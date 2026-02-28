@@ -1,0 +1,299 @@
+/* HomePage.css - Estilo Clásico Warcraft 3 */
+
+/* Estilos generales */
+.warcraf-homepage {
+  background-color: #000;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.warcraf-header {
+  background-color: #111;
+  border-bottom: 1px solid #333;
+  padding: 10px 0;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.logo img {
+  height: 50px;
+}
+
+/* Menú de navegación */
+.main-nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.main-nav li {
+  margin: 0 10px;
+}
+
+.main-nav a {
+  color: #FFAC04;
+  text-decoration: none;
+  font-size: 14px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+}
+
+.main-nav a:hover {
+  border: 1px solid #FFAC04;
+  background-color: #222;
+}
+
+/* Botones de autenticación */
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.login-btn, .register-btn {
+  background-color: transparent;
+  color: #FFAC04;
+  border: 1px solid #FFAC04;
+  padding: 5px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.login-btn:hover, .register-btn:hover {
+  background-color: #FFAC04;
+  color: #000;
+}
+
+/* Hero Section */
+.hero-section {
+  background-image: url('https://www.warcraf.com/img/war3-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  padding: 80px 20px;
+  text-align: center;
+  flex-grow: 1;
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 30px;
+  border: 1px solid #333;
+}
+
+.hero-content h1 {
+  color: #FFAC04;
+  font-size: 32px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+/* Selector de raza */
+#race-select {
+  background-color: #111;
+  color: #FFAC04;
+  border: 1px solid #333;
+  padding: 8px 15px;
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+/* Botón Jugar ahora */
+.play-now-btn {
+  background-color: #FFAC04;
+  color: #000;
+  border: none;
+  padding: 10px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 20px 0;
+  text-transform: uppercase;
+}
+
+.play-now-btn:hover {
+  background-color: #ffc107;
+}
+
+/* Estado del servidor */
+.server-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-left: 10px;
+}
+
+.status-indicator.active {
+  background-color: #0f0;
+  box-shadow: 0 0 10px #0f0;
+}
+
+/* Sección de información del juego */
+.game-info {
+  background-color: #111;
+  padding: 40px 20px;
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.info-card {
+  background-color: #222;
+  border: 1px solid #333;
+  padding: 20px;
+  text-align: center;
+}
+
+.info-card h3 {
+  color: #FFAC04;
+  margin: 15px 0;
+  font-size: 18px;
+}
+
+.info-card p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.race-image {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #444;
+}
+
+/* Footer */
+.warcraf-footer {
+  background-color: #111;
+  border-top: 1px solid #333;
+  padding: 30px 20px 20px;
+}
+
+.footer-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.link-column h4 {
+  color: #FFAC04;
+  font-size: 16px;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.link-column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.link-column li {
+  margin-bottom: 8px;
+}
+
+.link-column a {
+  color: #ccc;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.link-column a:hover {
+  color: #FFAC04;
+}
+
+.footer-bottom {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #333;
+  font-size: 12px;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.social-links a {
+  color: #FFAC04;
+  font-size: 20px;
+}
+
+/* Estilos para móvil */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #FFAC04;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: block;
+  }
+  
+  .main-nav, .auth-buttons {
+    display: none;
+  }
+  
+  .main-nav.active, .auth-buttons.active {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 20px;
+  }
+  
+  .main-nav.active ul {
+    flex-direction: column;
+  }
+  
+  .main-nav.active li {
+    margin: 5px 0;
+  }
+  
+  .auth-buttons.active {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 15px;
+  }
+  
+  .header-container {
+    flex-wrap: wrap;
+  }
+  
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,44 @@
+Paso 1: Instalar Node.js
+1- Descarga Node.js desde https://nodejs.org/es (elige la versión LTS para mayor estabilidad)
+2- Instala Node.js y confirma que funciona ejecutando:
+node -v
+npm -v
+Esto verificará que tienes Node.js y npm (el gestor de paquetes) instalados correctamente.
+
+Paso 2: Crear el proyecto de backend con NestJS
+1- Instala NestJS CLI globalmente:
+npm install -g @nestjs/cli
+2- Crea tu proyecto de backend:
+nest new backend-game
+3- Entrar en la carpeta y corre la app:
+cd backend-game
+npm run start
+npm run start:dev
+
+
+Paso 3: Crear el proyecto de frontend con React
+1- Usa Vite (más rápido que Create React App):
+npm create vite@latest frontend-game --template react
+2- Entra en la carpeta y corre la app:
+cd frontend-game
+npm install
+npm run dev
+
+Paso 4: Instala TypeORM para Node.js
+npm install typeorm @nestjs/typeorm mysql2
+
+Paso 5: Crear Base Datos con XAMMP 
+
+NestJS: Crear un modulo estandar en NestJS
+nest generate module race 
+nest generate controller race 
+nest generate service race 
+nest generate resource race
+nest generate class race --no-spec     //Para generar una entidad en NestJS con TypeORM
+
+NestJS: Como ejecutar un SCRIPT
+npx ts-node import-data.ts   //Tienes k estar parado en consola donde esta ese fichero
+
+ReactJs: Para las rutas
+npm install react-router-dom
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
