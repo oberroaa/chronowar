@@ -52,6 +52,7 @@ const gemFall = keyframes`
 `;
 
 const GlobalStyle = createGlobalStyle`
+  * { box-sizing: border-box; } /* <--- Esto evita que el borde mueva las cosas */
   html, body, #root {
     margin: 0;
     padding: 0;
@@ -92,16 +93,15 @@ const BattlefieldContainer = styled.div<{ $race: Race }>`
 
 const UnitRow = styled.div<{ $side: 'top' | 'bottom' }>`
   width: 100%;
-  max-width: 1400px;
   display: flex;
-  justify-content: center;
-  gap: 15px;
+  justify-content: space-between;
+  padding: 0 5px;
   z-index: 10;
   animation: ${props => props.$side === 'top' ? slideDown : slideUp} 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 `;
 
 const UnitCard = styled.div<{ $race: Race; $isEnemy: boolean; $isHero?: boolean }>`
-  width: ${props => props.$isHero ? 'clamp(75px, 18vw, 125px)' : 'clamp(65px, 16vw, 110px)'};
+  width: ${props => props.$isHero ? '19.5%' : '18.5%'};
   aspect-ratio: 4/5.5;
   background: ${props => raceColors[props.$race].background};
   border: ${props => props.$isHero ? '2px solid #ffd700' : `1px solid ${raceColors[props.$race].accent}`};
@@ -188,19 +188,27 @@ const BattleHUD = styled.div`
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 `;
 
+const BattleContent = styled.div`
+  width: min(90vw, 45vh);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  z-index: 10;
+  position: relative;
+`;
+
 const BoardSection = styled.div`
+  width: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
-  width: 100%;
-  z-index: 10;
   padding: 0;
-  margin: -5px 0; /* Compactar espacio */
 `;
 
 const BoardOuterFrame = styled.div`
-  width: min(90vw, 45vh);
-  aspect-ratio: 1/1;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   padding: 8px;
   background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.3));
   border-radius: 12px;
@@ -277,23 +285,23 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
   useEffect(() => {
     const newGems: Gem[] = [];
     for (let i = 0; i < 64; i++) {
-        newGems.push({
-            id: `gem-${i}-${Math.random()}`,
-            type: gemRaces[Math.floor(Math.random() * gemRaces.length)]
-        });
+      newGems.push({
+        id: `gem-${i}-${Math.random()}`,
+        type: gemRaces[Math.floor(Math.random() * gemRaces.length)]
+      });
     }
     setGems(newGems);
   }, []);
 
   const checkMatches = (currentGems: Gem[]) => {
     const matches = new Set<number>();
-    
+
     // Horizontal
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 6; col++) {
         const idx = row * 8 + col;
         const type = currentGems[idx]?.type;
-        if (type && currentGems[idx+1]?.type === type && currentGems[idx+2]?.type === type) {
+        if (type && currentGems[idx + 1]?.type === type && currentGems[idx + 2]?.type === type) {
           matches.add(idx);
           matches.add(idx + 1);
           matches.add(idx + 2);
@@ -306,7 +314,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
       for (let row = 0; row < 6; row++) {
         const idx = row * 8 + col;
         const type = currentGems[idx]?.type;
-        if (type && currentGems[idx+8]?.type === type && currentGems[idx+16]?.type === type) {
+        if (type && currentGems[idx + 8]?.type === type && currentGems[idx + 16]?.type === type) {
           matches.add(idx);
           matches.add(idx + 8);
           matches.add(idx + 16);
@@ -323,7 +331,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
     if (selectedIndex === null) {
       setSelectedIndex(index);
     } else {
-      const isAdjacent = 
+      const isAdjacent =
         Math.abs(Math.floor(index / 8) - Math.floor(selectedIndex / 8)) +
         Math.abs((index % 8) - (selectedIndex % 8)) === 1;
 
@@ -331,7 +339,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
         setIsProcessing(true);
         const newGems = [...gems];
         [newGems[index], newGems[selectedIndex]] = [newGems[selectedIndex], newGems[index]];
-        
+
         setGems(newGems);
         setSelectedIndex(null);
 
@@ -365,7 +373,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
       }
 
       // Mark matched gems
-      workingGems = workingGems.map((g, i) => 
+      workingGems = workingGems.map((g, i) =>
         matches.includes(i) ? { ...g, isMatched: true } : g
       );
       setGems(workingGems);
@@ -383,7 +391,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
             workingGems[idx] = { id: '', type: 'valdari', isMatched: true }; // Placeholder
           }
         }
-        
+
         // Fill top
         for (let row = 0; row < emptySpots; row++) {
           workingGems[row * 8 + col] = {
@@ -427,68 +435,70 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
       <GlobalStyle />
       <BattlefieldContainer $race={race}>
         <BattleHUD>TURNO VALDARI</BattleHUD>
-        
-        {/* Top Section: Enemy Lineup (5 Units) */}
-        <UnitRow $side="top">
-          {enemyUnits.map((unit, i) => {
-            const unitId = `enemy-${i}`;
-            const isHero = i === 2; // Unidad central es Héroe
-            return (
-              <UnitCard 
-                key={unitId} 
-                $race="gorkar" 
-                $isEnemy={true} 
-                $isHero={isHero}
-              >
-                {isHero && <HeroLabel>HERO</HeroLabel>}
-                <ManaBarTop $color="#ef4444" $width={100} />
-                <UnitImageContainer>
-                  <img src={unit.img} alt={unit.name} />
-                </UnitImageContainer>
-              </UnitCard>
-            );
-          })}
-        </UnitRow>
 
-        {/* Middle Section: Match-3 Gem Board */}
-        <BoardSection>
-          <BoardOuterFrame>
-            <GemGrid>
-              {gems.map((gem, index) => (
-                <GemItem 
-                    key={gem.id} 
-                    $race={gem.type} 
+        <BattleContent>
+          {/* Top Section: Enemy Lineup (5 Units) */}
+          <UnitRow $side="top">
+            {enemyUnits.map((unit, i) => {
+              const unitId = `enemy-${i}`;
+              const isHero = i === 2; // Unidad central es Héroe
+              return (
+                <UnitCard
+                  key={unitId}
+                  $race="gorkar"
+                  $isEnemy={true}
+                  $isHero={isHero}
+                >
+                  {isHero && <HeroLabel>HERO</HeroLabel>}
+                  <ManaBarTop $color="#ef4444" $width={100} />
+                  <UnitImageContainer>
+                    <img src={unit.img} alt={unit.name} />
+                  </UnitImageContainer>
+                </UnitCard>
+              );
+            })}
+          </UnitRow>
+
+          {/* Middle Section: Match-3 Gem Board */}
+          <BoardSection>
+            <BoardOuterFrame>
+              <GemGrid>
+                {gems.map((gem, index) => (
+                  <GemItem
+                    key={gem.id}
+                    $race={gem.type}
                     $isSelected={selectedIndex === index}
                     $isMatched={gem.isMatched}
                     $isFalling={gem.isFalling}
                     onClick={() => handleGemClick(index)}
-                />
-              ))}
-            </GemGrid>
-          </BoardOuterFrame>
-        </BoardSection>
+                  />
+                ))}
+              </GemGrid>
+            </BoardOuterFrame>
+          </BoardSection>
 
-        {/* Bottom Section: Hero Lineup (5 Units) */}
-        <UnitRow $side="bottom">
-          {heroUnits.map((unit, i) => {
-            const unitId = `hero-${i}`;
-            const isHero = i === 2;
-            return (
-              <UnitCard 
-                key={unitId} 
-                $race={race} 
-                $isEnemy={false} 
-                $isHero={isHero}
-              >
-                {isHero && <HeroLabel>HEROE</HeroLabel>}
-                <ManaBarTop $color="#3b82f6" $width={100} />
-                <UnitImageContainer>
-                  <img src={unit.img} alt={unit.name} />
-                </UnitImageContainer>
-              </UnitCard>
-            );
-          })}
-        </UnitRow>
+          {/* Bottom Section: Hero Lineup (5 Units) */}
+          <UnitRow $side="bottom">
+            {heroUnits.map((unit, i) => {
+              const unitId = `hero-${i}`;
+              const isHero = i === 2;
+              return (
+                <UnitCard
+                  key={unitId}
+                  $race={race}
+                  $isEnemy={false}
+                  $isHero={isHero}
+                >
+                  {isHero && <HeroLabel>HEROE</HeroLabel>}
+                  <ManaBarTop $color="#3b82f6" $width={100} />
+                  <UnitImageContainer>
+                    <img src={unit.img} alt={unit.name} />
+                  </UnitImageContainer>
+                </UnitCard>
+              );
+            })}
+          </UnitRow>
+        </BattleContent>
       </BattlefieldContainer>
     </>
   );
