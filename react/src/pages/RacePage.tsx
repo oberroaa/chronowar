@@ -35,6 +35,8 @@ interface RaceStyledProps {
 // Props principales del componente RacePage (recibe la raza)
 interface RacePageProps {
   race: RaceType;
+  onBattle: () => void;
+  onExit: () => void;
 }
 
 // Tipo para los datos de edificios (imagen y nivel)
@@ -168,7 +170,7 @@ const simulateBattle = (action: 'attack' | 'gather', targetLevel: number): Battl
 };
 
 // Componente principal RacePage
-const RacePage: React.FC<RacePageProps> = ({ race }) => {
+const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   // Obtiene los datos específicos de la raza actual
   const currentRaceData = raceData[race];
 
@@ -280,7 +282,8 @@ const RacePage: React.FC<RacePageProps> = ({ race }) => {
   // Manejar inicio de acción en el portal
   const handlePortalActionStart = (targetId: number) => {
     setPortalCurrentTarget(targetId);
-    setPortalCountdown(60); // Iniciar cuenta regresiva de 60 segundos
+    // En lugar de esperar 60 segundos, vamos directo a la batalla
+    onBattle(); 
   };
 
   // Cerrar resultado del portal

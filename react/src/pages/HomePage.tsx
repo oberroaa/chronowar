@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import { raceOptions, type RaceType } from '../types/gameData';
 
+interface HomePageProps {
+  onPlay: (race: RaceType) => void;
+}
+
 // Componente principal de la página de inicio
-const HomePage: React.FC = () => {
+const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
   // Estado para controlar si el menú móvil está abierto
   const [menuOpen, setMenuOpen] = useState(false);
   // Estado para almacenar la raza seleccionada
   const [selectedRace, setSelectedRace] = useState<RaceType>('valdari');
-  // Hook para navegar entre páginas
-  const navigate = useNavigate();
 
   // Función que se ejecuta al hacer clic en el botón "Jugar ahora"
   const handlePlayNow = () => {
     console.log("Raza seleccionada:", selectedRace);
-    // Navega a la página de la raza seleccionada
-    navigate(`/${selectedRace}`);
+    onPlay(selectedRace);
   };
 
   return (

@@ -20,6 +20,7 @@ interface Gem {
 
 interface BattlefieldProps {
   race: Race;
+  onExit: () => void;
 }
 
 // Map backgrounds correctly based on game assets
@@ -188,6 +189,25 @@ const BattleHUD = styled.div`
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 `;
 
+const ExitButton = styled.button`
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 8px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 110;
+  font-weight: bold;
+  
+  &:hover {
+    background: rgba(255,0,0,0.4);
+    border-color: #ff4444;
+  }
+`;
+
 const BattleContent = styled.div`
   width: min(90vw, 45vh);
   margin: 0 auto;
@@ -276,7 +296,7 @@ const GemItem = styled.div<{ $race: Race; $isSelected?: boolean; $isMatched?: bo
   }
 `;
 
-const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
+const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) => {
   const [gems, setGems] = useState<Gem[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -434,6 +454,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari' }) => {
     <>
       <GlobalStyle />
       <BattlefieldContainer $race={race}>
+        <ExitButton onClick={onExit}>SALIR</ExitButton>
         <BattleHUD>TURNO VALDARI</BattleHUD>
 
         <BattleContent>
