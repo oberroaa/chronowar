@@ -1,43 +1,24 @@
-import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import HomePage from './pages/HomePage';
 import RacePage from './pages/RacePage';
 import Battlefield from './pages/Battlefield';
 import './App.css';
-import { type RaceType } from './types/gameData';
+import { useGameStore } from './store/useGameStore';
 
 const App = () => {
-  const [view, setView] = useState<'home' | 'city' | 'battle'>('home');
-  const [race, setRace] = useState<RaceType>('valdari');
-
-  const handleStartGame = (selectedRace: RaceType) => {
-    setRace(selectedRace);
-    setView('city');
-  };
-
-  const handleEnterBattle = () => {
-    setView('battle');
-  };
-
-  const handleBackToCity = () => {
-    setView('city');
-  };
-
-  const handleBackToHome = () => {
-    setView('home');
-  };
+  const { view, race, setView, startGame } = useGameStore();
 
   return (
     <div className="app-main-container" style={{ position: 'relative', height: '100vh', width: '100vw', backgroundColor: '#000' }}>
       {view === 'home' && (
-        <HomePage onPlay={handleStartGame} />
+        <HomePage onPlay={startGame} />
       )}
       
       {view === 'city' && (
         <RacePage 
           race={race} 
-          onBattle={handleEnterBattle} 
-          onExit={handleBackToHome}
+          onBattle={() => setView('battle')} 
+          onExit={() => setView('home')}
         />
       )}
       
@@ -60,7 +41,7 @@ const App = () => {
           >
             <Battlefield 
               race={race} 
-              onExit={handleBackToCity} 
+              onExit={() => setView('city')} 
             />
           </motion.div>
         )}

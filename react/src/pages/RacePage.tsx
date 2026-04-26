@@ -21,6 +21,7 @@ import {
 } from '../types/jsonResponse';
 import { raceColors } from '../types/raceColors';
 import { jsonPlayersData, jsonSystemPlayersData } from '../types/jsonResponse';
+import { useGameStore } from '../store/useGameStore';
 
 // Props para los cuadros de construcción (con la raza)
 type ConstructionSquareProps = {
@@ -179,8 +180,8 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
     getInitialBuildings(race) // Inicializa con los edificios de la raza
   );
 
-  // Estado para los recursos del jugador
-  const [resources, setResources] = useState<Record<ResourceType, number>>(recursosPlayer);
+  // Usar el Store Global de Zustand
+  const { resources, setResources } = useGameStore();
 
   // Estados para controlar la visibilidad de los paneles
   const [showTroops, setShowTroops] = useState(false); // Panel de ejército
