@@ -7,7 +7,7 @@ interface GameState {
   view: 'home' | 'city' | 'battle';
   race: RaceType;
   resources: Record<ResourceType, number>;
-  
+
   // Actions
   setView: (view: 'home' | 'city' | 'battle') => void;
   setRace: (race: RaceType) => void;
@@ -27,7 +27,7 @@ export const useGameStore = create<GameState>((set) => ({
   setView: (view) => set({ view }),
   setRace: (race) => set({ race }),
   setResources: (resources) => set({ resources }),
-  
+
   updateResource: (type, amount) => set((state) => ({
     resources: {
       ...state.resources,

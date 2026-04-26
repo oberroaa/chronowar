@@ -37,7 +37,7 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
           </MobileMenuButton>
           
           {/* Lista de navegación - se muestra/oculta en móviles */}
-          <NavList isMenuOpen={menuOpen}>
+          <NavList $isMenuOpen={menuOpen}>
             <NavItem><NavLink href="#">Inicio</NavLink></NavItem>
             <NavItem><NavLink href="#">Juego</NavLink></NavItem>
             <NavItem><NavLink href="#">Comunidad</NavLink></NavItem>
@@ -46,7 +46,7 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
           </NavList>
           
           {/* Botones de autenticación - se muestran/ocultan en móviles */}
-          <AuthButtonsContainer isMenuOpen={menuOpen}>
+          <AuthButtonsContainer $isMenuOpen={menuOpen}>
             <AuthButton>Iniciar sesión</AuthButton>
             <AuthButton>Registrarse</AuthButton>
           </AuthButtonsContainer>
@@ -178,7 +178,7 @@ const Logo = styled.div`
 
 // Props para el menú de navegación
 interface NavListProps {
-  isMenuOpen: boolean;
+  $isMenuOpen: boolean;
 }
 
 // Lista de navegación
@@ -190,7 +190,7 @@ const NavList = styled.ul<NavListProps>`
   
   @media (max-width: 768px) {
     flex-direction: column;
-    display: ${({ isMenuOpen }) => (isMenuOpen ? 'flex' : 'none')};
+    display: ${({ $isMenuOpen }) => ($isMenuOpen ? 'flex' : 'none')};
     width: 100%;
     margin-top: 20px;
   }
@@ -222,7 +222,7 @@ const NavLink = styled.a`
 
 // Props para los botones de autenticación
 interface AuthButtonsProps {
-  isMenuOpen: boolean;
+  $isMenuOpen: boolean;
 }
 
 // Contenedor de botones de autenticación
@@ -231,7 +231,7 @@ const AuthButtonsContainer = styled.div<AuthButtonsProps>`
   gap: 10px;
   
   @media (max-width: 768px) {
-    display: ${({ isMenuOpen }) => (isMenuOpen ? 'flex' : 'none')};
+    display: ${({ $isMenuOpen }) => ($isMenuOpen ? 'flex' : 'none')};
     flex-direction: row;
     justify-content: center;
     width: 100%;

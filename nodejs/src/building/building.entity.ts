@@ -30,7 +30,7 @@ export class Building {
   @Column({ nullable: true })
   hitPoints: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'float', nullable: true })
   hpRegen: number;
 
   @Column({ nullable: true })
@@ -54,16 +54,16 @@ export class Building {
   @Column({ nullable: true })
   type: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'float', nullable: true })
   damage: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'float', nullable: true })
   range: number;
 
   @Column({ nullable: true })
   weapon: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'float', nullable: true })
   cooldown: number;
 
   @Column({ nullable: true })

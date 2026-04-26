@@ -1,3 +1,4 @@
+// FormationPanel - Componente principal de formaciones
 import React, { useState, useEffect } from 'react';
 import { savedFormations } from '../../types/jsonResponse';
 import type { FormationPanelProps, SelectedUnit, SlotPosition, FormationType } from './types';
@@ -33,12 +34,11 @@ import {
   SubtitleWithClose,
   CloseListButton,
   CloseIconSmall,
-  //hexToRgb
 } from './FormationPanel.styles';
 import UnitSlot from './UnitSlot';
 
-const FormationPanel: React.FC<FormationPanelProps> = ({ 
-  isOpen, onClose, race, gameUnits 
+const FormationPanel: React.FC<FormationPanelProps> = ({
+  isOpen, onClose, race, gameUnits
 }) => {
   const [unitsMap] = useState(() => {
     const map = new Map<number, any>();
@@ -56,7 +56,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
   const [selectedUnit, setSelectedUnit] = useState<SelectedUnit | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SlotPosition | null>(null);
   const [showUnitInfo, setShowUnitInfo] = useState<any | null>(null);
-  
+
   const [formations, setFormations] = useState<FormationType[]>([
     { name: "Ataque Principal", units: Array(10).fill(null) },
     { name: "Defensa Ciudad", units: Array(10).fill(null) },
@@ -66,21 +66,21 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
   useEffect(() => {
     if (isOpen) {
       const loadedFormations = [
-        { 
-          name: savedFormations.principal.name, 
-          units: savedFormations.principal.units.map(unit => 
+        {
+          name: savedFormations.principal.name,
+          units: savedFormations.principal.units.map(unit =>
             unit ? unitsMap.get(unit.id) || null : null
           )
         },
-        { 
-          name: savedFormations.secondary.name, 
-          units: savedFormations.secondary.units.map(unit => 
+        {
+          name: savedFormations.secondary.name,
+          units: savedFormations.secondary.units.map(unit =>
             unit ? unitsMap.get(unit.id) || null : null
           )
         },
-        { 
-          name: savedFormations.reserve.name, 
-          units: savedFormations.reserve.units.map(unit => 
+        {
+          name: savedFormations.reserve.name,
+          units: savedFormations.reserve.units.map(unit =>
             unit ? unitsMap.get(unit.id) || null : null
           )
         }
@@ -125,7 +125,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
 
     return gameUnits.map(unit => ({
       ...unit,
-      available: unit.unitType === 'heroe'  
+      available: unit.unitType === 'heroe'
         ? (usedCounts[unit.id] ? 0 : 1)
         : Math.max(0, (unit.available || 0) - (usedCounts[unit.id] || 0))
     }));
@@ -135,7 +135,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
 
   const handleUnitClick = (formationIndex: number, positionIndex: number) => {
     const clickedUnit = formations[formationIndex].units[positionIndex];
-    
+
     if (clickedUnit) {
       setShowUnitInfo(clickedUnit);
       setSelectedUnit({
@@ -151,11 +151,11 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
 
   const handleAddUnit = (unit: any) => {
     if (!selectedSlot) return;
-    
+
     if (unit.unitType === 'heroe' && selectedSlot.positionIndex !== 7) {
       return;
     }
-    
+
     const available = getAvailableCount(unit.id);
     if (available <= 0) {
       return;
@@ -164,18 +164,18 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
     const newFormations = [...formations];
     newFormations[selectedSlot.formationIndex].units[selectedSlot.positionIndex] = { ...unit };
     setFormations(newFormations);
-    
+
     setSelectedSlot(null);
   };
 
   const handleRemoveUnit = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!selectedUnit) return;
-    
+
     const newFormations = [...formations];
     newFormations[selectedUnit.formationIndex].units[selectedUnit.positionIndex] = null;
     setFormations(newFormations);
-    
+
     setShowUnitInfo(null);
     setSelectedUnit(null);
   };
@@ -191,22 +191,22 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
   };
 
   const isHeroInUse = (heroId: number) => {
-    return formations.some(formation => 
+    return formations.some(formation =>
       formation.units.some(unit => unit?.id === heroId && unit?.unitType === 'heroe'));
   };
 
   return (
-    <CompactPanel isOpen={isOpen} race={race}>
-      <PanelHeader race={race}>
-        <CloseButton race={race} onClick={onClose}>▲ Close ▲</CloseButton>      
-        <SaveButton race={race} onClick={saveFormations}>💾 Guardar</SaveButton>
+    <CompactPanel $isOpen={isOpen} $race={race}>
+      <PanelHeader $race={race}>
+        <CloseButton $race={race} onClick={onClose}>▲ Close ▲</CloseButton>
+        <SaveButton $race={race} onClick={saveFormations}>💾 Guardar</SaveButton>
       </PanelHeader>
-      
+
       <FormationsContainer>
         {formations.map((formation, formationIndex) => (
-          <FormationGroup key={formationIndex} race={race}>
-            <FormationTitle race={race}>{formation.name}</FormationTitle>
-          
+          <FormationGroup key={formationIndex} $race={race}>
+            <FormationTitle $race={race}>{formation.name}</FormationTitle>
+
             <UnitsRow>
               {formation.units.slice(0, 5).map((unit, positionIndex) => (
                 <UnitSlot
@@ -215,15 +215,15 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                   formationIndex={formationIndex}
                   positionIndex={positionIndex}
                   onUnitClick={handleUnitClick}
-                  $isSelected={selectedUnit?.formationIndex === formationIndex && selectedUnit?.positionIndex === positionIndex}
-                  $isHero={unit?.unitType === 'heroe'}
-                  $isEmpty={!unit}
-                  $isCenter={false}
+                  isSelected={selectedUnit?.formationIndex === formationIndex && selectedUnit?.positionIndex === positionIndex}
+                  isHero={unit?.unitType === 'heroe'}
+                  isEmpty={!unit}
+                  isCenter={false}
                   race={race}
                 />
               ))}
             </UnitsRow>
-            
+
             <UnitsRow>
               {formation.units.slice(5, 10).map((unit, rowIndex) => {
                 const positionIndex = rowIndex + 5;
@@ -234,10 +234,10 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                     formationIndex={formationIndex}
                     positionIndex={positionIndex}
                     onUnitClick={handleUnitClick}
-                    $isSelected={selectedUnit?.formationIndex === formationIndex && selectedUnit?.positionIndex === positionIndex}
-                    $isHero={unit?.unitType === 'heroe'}
-                    $isEmpty={!unit}
-                    $isCenter={positionIndex === 7}
+                    isSelected={selectedUnit?.formationIndex === formationIndex && selectedUnit?.positionIndex === positionIndex}
+                    isHero={unit?.unitType === 'heroe'}
+                    isEmpty={!unit}
+                    isCenter={positionIndex === 7}
                     race={race}
                   />
                 );
@@ -249,38 +249,38 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
 
       {selectedSlot && (
         <ModalOverlay>
-          <ModalContent race={race}>
-            <ModalHeader race={race}>
-              <ModalTitle race={race}>
+          <ModalContent $race={race}>
+            <ModalHeader $race={race}>
+              <ModalTitle $race={race}>
                 {formations[selectedSlot.formationIndex].name} - Slot {selectedSlot.positionIndex + 1}
               </ModalTitle>
-              <CloseModalButton race={race} onClick={closeModal}>×</CloseModalButton>
+              <CloseModalButton $race={race} onClick={closeModal}>×</CloseModalButton>
             </ModalHeader>
-            
+
             <UnitsList>
               {(selectedSlot.positionIndex === 7) ? (
                 <>
-                  <Subtitle race={race}>Héroes Disponibles</Subtitle>
+                  <Subtitle $race={race}>Héroes Disponibles</Subtitle>
                   {raceData.heroe.map(hero => {
                     const available = getAvailableCount(hero.id);
                     const inUse = isHeroInUse(hero.id);
-                    
+
                     return (
-                      <AvailableUnit 
-                        key={hero.id} 
+                      <AvailableUnit
+                        key={hero.id}
                         onClick={() => !inUse && available > 0 && handleAddUnit(hero)}
-                        race={race}
+                        $race={race}
                         $disabled={inUse || available <= 0}
                       >
                         <UnitImage src={hero.image} alt={hero.name} />
                         <UnitDetails>
-                          <UnitName race={race}>{hero.name}</UnitName>
+                          <UnitName $race={race}>{hero.name}</UnitName>
                           <UnitStats>
-                            <Stat race={race}>❤️ {hero.hp}</Stat>
-                            <Stat race={race}>⚔️ {hero.attack}</Stat>
-                            <Stat race={race}>🛡️ {hero.armor}</Stat>
-                            {inUse && <Stat race={race} style={{color: 'red'}}>EN USO</Stat>}
-                            {!inUse && available <= 0 && <Stat race={race} style={{color: 'red'}}>NO DISPONIBLE</Stat>}
+                            <Stat $race={race}>❤️ {hero.hp}</Stat>
+                            <Stat $race={race}>⚔️ {hero.attack}</Stat>
+                            <Stat $race={race}>🛡️ {hero.armor}</Stat>
+                            {inUse && <Stat $race={race} style={{ color: 'red' }}>EN USO</Stat>}
+                            {!inUse && available <= 0 && <Stat $race={race} style={{ color: 'red' }}>NO DISPONIBLE</Stat>}
                           </UnitStats>
                         </UnitDetails>
                       </AvailableUnit>
@@ -289,32 +289,32 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                 </>
               ) : (
                 <>
-                  <SubtitleWithClose race={race}>
+                  <SubtitleWithClose $race={race}>
                     <span>Unidades Disponibles</span>
-                    <CloseListButton race={race} onClick={closeModal}>
-                      <CloseIconSmall race={race}>×</CloseIconSmall>
+                    <CloseListButton $race={race} onClick={closeModal}>
+                      <CloseIconSmall $race={race}>×</CloseIconSmall>
                       Cerrar
                     </CloseListButton>
                   </SubtitleWithClose>
                   {raceData.unit.map(unit => {
                     const available = getAvailableCount(unit.id);
                     const total = unit.available || 0;
-                    
+
                     return (
-                      <AvailableUnit 
-                        key={unit.id} 
+                      <AvailableUnit
+                        key={unit.id}
                         onClick={() => available > 0 && handleAddUnit(unit)}
-                        race={race}
+                        $race={race}
                         $disabled={available <= 0}
                       >
                         <UnitImage src={unit.image} alt={unit.name} />
                         <UnitDetails>
-                          <UnitName race={race}>{unit.name}</UnitName>
+                          <UnitName $race={race}>{unit.name}</UnitName>
                           <UnitStats>
-                            <Stat race={race}>❤️ {unit.hp}</Stat>
-                            <Stat race={race}>⚔️ {unit.attack}</Stat>
-                            <Stat race={race}>🛡️ {unit.armor}</Stat>
-                            <Stat race={race}>
+                            <Stat $race={race}>❤️ {unit.hp}</Stat>
+                            <Stat $race={race}>⚔️ {unit.attack}</Stat>
+                            <Stat $race={race}>🛡️ {unit.armor}</Stat>
+                            <Stat $race={race}>
                               {available > 0 ? `Disponibles: ${available}/${total}` : 'NO DISPONIBLE'}
                             </Stat>
                           </UnitStats>
@@ -331,48 +331,48 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
 
       {showUnitInfo && selectedUnit && (
         <ModalOverlay>
-          <ModalContent race={race}>
-            <ModalHeader race={race}>
-              <ModalTitle race={race}>{showUnitInfo.name}</ModalTitle>
-              <CloseModalButton race={race} onClick={closeModal}>×</CloseModalButton>
+          <ModalContent $race={race}>
+            <ModalHeader $race={race}>
+              <ModalTitle $race={race}>{showUnitInfo.name}</ModalTitle>
+              <CloseModalButton $race={race} onClick={closeModal}>×</CloseModalButton>
             </ModalHeader>
-            
+
             <UnitInfoContainer>
-              <UnitImageLarge src={showUnitInfo.image} alt={showUnitInfo.name} race={race} />
-              
+              <UnitImageLarge src={showUnitInfo.image} alt={showUnitInfo.name} $race={race} />
+
               <UnitStatsContainer>
-                <StatItem race={race}>
-                  <StatLabel race={race}>Salud:</StatLabel>
-                  <StatValue race={race}>{showUnitInfo.hp}</StatValue>
+                <StatItem $race={race}>
+                  <StatLabel $race={race}>Salud:</StatLabel>
+                  <StatValue $race={race}>{showUnitInfo.hp}</StatValue>
                 </StatItem>
-                <StatItem race={race}>
-                  <StatLabel race={race}>Ataque Terrestre:</StatLabel>
-                  <StatValue race={race}>{showUnitInfo.attack}</StatValue>
+                <StatItem $race={race}>
+                  <StatLabel $race={race}>Ataque Terrestre:</StatLabel>
+                  <StatValue $race={race}>{showUnitInfo.attack}</StatValue>
                 </StatItem>
-                <StatItem race={race}>
-                  <StatLabel race={race}>Ataque Aéreo:</StatLabel>
-                  <StatValue race={race}>{showUnitInfo.attack}</StatValue>
+                <StatItem $race={race}>
+                  <StatLabel $race={race}>Ataque Aéreo:</StatLabel>
+                  <StatValue $race={race}>{showUnitInfo.attack}</StatValue>
                 </StatItem>
-                <StatItem race={race}>
-                  <StatLabel race={race}>Armadura:</StatLabel>
-                  <StatValue race={race}>{showUnitInfo.armor}</StatValue>
+                <StatItem $race={race}>
+                  <StatLabel $race={race}>Armadura:</StatLabel>
+                  <StatValue $race={race}>{showUnitInfo.armor}</StatValue>
                 </StatItem>
-                <StatItem race={race}>
-                  <StatLabel race={race}>Tipo de Arma:</StatLabel>
-                  <StatValue race={race}>{showUnitInfo.weaponType}</StatValue>
+                <StatItem $race={race}>
+                  <StatLabel $race={race}>Tipo de Arma:</StatLabel>
+                  <StatValue $race={race}>{showUnitInfo.weaponType}</StatValue>
                 </StatItem>
-                <StatItem race={race}>
-                  <StatLabel race={race}>Habilidad:</StatLabel>
-                  <StatValue race={race}>{showUnitInfo.special}</StatValue>
+                <StatItem $race={race}>
+                  <StatLabel $race={race}>Habilidad:</StatLabel>
+                  <StatValue $race={race}>{showUnitInfo.special}</StatValue>
                 </StatItem>
-                
-                <FormationButton 
-                  race={race} 
+
+                <FormationButton
+                  $race={race}
                   $formationType={selectedUnit.positionIndex >= 5 ? 'defense' : 'attack'}
                   onClick={handleRemoveUnit}
                 >
-                  {selectedUnit.positionIndex >= 5 
-                    ? "Quitar de Formación Defensiva" 
+                  {selectedUnit.positionIndex >= 5
+                    ? "Quitar de Formación Defensiva"
                     : "Quitar de Formación Ofensiva"}
                 </FormationButton>
               </UnitStatsContainer>

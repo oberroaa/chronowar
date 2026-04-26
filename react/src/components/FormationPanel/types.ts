@@ -30,15 +30,15 @@ export type UnitSlotProps = {
   $isHero?: boolean;
   $isEmpty: boolean;
   $isCenter: boolean;
-  race: RaceType;
+  $race: RaceType;
 };
 
 export type AvailableUnitProps = {
-  race: RaceType;
+  $race: RaceType;
   $disabled?: boolean;
 };
 
 export type FormationButtonProps = {
-  race: RaceType;
+  $race: RaceType;
   $formationType: 'attack' | 'defense';
 };

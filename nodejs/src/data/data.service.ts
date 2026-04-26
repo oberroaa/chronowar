@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+// Test de botones directos
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Race } from '../race/race.entity';
@@ -16,13 +17,19 @@ export class DataService {
     @InjectRepository(Unit) private unitRepository: Repository<Unit>,
   ) {}
 
+  // Método principal para limpiar e importar todos los datos del juego
   async importData(): Promise<void> {
     try {
-      console.log("Iniciando la importación de datos...");
+      console.log("Iniciando la limpieza y posterior importación de datos...");
 
       // Leer el archivo JSON
       const rawData = fs.readFileSync(`${__dirname}/../../src/data/data.json`, 'utf8');
       const jsonData = JSON.parse(rawData);
+
+      // Limpiar tablas existentes en cascada (borra todo lo relacionado)
+      await this.raceRepository.query('TRUNCATE TABLE "race" RESTART IDENTITY CASCADE');
+      
+      console.log("Tablas limpiadas en cascada correctamente.");
 
       // Insertar razas
       const raceEntities = await this.raceRepository.save(
@@ -84,7 +91,7 @@ export class DataService {
             upgradable: unitData.Upgradable === "true",
             gold: Number(unitData.Gold),
             wood: Number(unitData.Wood),
-            iron: Number(unitData.Iron),
+            stone: Number(unitData.Stone || unitData.Iron || 0),
             time: Number(unitData.Time),
             hitPoints: Number(unitData["Hit Points"]),
             hpRegen: Number(unitData["HP Regen"]),
@@ -93,7 +100,7 @@ export class DataService {
             armor: Number(unitData.Armor),
             armorType: unitData["Armor Type"],
             food: Number(unitData.Food),
-            builds: unitData.Builds,
+            builds: unitData.Builds !== "null" ? unitData.Builds : null,
             requisito: unitData.Requisito !== "null" ? unitData.Requisito : null,
             speed: Number(unitData.Speed),
             type: unitData.Type,

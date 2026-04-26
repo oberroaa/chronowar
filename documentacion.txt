@@ -42,3 +42,14 @@ npx ts-node import-data.ts   //Tienes k estar parado en consola donde esta ese f
 ReactJs: Para las rutas
 npm install react-router-dom
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+
+Paso 6: Conexión Frontend-Backend
+1- Configurar axios o fetch en React.
+2- Crear servicios para llamar a los endpoints de NestJS.
+3- Reemplazar datos estáticos por datos de la API.
+
+Sección de Preferencias del Desarrollador:
+- Usar siempre las herramientas de edición de archivos para que el usuario pueda revisar, aceptar o rechazar cambios directamente en el editor.
+- No sobreescribir archivos completos a menos que sea estrictamente necesario.
+
+

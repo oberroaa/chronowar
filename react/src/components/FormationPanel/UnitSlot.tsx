@@ -1,13 +1,17 @@
 import React from 'react';
 import type { UnitProduction } from '../../types/gameData';
-import type { UnitSlotProps } from './types';
-import { UnitSlot as StyledUnitSlot, UnitImage, UnitName, EmptySlot } from './FormationPanel.styles';
+import { StyledUnitSlot, UnitImage, UnitName, EmptySlot } from './FormationPanel.styles';
 
-interface UnitSlotComponentProps extends UnitSlotProps {
+interface UnitSlotComponentProps {
   unit: UnitProduction | null;
   formationIndex: number;
   positionIndex: number;
   onUnitClick: (formationIndex: number, positionIndex: number) => void;
+  isSelected: boolean;
+  isHero?: boolean;
+  isEmpty: boolean;
+  isCenter: boolean;
+  race: any;
 }
 
 const UnitSlot: React.FC<UnitSlotComponentProps> = ({
@@ -15,20 +19,28 @@ const UnitSlot: React.FC<UnitSlotComponentProps> = ({
   formationIndex,
   positionIndex,
   onUnitClick,
-  ...slotProps
+  isSelected,
+  isHero,
+  isEmpty,
+  isCenter,
+  race
 }) => {
   return (
     <StyledUnitSlot
-      {...slotProps}
+      $isSelected={isSelected}
+      $isHero={isHero}
+      $isEmpty={isEmpty}
+      $isCenter={isCenter}
+      $race={race}
       onClick={() => onUnitClick(formationIndex, positionIndex)}
     >
       {unit ? (
         <>
           <UnitImage src={unit.image} alt={unit.name} />
-          <UnitName race={slotProps.race}>{unit.name}</UnitName>
+          <UnitName $race={race}>{unit.name}</UnitName>
         </>
       ) : (
-        <EmptySlot race={slotProps.race}>+</EmptySlot>
+        <EmptySlot $race={race}>+</EmptySlot>
       )}
     </StyledUnitSlot>
   );

@@ -24,8 +24,8 @@ export class Unit {
   @Column({ type: 'int' })
   wood: number;
 
-  @Column({ type: 'int' })
-  iron: number;
+  @Column({ type: 'int', nullable: true })
+  stone: number;
 
   @Column({ type: 'int' })
   time: number;
@@ -51,8 +51,8 @@ export class Unit {
   @Column({ type: 'int' })
   food: number;
 
-  @Column({ type: 'boolean' })
-  builds: boolean;
+  @Column({ type: 'text', nullable: true })
+  builds: string;
 
   @Column({ nullable: true })
   requisito: string;
@@ -63,10 +63,10 @@ export class Unit {
   @Column()
   type: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float' })
   damage: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'float' })
   range: number;
 
   @Column({ nullable: true })
