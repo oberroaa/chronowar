@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
 import { raceColors } from '../types/raceColors';
 import { savedFormations, buildingsData } from '../types/jsonResponse';
-import type { UnitProduction } from '../types/gameData';
 
 /* 
  * BATTLEFIELD UI - VERTICAL MATCH-3 REDESIGN
