@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
 import { raceColors } from '../types/raceColors';
+import { savedFormations, buildingsData } from '../types/jsonResponse';
+import type { UnitProduction } from '../types/gameData';
 
 /* 
  * BATTLEFIELD UI - VERTICAL MATCH-3 REDESIGN
@@ -442,13 +444,23 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     { name: 'Raider', img: '/images/GorKar/units/Raider.png' }
   ];
 
-  const heroUnits = [
-    { name: 'Caballero', img: '/images/Valdari/units/Caballero.png' },
-    { name: 'Centinela', img: '/images/Valdari/units/Centinela.png' },
-    { name: 'Francotirador', img: '/images/Valdari/units/Francotirador.png' },
-    { name: 'Arcanista', img: '/images/Valdari/units/Arcanista.png' },
-    { name: 'Falange', img: '/images/Valdari/units/Falange.png' }
-  ];
+  const heroUnits = useMemo(() => {
+    // Extraer todas las unidades disponibles para hacer la búsqueda por ID
+    const allUnits = Object.values(buildingsData).flatMap(b => b.unitsProduced);
+    
+    // Mapear los IDs de la formación principal a los datos reales de la unidad
+    const units = savedFormations.principal.units.slice(0, 5).map(slot => {
+      if (!slot) return null;
+      const unit = allUnits.find(u => u.id === slot.id);
+      return unit ? { name: unit.name, img: unit.image } : null;
+    });
+
+    // Asegurarse de tener siempre 5 espacios
+    while (units.length < 5) {
+      units.push(null);
+    }
+    return units;
+  }, []);
 
   return (
     <>
@@ -511,10 +523,18 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                   $isHero={isHero}
                 >
                   {isHero && <HeroLabel>HEROE</HeroLabel>}
-                  <ManaBarTop $color="#3b82f6" $width={100} />
-                  <UnitImageContainer>
-                    <img src={unit.img} alt={unit.name} />
-                  </UnitImageContainer>
+                  {unit ? (
+                    <>
+                      <ManaBarTop $color="#3b82f6" $width={100} />
+                      <UnitImageContainer>
+                        <img src={unit.img} alt={unit.name} />
+                      </UnitImageContainer>
+                    </>
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                      Vacío
+                    </div>
+                  )}
                 </UnitCard>
               );
             })}
