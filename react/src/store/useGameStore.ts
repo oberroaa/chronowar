@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { type RaceType, type ResourceType } from '../types/gameData';
 import { recursosPlayer } from '../types/jsonResponse';
 
@@ -17,36 +18,44 @@ interface GameState {
   startGame: (selectedRace: RaceType) => void;
 }
 
-export const useGameStore = create<GameState>((set) => ({
-  // Initial State
-  view: 'home',
-  race: 'valdari',
-  resources: recursosPlayer,
+export const useGameStore = create<GameState>()(
+  persist(
+    (set) => ({
+      // Initial State
+      view: 'home',
+      race: 'valdari',
+      resources: recursosPlayer,
 
-  // Actions
-  setView: (view) => set({ view }),
-  setRace: (race) => set({ race }),
-  setResources: (resources) => set({ resources }),
+      // Actions
+      setView: (view) => set({ view }),
+      setRace: (race) => set({ race }),
+      setResources: (resources) => set({ resources }),
 
-  updateResource: (type, amount) => set((state) => ({
-    resources: {
-      ...state.resources,
-      [type]: state.resources[type] + amount
+      updateResource: (type, amount) => set((state) => ({
+        resources: {
+          ...state.resources,
+          [type]: state.resources[type] + amount
+        }
+      })),
+
+      addResources: (newResources) => set((state) => {
+        const updatedResources = { ...state.resources };
+        (Object.keys(newResources) as ResourceType[]).forEach((key) => {
+          if (newResources[key] !== undefined) {
+            updatedResources[key] += newResources[key]!;
+          }
+        });
+        return { resources: updatedResources };
+      }),
+
+      startGame: (selectedRace) => set({
+        race: selectedRace,
+        view: 'city'
+      }),
+    }),
+    {
+      name: 'chronowar-game-storage', // Nombre de la clave en LocalStorage
     }
-  })),
+  )
+);
 
-  addResources: (newResources) => set((state) => {
-    const updatedResources = { ...state.resources };
-    (Object.keys(newResources) as ResourceType[]).forEach((key) => {
-      if (newResources[key] !== undefined) {
-        updatedResources[key] += newResources[key]!;
-      }
-    });
-    return { resources: updatedResources };
-  }),
-
-  startGame: (selectedRace) => set({
-    race: selectedRace,
-    view: 'city'
-  }),
-}));
