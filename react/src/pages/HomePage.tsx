@@ -27,15 +27,15 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
           <Logo>
             <img src="./images/logo.png" alt="ChronoWar" />
           </Logo>
-          
+
           {/* Botón para abrir/cerrar el menú en móviles */}
-          <MobileMenuButton 
+          <MobileMenuButton
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menú"
           >
             ☰
           </MobileMenuButton>
-          
+
           {/* Lista de navegación - se muestra/oculta en móviles */}
           <NavList $isMenuOpen={menuOpen}>
             <NavItem><NavLink href="#">Inicio</NavLink></NavItem>
@@ -44,7 +44,7 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
             <NavItem><NavLink href="#">Ayuda</NavLink></NavItem>
             <NavItem><NavLink href="#">Tienda</NavLink></NavItem>
           </NavList>
-          
+
           {/* Botones de autenticación - se muestran/ocultan en móviles */}
           <AuthButtonsContainer $isMenuOpen={menuOpen}>
             <AuthButton>Iniciar sesión</AuthButton>
@@ -59,8 +59,8 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
           <HeroTitle>Forja tu imperio</HeroTitle>
           {/* Selector de raza */}
           <label htmlFor="race-select">Elige tu raza:</label>
-          <RaceSelect 
-            id="race-select" 
+          <RaceSelect
+            id="race-select"
             name="race"
             value={selectedRace}
             onChange={(e) => setSelectedRace(e.target.value as RaceType)}
@@ -101,7 +101,7 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
               <li><a href="#">Versión móvil</a></li>
             </ul>
           </LinkColumn>
-          
+
           <LinkColumn>
             <h4>Comunidad</h4>
             <ul>
@@ -110,7 +110,7 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
               <li><a href="#">Soporte</a></li>
             </ul>
           </LinkColumn>
-          
+
           <LinkColumn>
             <h4>Empresa</h4>
             <ul>
@@ -120,7 +120,7 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
             </ul>
           </LinkColumn>
         </FooterLinks>
-        
+
         <FooterBottom>
           <p>© 2025 ChronoWar Games. Todos los derechos reservados.</p>
           <SocialLinks>

@@ -446,7 +446,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
   const heroUnits = useMemo(() => {
     // Extraer todas las unidades disponibles para hacer la búsqueda por ID
     const allUnits = Object.values(buildingsData).flatMap(b => b.unitsProduced);
-    
+
     // Mapear los IDs de la formación principal a los datos reales de la unidad
     const units = savedFormations.principal.units.slice(0, 5).map(slot => {
       if (!slot) return null;
