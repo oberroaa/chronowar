@@ -5,7 +5,6 @@ import {
   SquaresGorkar,
   SquaresSylvaran,
   SquaresMortharim,
-  type ResourceType,
   type UnitProduction,
   type RaceType,
   raceOptions
@@ -16,7 +15,6 @@ import PortalPanel from '../components/PortalPanel/index';
 import BuildingInfoPanel from '../components/BuildingInfoPanel/index';
 import FormationPanel from '../components/FormationPanel/index';
 import {
-  recursosPlayer,
   buildingsData,
 } from '../types/jsonResponse';
 import { raceColors } from '../types/raceColors';
@@ -312,6 +310,11 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         {showUnits ? '▼' : '▲'} Formation {/* Cambia el ícono según el estado */}
       </BottomPanelButton>
 
+      {/* Botón para salir al menú principal */}
+      <ExitGameButton onClick={onExit} $race={race}>
+        ⏏ Salir
+      </ExitGameButton>
+
       {/* Paneles desplegables */}
       <ArmyPanel
         isOpen={showTroops} // Estado de visibilidad
@@ -527,6 +530,26 @@ const BottomPanelButton = styled(PanelButtonBase)`
   
   &:hover {
     padding-bottom: 15px; // Efecto de expansión al hover
+  }
+`;
+
+// Botón para salir al menú principal
+const ExitGameButton = styled(PanelButtonBase)`
+  bottom: 20px;
+  left: 20px;
+  border-radius: 8px;
+  padding: 8px 16px;
+  background: rgba(180, 20, 20, 0.7);
+  border-color: #ff4444;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover {
+    background: rgba(220, 30, 30, 0.9);
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
   }
 `;
 

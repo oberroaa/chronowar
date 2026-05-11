@@ -15,7 +15,7 @@ export type BuildingInfoModalProps = {
     buildingId: string | null;
     onClose: () => void;
     resources: Record<ResourceType, number>;
-    setResources: React.Dispatch<React.SetStateAction<Record<ResourceType, number>>>;
+    setResources: (resources: Record<ResourceType, number>) => void;
     race: RaceType;
     buildings: { id: string, level: number }[];
     onBuildingUpgraded: (buildingId: string, newLevel: number) => void;

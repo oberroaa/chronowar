@@ -57,20 +57,21 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
       <HeroSection>
         <HeroContent>
           <HeroTitle>Forja tu imperio</HeroTitle>
-          {/* Selector de raza */}
-          <label htmlFor="race-select">Elige tu raza:</label>
-          <RaceSelect
-            id="race-select"
-            name="race"
-            value={selectedRace}
-            onChange={(e) => setSelectedRace(e.target.value as RaceType)}
-          >
-            {raceOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+          {/* Selector Visual Interactivo de Raza */}
+          <RaceSelectorContainer>
+            {raceOptions.map(race => (
+              <RaceOptionCard 
+                key={race.value}
+                $isSelected={selectedRace === race.value}
+                onClick={() => setSelectedRace(race.value)}
+              >
+                <RaceIcon>
+                  {race.label.charAt(0)}
+                </RaceIcon>
+                <RaceName>{race.label.split('(')[0].trim()}</RaceName>
+              </RaceOptionCard>
             ))}
-          </RaceSelect>
+          </RaceSelectorContainer>
           {/* Botón para comenzar a jugar */}
           <PlayNowButton onClick={handlePlayNow}>
             Jugar ahora
@@ -306,17 +307,62 @@ const HeroTitle = styled.h1`
   text-transform: uppercase;
 `;
 
-// Selector de raza
-const RaceSelect = styled.select`
-  padding: 8px 15px;
-  border-radius: 5px;
-  margin: 10px 0;
-  background-color: #111;
-  color: #FFAC04;
-  border: 1px solid #333;
-  font-size: 16px;
-  width: 80%;
-  max-width: 300px;
+// --- NUEVOS ESTILOS PARA EL SELECTOR DE RAZAS ---
+
+const RaceSelectorContainer = styled.div`
+  display: flex;
+  gap: 15px;
+  margin: 30px 0;
+  justify-content: center;
+  flex-wrap: wrap;
+`;
+
+const RaceOptionCard = styled.div<{ $isSelected: boolean }>`
+  background: ${({ $isSelected }) => $isSelected ? 'rgba(255, 172, 4, 0.15)' : 'rgba(17, 17, 17, 0.7)'};
+  border: 2px solid ${({ $isSelected }) => $isSelected ? '#FFAC04' : 'rgba(255, 255, 255, 0.1)'};
+  border-radius: 12px;
+  padding: 15px;
+  cursor: pointer;
+  width: 120px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(8px);
+  
+  /* Efecto dinámico al pasar el cursor */
+  &:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 172, 4, 0.5);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Si está seleccionado, brilla */
+  ${({ $isSelected }) => $isSelected && `
+    box-shadow: 0 0 15px rgba(255, 172, 4, 0.3);
+    transform: scale(1.05);
+  `}
+`;
+
+const RaceIcon = styled.div`
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #333 0%, #111 100%);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+`;
+
+const RaceName = styled.div`
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 `;
 
 // Botón principal de jugar
