@@ -87,6 +87,26 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+      },
+      {
+        id: 16,        
+        available: 1,
+        name: "Emisario",
+        unitType: "poblation",
+        cost: { gold: 50, food: 1 },
+        buildTime: 20,
+        image: '/images/Valdari/comun/Emisario.png',
+        gif: '',
+        special: "Diplomacy",
+        attack: 2.0,
+        weaponType: "Normal",
+        armorType: "Unarmored",
+        armor: 0,
+        hp: 180,
+        hpRegen: 1.0,
+        mana: 0.0,
+        manaRegen: 0.0,
+        transportSize: 1,
       }
     ],
     upgradesAvailable: [
@@ -503,87 +523,19 @@ export const buildingsData: Record<string, BuildingInfo> = {
     buildCost: { gold: 400, wood: 200, stone: 100 },
     buildTime: 60,
     image: '/images/Valdari/construcciones/mercado.png',
-    unitsProduced: [
-      {
-        id: 16,        
-        available: 1,
-        name: "Emisario",
-        unitType: "comun",
-        cost: { gold: 50, food: 1 },
-        buildTime: 20,
-        image: '/images/Valdari/comun/Emisario.png',
-        gif: '',
-        special: "Diplomacy",
-        attack: 2.0,
-        weaponType: "Normal",
-        armorType: "Unarmored",
-        armor: 0,
-        hp: 180,
-        hpRegen: 1.0,
-        mana: 0.0,
-        manaRegen: 0.0,
-        transportSize: 1,
-      }
-    ],
+    unitsProduced: [],
     upgradesAvailable: [
       {
-        name: "Trade Routes",
-        cost: { gold: 200, wood: 100 },
-        time: 40,
-        description: "Increases resource trading efficiency by 25%"
+        name: "Activar BOT",
+        cost: { gold: 500, chrono: 10 },
+        time: 5,
+        description: "Activa el algoritmo de trading automático (BOT) para operar en el mercado."
       },
       {
-        name: "Bulk Discount",
-        cost: { gold: 150, stone: 30, chrono: 5 },
-        time: 35,
-        description: "Reduces item costs by 15%"
-      }
-    ]
-  },
-  8: {
-    id: 8,
-    race: "valdari",
-    name: "Tower",  
-    main: false, 
-    description: "Defensive structure to protect your kingdom.",
-    level: 1,
-    buildCost: { gold: 450, wood: 150, stone: 300 },
-    buildTime: 70,
-    image: '/images/Valdari/construcciones/torre.png',
-    unitsProduced: [
-      {
-        id: 17,        
-        available: 1,
-        name: "Guardian",
-        unitType: "comun",
-        cost: { gold: 60, food: 1 },
-        buildTime: 25,
-        image: '/images/Valdari/comun/Guardian.png',
-        gif: '',
-        special: "Tower Defense",
-        attack: 12.0,
-        weaponType: "Siege",
-        armorType: "Medium",
-        armor: 3,
-        hp: 300,
-        hpRegen: 2.0,
-        mana: 0.0,
-        manaRegen: 0.0,
-        transportSize: 1,
-      }
-    ],
-    upgradesAvailable: [
-      {
-        name: "Arrow Volley",
-        cost: { gold: 120, wood: 40 },
-        time: 45,
-        description: "Increases attack speed by 30%"
-      },
-      {
-        name: "Reinforced Walls",
-        cost: { gold: 150, stone: 80, chrono: 5 },
-        time: 60,
-        description: "Increases tower HP by 40%"
+        name: "Subir Lotaje",
+        cost: { gold: 300, chrono: 5 },
+        time: 10,
+        description: "Aumenta el tamaño de la posición (lotes) de las operaciones del BOT."
       }
     ]
   }

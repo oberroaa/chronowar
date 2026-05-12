@@ -9,6 +9,7 @@ import {
     type UpgradeInfo,
     raceColors
 } from './types';
+import TradingChart from '../TradingChart';
 
 // Importaciones de estilos
 import {
@@ -402,11 +403,15 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     )}
                 </BuildingTitle>
 
-                <PopulationDisplay $secondaryColor={currentRaceStyle.secondaryColor}>
-                    Población disponible: {availablePopulation}
-                </PopulationDisplay>
+                {building.name !== "Market" && (
+                    <PopulationDisplay $secondaryColor={currentRaceStyle.secondaryColor}>
+                        Población disponible: {availablePopulation}
+                    </PopulationDisplay>
+                )}
 
                 <BuildingDescription>{building.description}</BuildingDescription>
+
+                {building.name === "Market" && <TradingChart />}
 
                 {/* Muestra colas de producción y mejoras */}
                 {(productionQueue.length > 0 || upgradeQueue.length > 0) && (
