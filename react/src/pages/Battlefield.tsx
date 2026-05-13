@@ -354,23 +354,23 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     for (let i = 0; i < 64; i++) {
       const row = Math.floor(i / 8);
       const col = i % 8;
-      
+
       let availableRaces = [...gemRaces];
       let selectedType: Race;
-      
+
       while (true) {
         selectedType = availableRaces[Math.floor(Math.random() * availableRaces.length)];
-        
+
         // Check horizontal match
-        const horizontalMatch = col >= 2 && 
-          newGems[i - 1].type === selectedType && 
+        const horizontalMatch = col >= 2 &&
+          newGems[i - 1].type === selectedType &&
           newGems[i - 2].type === selectedType;
-          
+
         // Check vertical match
-        const verticalMatch = row >= 2 && 
-          newGems[i - 8].type === selectedType && 
+        const verticalMatch = row >= 2 &&
+          newGems[i - 8].type === selectedType &&
           newGems[i - 16].type === selectedType;
-          
+
         if (!horizontalMatch && !verticalMatch) {
           break;
         } else {
@@ -509,7 +509,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       <GlobalStyle />
       <BattlefieldContainer $race={race}>
         <ExitButton onClick={onExit}>SALIR</ExitButton>
-{/* <BattleHUD>TURNO VALDARI</BattleHUD> */}
+        {/* <BattleHUD>TURNO VALDARI</BattleHUD> */}
 
         <BattleContent>
           {/* ENEMIGOS (Arriba) */}

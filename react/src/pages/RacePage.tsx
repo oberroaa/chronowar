@@ -347,43 +347,41 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         gameUnits={gameUnits} // ← Agrega esta línea
       />
 
-      {/* Imagen de fondo de la ciudad */}
-      <BackgroundImage src={currentRaceData.backgroundImage} alt={`${race} city`} />
-
-      {/* Contenedor principal de los cuadros de construcción */}
-      <ContentContainer>
-        {/* Mapea cada square (cuadrado de construcción) de la raza actual */}
-        {currentRaceData.squares.map((square) => (
-          // Cuadrado de construcción individual
-          <ConstructionSquare
-            key={square.name} // Clave única para React
-            style={{ top: square.top, left: square.left }} // Posición en pantalla
-            onClick={() => handleAddConstruction(square.name)} // Al hacer click
-            $race={race} // Propiedad de raza para estilos
-          >
-            {/* Contenedor interno del cuadrado */}
-            <SquareInner>
-              {/* Si el edificio existe en constructions, muestra su imagen */}
-              {constructions[square.name.toLowerCase()] ? (
-                // Imagen del edificio
-                <BuildingImage
-                  src={constructions[square.name.toLowerCase()].image}
-                  alt={`${square.name} building`}
-                  $race={race} // Propiedad de raza para estilos
-                />
-              ) : (
-                // Si no hay edificio, muestra un símbolo según la raza
-                <ArcaneSymbol $race={race}>
-                  {race === 'valdari' && '⚡'} // Valdari: rayo
-                  {race === 'gorkar' && '🔥'}  // Gorkar: fuego
-                  {race === 'sylvaran' && '🌿'} // Sylvaran: planta
-                  {race === 'mortharim' && '💀'} // Mortharim: calavera
-                </ArcaneSymbol>
-              )}
-            </SquareInner>
-          </ConstructionSquare>
-        ))}
-      </ContentContainer>
+      {/* Contenedor principal con el fondo unificado */}
+      {/* Escenario del mapa que mantiene las proporciones */}
+      <MapWrapper>
+        <MapStage>
+          <BackgroundImage src={currentRaceData.backgroundImage} alt={`${race} city`} />
+          <SquaresOverlay>
+            {/* Mapea cada square (cuadrado de construcción) de la raza actual */}
+            {currentRaceData.squares.map((square) => (
+              <ConstructionSquare
+                key={square.name}
+                style={{ top: square.top, left: square.left }}
+                onClick={() => handleAddConstruction(square.name)}
+                $race={race}
+              >
+                <SquareInner>
+                  {constructions[square.name.toLowerCase()] ? (
+                    <BuildingImage
+                      src={constructions[square.name.toLowerCase()].image}
+                      alt={`${square.name} building`}
+                      $race={race}
+                    />
+                  ) : (
+                    <ArcaneSymbol $race={race}>
+                      {race === 'valdari' && '⚡'}
+                      {race === 'gorkar' && '🔥'}
+                      {race === 'sylvaran' && '🌿'}
+                      {race === 'mortharim' && '💀'}
+                    </ArcaneSymbol>
+                  )}
+                </SquareInner>
+              </ConstructionSquare>
+            ))}
+          </SquaresOverlay>
+        </MapStage>
+      </MapWrapper>
 
       {/* Panel de información del edificio seleccionado */}
       <BuildingInfoPanel
@@ -415,35 +413,62 @@ const PageContainer = styled.div`
   overflow: hidden; // Oculta el overflow
 `;
 
-// Imagen de fondo (ciudad)
-const BackgroundImage = styled.img`
-  position: fixed; // Posición fija
-  top: 0; // Desde arriba
-  left: 0; // Desde la izquierda
-  width: 100vw; // Ancho completo
-  height: 100vh; // Alto completo
-  object-fit: fill; // Ajusta la imagen al contenedor
-  z-index: -1; // Detrás de todo
+
+
+const MapWrapper = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
+  background: #000;
 `;
 
-// Contenedor de los cuadros de construcción
-const ContentContainer = styled.div`
-  position: absolute; // Posición absoluta
-  top: 0; // Desde arriba
-  left: 0; // Desde la izquierda
-  width: 100%; // Ancho completo
-  height: 100%; // Alto completo
+const MapStage = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* El contenedor debe medir lo mismo que la imagen */
+  width: fit-content;
+  height: fit-content;
+  max-width: 100vw;
+  max-height: 100vh;
+`;
+
+const BackgroundImage = styled.img`
+  max-width: 100vw;
+  max-height: 100vh;
+  object-fit: contain;
+  display: block;
+`;
+
+const SquaresOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  
+  & > * {
+    pointer-events: auto;
+  }
 `;
 
 // Cuadro individual de construcción
 const ConstructionSquare = styled.div<ConstructionSquareProps>`
   position: absolute; // Posición absoluta
-  width: 15%; // Ancho relativo
-  height: 15%; // Alto relativo
-  transform: rotate(90deg); // Rota 90 grados (efecto diamante)
-  transition: all 0.3s ease; // Transición suave
-  cursor: pointer; // Cursor de pointer
-  z-index: 2; // Por encima del fondo
+  width: 15%; 
+  height: 15%;
+  /* Eliminamos la rotación de aquí para que el contenedor se estire igual que el fondo */
+  transition: all 0.3s ease;
+  cursor: pointer;
+  z-index: 2;
   border-radius: ${props => props.$race === 'sylvaran' ? '50%' : '0'}; // Redondo para Sylvaran
 `;
 
@@ -454,8 +479,9 @@ const SquareInner = styled.div`
   display: flex; // Flexbox para centrar
   align-items: center; // Centrado vertical
   justify-content: center; // Centrado horizontal
-  transform: rotate(-45deg); // Compensa la rotación exterior
-  position: relative; // Posición relativa
+  /* Combinamos las rotaciones aquí: 90 del padre + (-45) del hijo = 45 */
+  transform: rotate(45deg); 
+  position: relative;
 `;
 
 // Símbolo arcano (mostrado cuando no hay edificio)
