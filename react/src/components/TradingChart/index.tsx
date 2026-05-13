@@ -55,7 +55,7 @@ const TradingChart: React.FC = () => {
       const close = open + (Math.random() - 0.5) * 50;
       const high = Math.max(open, close) + Math.random() * 20;
       const low = Math.min(open, close) - Math.random() * 20;
-      
+
       data.push({
         time: currentTime as any,
         open,
@@ -72,10 +72,10 @@ const TradingChart: React.FC = () => {
 
     // Conectar WebSocket al backend (ahora en el puerto 80)
     const socket = io('http://localhost');
-    
+
     socket.on('tradingData', (newData: any) => {
       console.log("Nuevo dato recibido:", newData);
-      
+
       if (newData.isOrder) {
         if (newData.isClose) {
           // SEÑAL DE CIERRE: Quitar la línea
@@ -89,7 +89,7 @@ const TradingChart: React.FC = () => {
           // SEÑAL DE APERTURA: Crear línea horizontal
           const isBuy = newData.type === 'BUY';
           const lineId = newData.ticket ? String(newData.ticket) : newData.type;
-          
+
           // Si ya existía una línea para este tipo/ticket, la quitamos antes
           const oldLine = priceLinesRef.current.get(lineId);
           if (oldLine) candlestickSeries.removePriceLine(oldLine);
