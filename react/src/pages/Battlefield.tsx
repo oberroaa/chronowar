@@ -3,13 +3,6 @@ import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
 import { raceColors } from '../types/raceColors';
 import { savedFormations, buildingsData } from '../types/jsonResponse';
 
-/* 
- * BATTLEFIELD UI - VERTICAL MATCH-3 REDESIGN
- * Focus: Top (Enemies), Center (Grid), Bottom (Heroes)
- * 5 units per side, 4 race-based gemstones
- */
-
-// Types
 type Race = 'valdari' | 'gorkar' | 'sylvaran' | 'mortharim';
 
 interface Gem {
@@ -24,7 +17,6 @@ interface BattlefieldProps {
   onExit: () => void;
 }
 
-// Map backgrounds correctly based on game assets
 const raceBackgrounds: Record<string, string> = {
   valdari: '/images/battlefields/download.png',
   gorkar: '/images/battlefields/download.png',
@@ -32,10 +24,10 @@ const raceBackgrounds: Record<string, string> = {
   mortharim: '/images/battlefields/download.png'
 };
 
-// Keyframes
+// --- ANIMATION KEYFRAMES ---
 const gemPulse = keyframes`
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.05); filter: brightness(1.2); }
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
+  50% { filter: brightness(1.3) drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
 `;
 
 const slideDown = keyframes`
@@ -53,19 +45,20 @@ const gemFall = keyframes`
   to { transform: translateY(0); opacity: 1; }
 `;
 
+// --- GLOBAL STYLES ---
 const GlobalStyle = createGlobalStyle`
-  * { box-sizing: border-box; } /* <--- Esto evita que el borde mueva las cosas */
+  * { box-sizing: border-box; }
   html, body, #root {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #000;
+    background-color: #050510;
   }
 `;
 
-// Styled Components
+// --- STYLED COMPONENTS ---
 const BattlefieldContainer = styled.div<{ $race: Race }>`
   width: 100vw;
   height: 100vh;
@@ -76,48 +69,65 @@ const BattlefieldContainer = styled.div<{ $race: Race }>`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
   padding: 0;
   margin: 0;
   overflow: hidden;
   position: relative;
-  box-sizing: border-box;
   
   &::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(circle, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%);
-    backdrop-filter: blur(1px);
+    /* Viñeta oscura para enfocar la acción en el centro */
+    background: radial-gradient(circle at center, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.85) 100%);
+    backdrop-filter: blur(2px);
     z-index: 0;
   }
+`;
+
+const BattleContent = styled.div`
+  width: 100%;
+  max-width: 500px; /* Tamaño ideal para un match 3 vertical */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* Más aire entre el tablero y las cartas */
+  z-index: 10;
+  position: relative;
 `;
 
 const UnitRow = styled.div<{ $side: 'top' | 'bottom' }>`
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 0 5px;
+  padding: 0 10px;
   z-index: 10;
-  animation: ${props => props.$side === 'top' ? slideDown : slideUp} 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: ${props => props.$side === 'top' ? slideDown : slideUp} 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.3);
 `;
 
 const UnitCard = styled.div<{ $race: Race; $isEnemy: boolean; $isHero?: boolean }>`
-  width: ${props => props.$isHero ? '19.5%' : '18.5%'};
-  aspect-ratio: 4/5.5;
-  background: ${props => raceColors[props.$race].background};
-  border: ${props => props.$isHero ? '2px solid #ffd700' : `1px solid ${raceColors[props.$race].accent}`};
+  width: ${props => props.$isHero ? '19%' : '18%'};
+  aspect-ratio: 3.5/5;
+  background: #111;
+  /* Marco dorado para héroes, metálico oscuro para el resto */
+  border: ${props => props.$isHero ? '2px solid #ffd700' : '2px solid #4a4a5a'};
   border-radius: 8px;
   position: relative;
   overflow: visible;
-  box-shadow: ${props => props.$isHero ? '0 0 20px rgba(255, 215, 0, 0.4)' : '0 5px 15px rgba(0,0,0,0.7)'};
+  /* Sombra agresiva para que resalte del tablero */
+  box-shadow: ${props => props.$isHero
+    ? '0 8px 25px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.2)'
+    : '0 8px 20px rgba(0,0,0,0.8)'};
   transition: all 0.2s ease-out;
   cursor: pointer;
   z-index: ${props => props.$isHero ? 2 : 1};
+  transform: ${props => props.$isHero ? 'scale(1.05)' : 'scale(1)'}; /* Héroe un poco más grande */
 
   &:hover {
     border-color: #fff;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 20px ${props => raceColors[props.$race].accent};
+    transform: translateY(-5px) scale(${props => props.$isHero ? '1.1' : '1.05'});
+    box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 15px ${props => raceColors[props.$race].accent};
   }
 `;
 
@@ -131,172 +141,206 @@ const UnitImageContainer = styled.div`
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Imagen completa que llena el cuadro */
+    object-fit: cover;
     display: block;
+  }
+
+  /* Efecto Viñeta Interna (oscurece bordes de la foto) */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
+    pointer-events: none;
   }
 `;
 
-const ManaBarTop = styled.div<{ $color: string; $width: number }>`
+const StatusBar = styled.div<{ $color: string; $width: number; $position: 'top' | 'bottom' }>`
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: rgba(0,0,0,0.5);
+  ${props => props.$position === 'top' ? 'top: -6px;' : 'bottom: -6px;'}
+  left: 5%;
+  width: 90%;
+  height: 6px;
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 3px;
   z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.8);
   
   &::after {
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
     width: ${props => props.$width}%;
-    background: ${props => props.$color};
+    background: linear-gradient(90deg, ${props => props.$color}, #fff); /* Destello en la barra */
     box-shadow: 0 0 5px ${props => props.$color};
+    border-radius: 2px;
   }
 `;
 
 const HeroLabel = styled.div`
   position: absolute;
-  top: -12px;
+  top: -16px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(to bottom, #ffd700, #b8860b);
-  color: #000;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  background: linear-gradient(to bottom, #fff8cc, #ffd700, #b8860b);
+  border: 1px solid #fff;
+  color: #331100;
+  padding: 2px 14px;
+  border-radius: 12px;
+  font-size: 0.7rem;
   font-weight: 900;
   text-transform: uppercase;
   z-index: 20;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
   white-space: nowrap;
 `;
 
+// --- HUD STYLES ---
 const BattleHUD = styled.div`
   position: absolute;
-  top: 15px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  padding: 8px 30px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 215, 0, 0.5);
+  background: linear-gradient(180deg, rgba(20,20,30,0.9), rgba(0,0,0,0.9));
+  padding: 10px 40px;
+  border-radius: 4px;
+  border-top: 2px solid #ffd700;
+  border-bottom: 2px solid #ffd700;
+  border-left: 1px solid rgba(255, 215, 0, 0.5);
+  border-right: 1px solid rgba(255, 215, 0, 0.5);
   color: #ffd700;
   font-weight: 900;
+  font-size: 1.1rem;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  backdrop-filter: blur(5px);
+  letter-spacing: 3px;
   z-index: 100;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,215,0,0.1);
+  text-shadow: 0 2px 4px rgba(0,0,0,1);
 `;
 
 const ExitButton = styled.button`
   position: absolute;
-  top: 15px;
-  left: 15px;
-  background: rgba(0,0,0,0.7);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 8px 15px;
-  border-radius: 8px;
+  top: 20px;
+  left: 20px;
+  background: linear-gradient(to bottom, #444, #111);
+  color: #ddd;
+  border: 2px solid #555;
+  padding: 8px 20px;
+  border-radius: 4px;
   cursor: pointer;
   z-index: 110;
   font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+  transition: all 0.2s;
   
   &:hover {
-    background: rgba(255,0,0,0.4);
-    border-color: #ff4444;
+    background: linear-gradient(to bottom, #ff5555, #aa0000);
+    border-color: #ffaaaa;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255,0,0,0.5);
   }
 `;
 
-const BattleContent = styled.div`
-  width: min(90vw, 45vh);
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  z-index: 10;
-  position: relative;
-`;
-
+// --- BOARD STYLES ---
 const BoardSection = styled.div`
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 0;
+  padding: 0 10px;
 `;
 
 const BoardOuterFrame = styled.div`
   width: 100%;
-  aspect-ratio: 1 / 1;
-  padding: 8px;
-  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.3));
+  aspect-ratio: 1 / 1.05; /* Un poco mas alto que ancho para que las gemas tengan espacio */
+  padding: 10px;
+  /* Fondo estilo tablero mágico / piedra tallada */
+  background: rgba(10, 15, 25, 0.85); 
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 0 30px rgba(0,0,0,0.8);
-  backdrop-filter: blur(15px);
-  display: flex;
+  border: 3px solid #3a3a4a;
+  border-top-color: #5a5a6a;
+  border-bottom-color: #1a1a2a;
+  box-shadow: 
+    0 15px 35px rgba(0,0,0,0.9), 
+    inset 0 0 40px rgba(0,0,0,1);
+  backdrop-filter: blur(10px);
 `;
 
 const GemGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
-  gap: 4px;
+  gap: 5px; /* Más espacio entre gemas */
   width: 100%;
   height: 100%;
+  padding: 4px;
+  background: rgba(0,0,0,0.4); /* Foso oscuro para las gemas */
+  border-radius: 8px;
+  box-shadow: inset 0 5px 15px rgba(0,0,0,0.8);
 `;
 
 const GemItem = styled.div<{ $race: Race; $isSelected?: boolean; $isMatched?: boolean; $isFalling?: boolean }>`
   width: 100%;
   height: 100%;
-  background: ${props => raceColors[props.$race].background};
-  border: 1px solid ${props => raceColors[props.$race].accent}88;
-  border-radius: 4px;
+  border-radius: 50%; /* Convertimos en orbe circular */
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: clamp(0.8rem, 2vw, 1.4rem);
+  font-size: clamp(1rem, 2.5vw, 1.8rem);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
-  box-shadow: inset 0 0 10px ${props => raceColors[props.$race].accent}22,
-              0 2px 5px rgba(0,0,0,0.3);
-  animation: ${gemPulse} 4s infinite ease-in-out;
   
-  ${props => props.$isSelected && `
-    outline: 3px solid #fff;
-    outline-offset: -3px;
-    box-shadow: 0 0 20px #fff;
+  /* ESTILO 3D (Reflejo superior y sombra inferior) */
+  background: radial-gradient(
+    circle at 35% 30%, 
+    rgba(255, 255, 255, 0.4) 0%, 
+    ${props => raceColors[props.$race].background || '#000'} 40%, 
+    #000 100%
+  );
+  box-shadow: 
+    inset 0 -4px 6px rgba(0,0,0,0.7), /* Sombra abajo */
+    inset 0 2px 4px rgba(255,255,255,0.4), /* Luz arriba */
+    0 3px 5px rgba(0,0,0,0.5); /* Sombra de caída */
+  
+  border: 1px solid ${props => raceColors[props.$race].accent}66;
+  
+  animation: ${gemPulse} 3s infinite alternate ease-in-out;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  ${props => props.$isSelected && css`
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+    box-shadow: 0 0 20px #fff, inset 0 0 10px #fff;
     z-index: 5;
-    transform: scale(1.1);
+    transform: scale(1.15);
   `}
 
-  ${props => props.$isMatched && `
+  ${props => props.$isMatched && css`
     opacity: 0;
-    transform: scale(0);
-    transition: all 0.2s ease-out;
+    transform: scale(0) rotate(180deg);
+    transition: all 0.3s ease-in;
   `}
 
   ${props => props.$isFalling && css`
-    animation: ${gemFall} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation: ${gemFall} 0.4s cubic-bezier(0.175, 0.885, 0.32, 1) forwards;
   `}
 
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
   &:hover {
-    transform: scale(1.1) rotate(3deg);
-    border-color: #fff;
-    box-shadow: 0 0 25px ${props => raceColors[props.$race].accent};
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 
+      0 5px 15px ${props => raceColors[props.$race].accent},
+      inset 0 -4px 6px rgba(0,0,0,0.5), 
+      inset 0 4px 8px rgba(255,255,255,0.6);
   }
 
   &::before {
     content: '${props => raceColors[props.$race].icon}';
-    filter: drop-shadow(0 0 5px ${props => raceColors[props.$race].accent});
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); /* Mejora la lectura del icono */
   }
 `;
 
+// --- MAIN COMPONENT ---
 const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) => {
   const [gems, setGems] = useState<Gem[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -316,62 +360,45 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
 
   const checkMatches = (currentGems: Gem[]) => {
     const matches = new Set<number>();
-
-    // Horizontal
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 6; col++) {
         const idx = row * 8 + col;
         const type = currentGems[idx]?.type;
         if (type && currentGems[idx + 1]?.type === type && currentGems[idx + 2]?.type === type) {
-          matches.add(idx);
-          matches.add(idx + 1);
-          matches.add(idx + 2);
+          matches.add(idx); matches.add(idx + 1); matches.add(idx + 2);
         }
       }
     }
-
-    // Vertical
     for (let col = 0; col < 8; col++) {
       for (let row = 0; row < 6; row++) {
         const idx = row * 8 + col;
         const type = currentGems[idx]?.type;
         if (type && currentGems[idx + 8]?.type === type && currentGems[idx + 16]?.type === type) {
-          matches.add(idx);
-          matches.add(idx + 8);
-          matches.add(idx + 16);
+          matches.add(idx); matches.add(idx + 8); matches.add(idx + 16);
         }
       }
     }
-
     return Array.from(matches);
   };
 
   const handleGemClick = async (index: number) => {
     if (isProcessing) return;
-
     if (selectedIndex === null) {
       setSelectedIndex(index);
     } else {
-      const isAdjacent =
-        Math.abs(Math.floor(index / 8) - Math.floor(selectedIndex / 8)) +
-        Math.abs((index % 8) - (selectedIndex % 8)) === 1;
-
+      const isAdjacent = Math.abs(Math.floor(index / 8) - Math.floor(selectedIndex / 8)) + Math.abs((index % 8) - (selectedIndex % 8)) === 1;
       if (isAdjacent) {
         setIsProcessing(true);
         const newGems = [...gems];
         [newGems[index], newGems[selectedIndex]] = [newGems[selectedIndex], newGems[index]];
-
         setGems(newGems);
         setSelectedIndex(null);
-
-        // Wait for swap animation
         await new Promise(r => setTimeout(r, 300));
 
         const matches = checkMatches(newGems);
         if (matches.length > 0) {
           processMatches(newGems);
         } else {
-          // Swap back
           const revertedGems = [...gems];
           setGems(revertedGems);
           setIsProcessing(false);
@@ -392,15 +419,10 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         hasMatches = false;
         break;
       }
-
-      // Mark matched gems
-      workingGems = workingGems.map((g, i) =>
-        matches.includes(i) ? { ...g, isMatched: true } : g
-      );
+      workingGems = workingGems.map((g, i) => matches.includes(i) ? { ...g, isMatched: true } : g);
       setGems(workingGems);
       await new Promise(r => setTimeout(r, 400));
 
-      // Remove and fall
       for (let col = 0; col < 8; col++) {
         let emptySpots = 0;
         for (let row = 7; row >= 0; row--) {
@@ -409,11 +431,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
             emptySpots++;
           } else if (emptySpots > 0) {
             workingGems[(row + emptySpots) * 8 + col] = { ...workingGems[idx], isFalling: true };
-            workingGems[idx] = { id: '', type: 'valdari', isMatched: true }; // Placeholder
+            workingGems[idx] = { id: '', type: 'valdari', isMatched: true };
           }
         }
-
-        // Fill top
         for (let row = 0; row < emptySpots; row++) {
           workingGems[row * 8 + col] = {
             id: `gem-${Date.now()}-${row}-${col}`,
@@ -425,13 +445,10 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
 
       workingGems = workingGems.map(g => ({ ...g, isMatched: false }));
       setGems(workingGems);
-      await new Promise(r => setTimeout(r, 500)); // Time for fall animation
-
-      // Reset falling flag
+      await new Promise(r => setTimeout(r, 400));
       workingGems = workingGems.map(g => ({ ...g, isFalling: false }));
       setGems(workingGems);
     }
-
     setIsProcessing(false);
   };
 
@@ -444,20 +461,13 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
   ];
 
   const heroUnits = useMemo(() => {
-    // Extraer todas las unidades disponibles para hacer la búsqueda por ID
     const allUnits = Object.values(buildingsData).flatMap(b => b.unitsProduced);
-
-    // Mapear los IDs de la formación principal a los datos reales de la unidad
     const units = savedFormations.principal.units.slice(0, 5).map(slot => {
       if (!slot) return null;
       const unit = allUnits.find(u => u.id === slot.id);
       return unit ? { name: unit.name, img: unit.image } : null;
     });
-
-    // Asegurarse de tener siempre 5 espacios
-    while (units.length < 5) {
-      units.push(null);
-    }
+    while (units.length < 5) units.push(null);
     return units;
   }, []);
 
@@ -469,29 +479,24 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         <BattleHUD>TURNO VALDARI</BattleHUD>
 
         <BattleContent>
-          {/* Top Section: Enemy Lineup (5 Units) */}
+          {/* ENEMIGOS (Arriba) */}
           <UnitRow $side="top">
             {enemyUnits.map((unit, i) => {
-              const unitId = `enemy-${i}`;
-              const isHero = i === 2; // Unidad central es Héroe
+              const isHero = i === 2;
               return (
-                <UnitCard
-                  key={unitId}
-                  $race="gorkar"
-                  $isEnemy={true}
-                  $isHero={isHero}
-                >
-                  {isHero && <HeroLabel>HERO</HeroLabel>}
-                  <ManaBarTop $color="#ef4444" $width={100} />
+                <UnitCard key={`enemy-${i}`} $race="gorkar" $isEnemy={true} $isHero={isHero}>
+                  {isHero && <HeroLabel>BOSS</HeroLabel>}
+                  <StatusBar $position="top" $color="#ff3333" $width={100} /> {/* Vida Rojoy */}
                   <UnitImageContainer>
                     <img src={unit.img} alt={unit.name} />
                   </UnitImageContainer>
+                  <StatusBar $position="bottom" $color="#aa00ff" $width={100} /> {/* Rage/Mana */}
                 </UnitCard>
               );
             })}
           </UnitRow>
 
-          {/* Middle Section: Match-3 Gem Board */}
+          {/* TABLERO (Centro) */}
           <BoardSection>
             <BoardOuterFrame>
               <GemGrid>
@@ -509,28 +514,23 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
             </BoardOuterFrame>
           </BoardSection>
 
-          {/* Bottom Section: Hero Lineup (5 Units) */}
+          {/* TUS HÉROES (Abajo) */}
           <UnitRow $side="bottom">
             {heroUnits.map((unit, i) => {
-              const unitId = `hero-${i}`;
               const isHero = i === 2;
               return (
-                <UnitCard
-                  key={unitId}
-                  $race={race}
-                  $isEnemy={false}
-                  $isHero={isHero}
-                >
+                <UnitCard key={`hero-${i}`} $race={race} $isEnemy={false} $isHero={isHero}>
                   {isHero && <HeroLabel>HEROE</HeroLabel>}
                   {unit ? (
                     <>
-                      <ManaBarTop $color="#3b82f6" $width={100} />
+                      <StatusBar $position="top" $color="#33ff33" $width={100} /> {/* Vida Verde */}
                       <UnitImageContainer>
                         <img src={unit.img} alt={unit.name} />
                       </UnitImageContainer>
+                      <StatusBar $position="bottom" $color="#3399ff" $width={100} /> {/* Mana Azul */}
                     </>
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.2 }}>
                       Vacío
                     </div>
                   )}
@@ -545,4 +545,3 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
 };
 
 export default Battlefield;
-
