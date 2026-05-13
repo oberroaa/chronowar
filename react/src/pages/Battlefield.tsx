@@ -198,27 +198,29 @@ const HeroLabel = styled.div`
 `;
 
 // --- HUD STYLES ---
-const BattleHUD = styled.div`
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(20,20,30,0.9), rgba(0,0,0,0.9));
-  padding: 10px 40px;
-  border-radius: 4px;
-  border-top: 2px solid #ffd700;
-  border-bottom: 2px solid #ffd700;
-  border-left: 1px solid rgba(255, 215, 0, 0.5);
-  border-right: 1px solid rgba(255, 215, 0, 0.5);
-  color: #ffd700;
-  font-weight: 900;
-  font-size: 1.1rem;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  z-index: 100;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,215,0,0.1);
-  text-shadow: 0 2px 4px rgba(0,0,0,1);
-`;
+/*
+201: const BattleHUD = styled.div`
+202:   position: absolute;
+203:   top: 20px;
+204:   left: 50%;
+205:   transform: translateX(-50%);
+206:   background: linear-gradient(180deg, rgba(20,20,30,0.9), rgba(0,0,0,0.9));
+207:   padding: 10px 40px;
+208:   border-radius: 4px;
+209:   border-top: 2px solid #ffd700;
+210:   border-bottom: 2px solid #ffd700;
+211:   border-left: 1px solid rgba(255, 215, 0, 0.5);
+212:   border-right: 1px solid rgba(255, 215, 0, 0.5);
+213:   color: #ffd700;
+214:   font-weight: 900;
+215:   font-size: 1.1rem;
+216:   text-transform: uppercase;
+217:   letter-spacing: 3px;
+218:   z-index: 100;
+219:   box-shadow: 0 10px 20px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,215,0,0.1);
+220:   text-shadow: 0 2px 4px rgba(0,0,0,1);
+221: `;
+*/
 
 const ExitButton = styled.button`
   position: absolute;

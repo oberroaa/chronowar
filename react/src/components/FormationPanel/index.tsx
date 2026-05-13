@@ -46,7 +46,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
   const raceData = {
     unit: gameUnits.filter(u => u.unitType === 'unit'),
     heroe: gameUnits.filter(u => u.unitType === 'heroe'),
-    comun: gameUnits.filter(u => u.unitType === 'comun'),
+    // comun: gameUnits.filter(u => u.unitType === 'comun'),
     poblation: gameUnits.filter(u => u.unitType === 'poblation')
   };
 
@@ -276,7 +276,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
               ) : (
                 <>
                   <Subtitle $race={race}>Unidades Disponibles</Subtitle>
-                  {raceData.unit.map(unit => {
+                  {[...raceData.unit, ...raceData.poblation].map(unit => {
                     const available = getAvailableCount(unit.id);
                     const total = unit.available || 0;
 

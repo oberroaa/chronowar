@@ -95,7 +95,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         unitType: "poblation",
         cost: { gold: 50, food: 1 },
         buildTime: 20,
-        image: '/images/Valdari/comun/Emisario.png',
+        image: '/images/Valdari/poblation/Emisario.png',
         gif: '',
         special: "Diplomacy",
         attack: 2.0,
