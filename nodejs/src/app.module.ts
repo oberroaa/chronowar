@@ -8,6 +8,7 @@ import { RaceModule } from './race/race.module';
 import { HeroModule } from './hero/hero.module';
 import { BuildingModule } from './building/building.module';
 import { UnitModule } from './unit/unit.module';
+import { TradingModule } from './trading/trading.module';
 
 import { Race } from './race/race.entity';
 import { Hero } from './hero/hero.entity';
@@ -23,6 +24,7 @@ import { Unit } from './unit/unit.entity';
     HeroModule, 
     BuildingModule, 
     UnitModule,
+    TradingModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
