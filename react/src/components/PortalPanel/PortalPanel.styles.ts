@@ -1,8 +1,8 @@
 import styled, { keyframes } from 'styled-components';
 import type { RaceType } from '../../types/gameData';
 import { raceColors } from '../../types/raceColors';
-import type { 
-  StyledRaceProps, 
+import type {
+  StyledRaceProps,
   StyledOpenProps,
   StyledActiveProps,
   StyledActionProps,
@@ -253,14 +253,14 @@ export const RiskBadge = styled.span<{ $level: 'low' | 'medium' | 'high' }>`
   border-radius: 10px;
   text-transform: uppercase;
   font-weight: 900;
-  background: ${({ $level }) => 
-    $level === 'high' ? 'rgba(255, 50, 50, 0.2)' : 
-    $level === 'medium' ? 'rgba(255, 200, 50, 0.2)' : 
-    'rgba(50, 255, 50, 0.2)'};
-  color: ${({ $level }) => 
-    $level === 'high' ? '#ff4d4d' : 
-    $level === 'medium' ? '#ffd700' : 
-    '#4ade80'};
+  background: ${({ $level }) =>
+    $level === 'high' ? 'rgba(255, 50, 50, 0.2)' :
+      $level === 'medium' ? 'rgba(255, 200, 50, 0.2)' :
+        'rgba(50, 255, 50, 0.2)'};
+  color: ${({ $level }) =>
+    $level === 'high' ? '#ff4d4d' :
+      $level === 'medium' ? '#ffd700' :
+        '#4ade80'};
   border: 1px solid currentColor;
 `;
 
@@ -311,15 +311,15 @@ export const Tabs = styled.div<StyledRaceProps>`
 export const TabButton = styled.button<StyledActiveProps & StyledRaceProps>`
   flex: 1;
   padding: 10px;
-  background: ${({ $active, $race }) => $active ? 
-    `rgba(${hexToRgb(raceColors[$race].color)}, 0.3)` : 
+  background: ${({ $active, $race }) => $active ?
+    `rgba(${hexToRgb(raceColors[$race].color)}, 0.3)` :
     'transparent'};
-  color: ${({ $active, $race }) => $active ? 
-    raceColors[$race].color : 
+  color: ${({ $active, $race }) => $active ?
+    raceColors[$race].color :
     raceColors[$race].textColor || '#ccc'};
   border: none;
-  border-bottom: ${({ $active, $race }) => $active ? 
-    `2px solid ${raceColors[$race].color}` : 
+  border-bottom: ${({ $active, $race }) => $active ?
+    `2px solid ${raceColors[$race].color}` :
     'none'};
   cursor: pointer;
   font-weight: ${({ $active }) => $active ? 'bold' : 'normal'};
@@ -453,7 +453,7 @@ export const TravelsCounter = styled.div<StyledRaceProps & StyledLowProps>`
   padding: 10px 25px;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 30px;
-  border: 1px solid ${({ $isLow, $race }) => 
+  border: 1px solid ${({ $isLow, $race }) =>
     $isLow ? raceColors[$race as keyof typeof raceColors].secondaryColor : `rgba(${hexToRgb(raceColors[$race as keyof typeof raceColors].color)}, 0.3)`};
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
 `;
