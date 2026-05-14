@@ -45,6 +45,25 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
     }
   };
 
+  // Helper para generar datos visuales aleatorios (pero consistentes)
+  const getTargetMeta = (id: number) => {
+    const risks: ('low' | 'medium' | 'high')[] = ['low', 'medium', 'high'];
+    const loots = [
+      { icon: '💰', label: 'Oro' },
+      { icon: '🪵', label: 'Madera' },
+      { icon: '🪨', label: 'Piedra' },
+      { icon: '🍖', label: 'Comida' },
+      { icon: '🎁', label: 'Items' }
+    ];
+    
+    const seed = (id * 12345) % 1000;
+    const risk = risks[seed % 3];
+    const lootCount = (seed % 2) + 2;
+    const selectedLoot = loots.slice(seed % 2, (seed % 2) + lootCount);
+    
+    return { risk, selectedLoot };
+  };
+
   // Verificar si hay viajes disponibles
   const hasTravelsAvailable = travelCount > 0;
 
@@ -135,138 +154,106 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
           ×
         </PanelStyles.CloseButton>
         
-        <PanelStyles.PanelTitle $race={race}>
-          {currentRace.icon} Portal {currentRace.icon}
-        </PanelStyles.PanelTitle>
-        
-        {/* Sección de viajes disponibles */}
-        <PanelStyles.TravelsSection $race={race}>
-          <PanelStyles.TravelsTitle $race={race}>Viajes Disponibles:</PanelStyles.TravelsTitle>
-          <PanelStyles.TravelsCounter $race={race} $isLow={travelCount <= 2}>
-            <PanelStyles.TravelsNumber $isCritical={travelCount === 0}>
-              {travelCount} / {maxTravels}
-            </PanelStyles.TravelsNumber>
-          </PanelStyles.TravelsCounter>
-          {travelCount === 0 && (
-            <PanelStyles.NoTravelsWarning $race={race}>
-              No tienes viajes disponibles. Espera a que se recarguen.
-            </PanelStyles.NoTravelsWarning>
-          )}
-        </PanelStyles.TravelsSection>
-        
-        {/* Tabs para cambiar entre Players y Locations */}
-        <PanelStyles.Tabs $race={race}>
-          <PanelStyles.TabButton 
-            $active={activeTab === 'players'} 
-            onClick={() => onTabChange('players')}
-            $race={race}
-            disabled={countdown !== null || !hasTravelsAvailable}
-          >
-            Players
-          </PanelStyles.TabButton>
-          <PanelStyles.TabButton 
-            $active={activeTab === 'system'} 
-            onClick={() => onTabChange('system')}
-            $race={race}
-            disabled={countdown !== null || !hasTravelsAvailable}
-          >
-            Locations
-          </PanelStyles.TabButton>
-        </PanelStyles.Tabs>
-        
-        {/* Mostrar contador cuando hay una acción en progreso */}
-        {countdown !== null && (
-          <PanelStyles.CountdownContainer $race={race}>
-            <PanelStyles.CountdownText>
-              {activeTab === 'players' ? 'Atacando...' : 'Recolectando...'} 
-              <PanelStyles.CountdownValue>{countdown}s</PanelStyles.CountdownValue>
-            </PanelStyles.CountdownText>
-          </PanelStyles.CountdownContainer>
-        )}
-        
-        {/* Tabla de Players */}
-        {activeTab === 'players' ? (
-          <PanelStyles.Table>
-            <thead>
-              <tr>
-                <PanelStyles.TableHeader $race={race}>Player</PanelStyles.TableHeader>
-                <PanelStyles.TableHeader $race={race}>Race</PanelStyles.TableHeader>
-                <PanelStyles.TableHeader $race={race}>Action</PanelStyles.TableHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {playersData.map((player) => {
-                const playerRaceData = raceColors[player.race];
-                const isDisabled = countdown !== null || !hasTravelsAvailable;
-                
-                return (
-                  <PanelStyles.TableRow key={player.id} $race={race}>
-                    <PanelStyles.TableCell>{player.name}</PanelStyles.TableCell>
-                    <PanelStyles.TableCell>
-                      <PanelStyles.RaceBadge $race={player.race}>
-                        {playerRaceData.icon} 
-                      </PanelStyles.RaceBadge>
-                    </PanelStyles.TableCell>
-                    <PanelStyles.TableCell>
-                      <PanelStyles.ActionButton 
-                        $action="attack" 
-                        $race={race}
-                        onClick={() => handleAction(player.id)}
-                        disabled={isDisabled}
-                        $isDisabled={isDisabled}
-                      >
-                        {currentTarget === player.id && countdown !== null 
-                          ? `Atacando... (${countdown}s)` 
-                          : hasTravelsAvailable ? 'Attack' : 'Sin Viajes'}
-                      </PanelStyles.ActionButton>
-                    </PanelStyles.TableCell>
-                  </PanelStyles.TableRow>
-                );
-              })}
-            </tbody>
-          </PanelStyles.Table>
-        ) : (
-          // Tabla de Locations (System Players)
-          <PanelStyles.Table>
-            <thead>
-              <tr>
-                <PanelStyles.TableHeader $race={race}>Location</PanelStyles.TableHeader>
-                <PanelStyles.TableHeader $race={race}>Race</PanelStyles.TableHeader>
-                <PanelStyles.TableHeader $race={race}>Action</PanelStyles.TableHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {systemPlayersData.map((location) => {
-                const locationRaceData = raceColors[location.race];
-                const isDisabled = countdown !== null || !hasTravelsAvailable;
-                
-                return (
-                  <PanelStyles.TableRow key={location.id} $race={race}>
-                    <PanelStyles.TableCell>{location.name}</PanelStyles.TableCell>
-                    <PanelStyles.TableCell>
-                      <PanelStyles.RaceBadge $race={location.race}>
-                        {locationRaceData.icon} 
-                      </PanelStyles.RaceBadge>
-                    </PanelStyles.TableCell>
-                    <PanelStyles.TableCell>
-                      <PanelStyles.ActionButton 
-                        $action="gather" 
-                        $race={race}
-                        onClick={() => handleAction(location.id)}
-                        disabled={isDisabled}
-                        $isDisabled={isDisabled}
-                      >
-                        {currentTarget === location.id && countdown !== null 
-                          ? `Recolectando... (${countdown}s)` 
-                          : hasTravelsAvailable ? 'Gather' : 'Sin Viajes'}
-                      </PanelStyles.ActionButton>
-                    </PanelStyles.TableCell>
-                  </PanelStyles.TableRow>
-                );
-              })}
-            </tbody>
-          </PanelStyles.Table>
-        )}
+        <PanelStyles.PortalHeader $race={race}>
+          <PanelStyles.PortalVortex $race={race} />
+          <PanelStyles.PortalCore $race={race}>
+            {currentRace.icon}
+          </PanelStyles.PortalCore>
+          <PanelStyles.PanelTitle $race={race} style={{ marginTop: '20px', marginBottom: '0' }}>
+            PORTAL DIMENSIONAL
+          </PanelStyles.PanelTitle>
+        </PanelStyles.PortalHeader>
+
+        <PanelStyles.PanelContent>
+          {/* Sección de viajes disponibles */}
+          <PanelStyles.TravelsSection $race={race}>
+            <PanelStyles.TravelsTitle $race={race}>Cargas de Energía:</PanelStyles.TravelsTitle>
+            <PanelStyles.TravelsCounter $race={race} $isLow={travelCount <= 2}>
+              <PanelStyles.TravelsNumber $isCritical={travelCount === 0}>
+                {travelCount} / {maxTravels}
+              </PanelStyles.TravelsNumber>
+            </PanelStyles.TravelsCounter>
+            {travelCount === 0 && (
+              <PanelStyles.NoTravelsWarning $race={race}>
+                Energía agotada. Esperando estabilización...
+              </PanelStyles.NoTravelsWarning>
+            )}
+          </PanelStyles.TravelsSection>
+          
+          {/* Tabs para cambiar entre Players y Locations */}
+          <PanelStyles.Tabs $race={race}>
+            <PanelStyles.TabButton 
+              $active={activeTab === 'players'} 
+              onClick={() => onTabChange('players')}
+              $race={race}
+              disabled={countdown !== null || !hasTravelsAvailable}
+            >
+              Jugadores
+            </PanelStyles.TabButton>
+            <PanelStyles.TabButton 
+              $active={activeTab === 'system'} 
+              onClick={() => onTabChange('system')}
+              $race={race}
+              disabled={countdown !== null || !hasTravelsAvailable}
+            >
+              Ubicaciones
+            </PanelStyles.TabButton>
+          </PanelStyles.Tabs>
+          
+          <PanelStyles.TargetGrid>
+            {(activeTab === 'players' ? playersData : systemPlayersData).map((target) => {
+              const meta = getTargetMeta(target.id);
+              const targetRace = (target as any).race ? raceColors[(target as any).race as keyof typeof raceColors] : currentRace;
+              const isCurrent = currentTarget === target.id && countdown !== null;
+              const isDisabled = (countdown !== null && !isCurrent) || !hasTravelsAvailable;
+              const progress = isCurrent && countdown ? ((20 - countdown) / 20) * 100 : 0;
+
+              return (
+                <PanelStyles.TargetCard key={target.id} $race={race}>
+                  <PanelStyles.CardMainRow>
+                    <PanelStyles.TargetAvatar $race={(target as any).race || race}>
+                      {targetRace.icon}
+                    </PanelStyles.TargetAvatar>
+
+                    <PanelStyles.TargetInfo>
+                      <PanelStyles.TargetName>{target.name}</PanelStyles.TargetName>
+                      <PanelStyles.RiskBadge $level={meta.risk}>
+                        {meta.risk}
+                      </PanelStyles.RiskBadge>
+                    </PanelStyles.TargetInfo>
+
+                    <PanelStyles.IconButton 
+                      $action={activeTab === 'players' ? 'attack' : 'gather'} 
+                      $race={race}
+                      onClick={() => handleAction(target.id)}
+                      disabled={isDisabled}
+                      $isDisabled={isDisabled}
+                      title={activeTab === 'players' ? 'Atacar' : 'Recolectar'}
+                    >
+                      {isCurrent 
+                        ? '⏳' 
+                        : activeTab === 'players' ? '⚔️' : '⛏️'}
+                    </PanelStyles.IconButton>
+                  </PanelStyles.CardMainRow>
+
+                  <PanelStyles.LootPreview>
+                    {meta.selectedLoot.map((loot, idx) => (
+                      <PanelStyles.LootItem key={idx} title={loot.label}>
+                        {loot.icon}
+                      </PanelStyles.LootItem>
+                    ))}
+                  </PanelStyles.LootPreview>
+
+                  {isCurrent && (
+                    <PanelStyles.ProgressWrapper $race={race}>
+                      <PanelStyles.ProgressBar $progress={progress} $race={race} />
+                    </PanelStyles.ProgressWrapper>
+                  )}
+                </PanelStyles.TargetCard>
+              );
+            })}
+          </PanelStyles.TargetGrid>
+        </PanelStyles.PanelContent>
       </PanelStyles.RightPanelContainer>
     </>
   );
