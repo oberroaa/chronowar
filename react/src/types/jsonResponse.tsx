@@ -67,6 +67,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+        carryCapacity: 5,
       },
       {
         id: 2,        
@@ -87,6 +88,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+        carryCapacity: 5,
       },
       {
         id: 16,        
@@ -107,6 +109,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+        carryCapacity: 8,
       }
     ],
     upgradesAvailable: [
@@ -154,6 +157,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+        carryCapacity: 30,
       }
     ],
     upgradesAvailable: [
@@ -195,6 +199,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+        carryCapacity: 10,
       },
       {
         id: 5,          
@@ -215,6 +220,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+        carryCapacity: 15,
       },
       {
         id: 6,        
@@ -235,6 +241,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 2,
+        carryCapacity: 8,
       }
     ],
     upgradesAvailable: [
@@ -282,6 +289,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 100.0,
         manaRegen: 1.5,
         transportSize: 1,
+        carryCapacity: 10,
       },
       {
         id: 8,        
@@ -302,6 +310,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 150.0,
         manaRegen: 2.0,
         transportSize: 1,
+        carryCapacity: 10,
       },
       {
         id: 9,        
@@ -322,6 +331,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 120.0,
         manaRegen: 1.8,
         transportSize: 1,
+        carryCapacity: 10,
       }
     ],
     upgradesAvailable: [
@@ -369,6 +379,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 1,
+        carryCapacity: 12,
       },
       {
         id: 11,        
@@ -389,6 +400,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 0.0,
         manaRegen: 0.0,
         transportSize: 2,
+        carryCapacity: 20,
       }
     ],
     upgradesAvailable: [
@@ -436,6 +448,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 200.0,
         manaRegen: 2.5,
         transportSize: 2,
+        carryCapacity: 40,
       },
       {
         id: 13,        
@@ -456,6 +469,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 300.0,
         manaRegen: 3.0,
         transportSize: 1,
+        carryCapacity: 35,
       },
       {
         id: 14,        
@@ -476,6 +490,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 150.0,
         manaRegen: 2.0,
         transportSize: 2,
+        carryCapacity: 30,
       },
       {
         id: 15,        
@@ -496,6 +511,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
         mana: 250.0,
         manaRegen: 2.8,
         transportSize: 1,
+        carryCapacity: 25,
       }
     ],
     upgradesAvailable: [

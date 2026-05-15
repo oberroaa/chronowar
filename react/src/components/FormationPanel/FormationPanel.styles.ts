@@ -271,25 +271,28 @@ export const ModalOverlay = styled.div`
 
 // Contenido del modal
 export const ModalContent = styled.div<{ $race: RaceType }>`
-  background: ${({ $race }) => raceColors[$race].background};
-  border: 2px solid ${({ $race }) => raceColors[$race].secondary};
-  border-radius: 12px;
+  background: rgba(10, 10, 15, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.4)`};
+  border-radius: 16px;
   width: 95%;
-  max-width: 600px;
+  max-width: 500px;
   max-height: 85vh;
   overflow-y: auto;
-  padding: 15px;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+  padding: 0; /* Padding manejado internamente por el header y secciones */
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 
+              inset 0 0 20px ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.1)`};
   position: relative;
+  animation: modalFadeIn 0.3s ease-out;
+
+  @keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
   @media (max-width: 600px) {
-    width: 70%;
-    max-width: 70%;
-    max-height: 88vh;
-    border-radius: 12px;
-    padding: 12px;
-    overscroll-behavior: contain;
-    margin-bottom: 10px;
+    width: 90%;
+    max-height: 80vh;
   }
 `;
 
@@ -298,29 +301,23 @@ export const ModalHeader = styled.div<{ $race: RaceType }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 2px solid ${({ $race }) => raceColors[$race].accent};
-  padding: 12px 15px;
-  background: ${({ $race }) => raceColors[$race].background};
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.3)`};
   position: sticky;
-  top: -10px;
+  top: 0;
   z-index: 10;
-  margin: -10px -10px 15px -10px;
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-
-  @media (max-width: 600px) {
-    padding: 14px 12px;
-    top: -12px;
-    margin: -12px -12px 12px -12px;
-  }
 `;
 
 // Título del modal
 export const ModalTitle = styled.h3<{ $race: RaceType }>`
-  color: ${({ $race }) => raceColors[$race].primary};
+  color: #fff;
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px ${({ $race }) => raceColors[$race].color};
 `;
 
 // Botón para cerrar modal
@@ -448,16 +445,26 @@ export const Stat = styled.span<{ $race: RaceType }>`
 // Contenedor de información de unidad
 export const UnitInfoContainer = styled.div`
   display: flex;
-  gap: 20px;
+  padding: 20px;
+  gap: 24px;
+  
+  @media (max-width: 500px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
 `;
 
 // Imagen grande de unidad
 export const UnitImageLarge = styled.img<{ $race: RaceType }>`
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
-  border: 2px solid ${({ $race }) => raceColors[$race].secondary};
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.5)`};
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 `;
 
 // Contenedor de estadísticas
@@ -484,42 +491,45 @@ export const StatLabel = styled.span<{ $race: RaceType }>`
 
 // Valor de estadística
 export const StatValue = styled.span<{ $race: RaceType }>`
-  color: ${({ $race }) => raceColors[$race].text};
-  font-weight: bold;
+  color: #fff;
+  font-weight: 600;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
 `;
 
 // Botón de formación (quitar unidad)
 export const FormationButton = styled.button<FormationButtonProps>`
-  background: ${({ $race, $formationType }) =>
-    $formationType === 'attack'
-      ? `linear-gradient(to bottom, ${raceColors[$race].primary}, #a02020)`
-      : `linear-gradient(to bottom, ${raceColors[$race].secondary}, #2040a0)`};
+  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin-top: 15px;
+  border: 1px solid #ff5252;
+  border-radius: 8px;
+  padding: 14px 20px;
+  margin-top: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  gap: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);
+  width: 100%;
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(211, 47, 47, 0.6);
+    filter: brightness(1.2);
   }
 
   &:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
   }
 
   &::before {
-    content: ${({ $formationType }) =>
-    $formationType === 'attack' ? '"⚔️"' : '"🛡️"'};
-    font-size: 1.1rem;
+    content: "⚔️";
+    font-size: 1.2rem;
   }
 `;

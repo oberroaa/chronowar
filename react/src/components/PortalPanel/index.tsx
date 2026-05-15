@@ -10,9 +10,8 @@ import * as PanelStyles from './PortalPanel.styles';
 import * as ModalStyles from './Modal.styles';
 
 // Componente principal del panel del portal
-const PortalPanel: React.FC<PortalPanelProps> = ({ 
-  isOpen, 
-  onClose,
+const PortalPanel: React.FC<PortalPanelProps> = ({
+  isOpen,
   playersData = jsonPlayersData,
   systemPlayersData = jsonSystemPlayersData,
   race,
@@ -45,24 +44,7 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
     }
   };
 
-  // Helper para generar datos visuales aleatorios (pero consistentes)
-  const getTargetMeta = (id: number) => {
-    const risks: ('low' | 'medium' | 'high')[] = ['low', 'medium', 'high'];
-    const loots = [
-      { icon: '💰', label: 'Oro' },
-      { icon: '🪵', label: 'Madera' },
-      { icon: '🪨', label: 'Piedra' },
-      { icon: '🍖', label: 'Comida' },
-      { icon: '🎁', label: 'Items' }
-    ];
-    
-    const seed = (id * 12345) % 1000;
-    const risk = risks[seed % 3];
-    const lootCount = (seed % 2) + 2;
-    const selectedLoot = loots.slice(seed % 2, (seed % 2) + lootCount);
-    
-    return { risk, selectedLoot };
-  };
+
 
   // Verificar si hay viajes disponibles
   const hasTravelsAvailable = travelCount > 0;
@@ -72,15 +54,15 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
       {/* Modal de resultados de batalla/recolección */}
       {battleResult && (
         <ModalStyles.ModalOverlay onClick={onResultClose}>
-          <ModalStyles.ModalContainer 
-            onClick={(e) => e.stopPropagation()} 
-            $race={race} 
+          <ModalStyles.ModalContainer
+            onClick={(e) => e.stopPropagation()}
+            $race={race}
             $isSuccess={battleResult.success}
           >
             <ModalStyles.ModalCloseButton $race={race} onClick={onResultClose}>
               ×
             </ModalStyles.ModalCloseButton>
-            
+
             <ModalStyles.ModalHeader $isSuccess={battleResult.success} $race={race}>
               <ModalStyles.ModalIcon $isSuccess={battleResult.success}>
                 {battleResult.success ? '🎉' : '💥'}
@@ -89,14 +71,14 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
                 {battleResult.success ? '¡Éxito!' : 'Fallo'}
               </ModalStyles.ModalTitle>
             </ModalStyles.ModalHeader>
-            
+
             <ModalStyles.Divider $race={race} />
-            
+
             <ModalStyles.ModalContent>
               <ModalStyles.ModalText $isSuccess={battleResult.success}>
                 {battleResult.message}
               </ModalStyles.ModalText>
-              
+
               {battleResult.rewards && (
                 <ModalStyles.ModalRewardsSection>
                   <ModalStyles.RewardsTitle $race={race}>Recompensas Obtenidas:</ModalStyles.RewardsTitle>
@@ -108,7 +90,7 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
                         <ModalStyles.StatValue>+{battleResult.rewards.experience}</ModalStyles.StatValue>
                       </ModalStyles.StatContent>
                     </ModalStyles.ModalStat>
-                    
+
                     {battleResult.rewards.resources && (
                       <ModalStyles.ModalStat $race={race} $isSuccess={battleResult.success}>
                         <ModalStyles.StatIcon>💰</ModalStyles.StatIcon>
@@ -118,7 +100,7 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
                         </ModalStyles.StatContent>
                       </ModalStyles.ModalStat>
                     )}
-                    
+
                     {battleResult.rewards.items && (
                       <ModalStyles.ModalStat $race={race} $isSuccess={battleResult.success}>
                         <ModalStyles.StatIcon>🎁</ModalStyles.StatIcon>
@@ -132,13 +114,13 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
                 </ModalStyles.ModalRewardsSection>
               )}
             </ModalStyles.ModalContent>
-            
+
             <ModalStyles.Divider $race={race} />
-            
+
             <ModalStyles.ModalFooter>
-              <ModalStyles.ModalButton 
-                $race={race} 
-                $isSuccess={battleResult.success} 
+              <ModalStyles.ModalButton
+                $race={race}
+                $isSuccess={battleResult.success}
                 onClick={onResultClose}
               >
                 Continuar
@@ -150,48 +132,41 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
 
       {/* Panel principal del portal */}
       <PanelStyles.RightPanelContainer $isOpen={isOpen} $race={race}>
-        <PanelStyles.CloseButton onClick={onClose} $race={race} disabled={countdown !== null}>
-          ×
-        </PanelStyles.CloseButton>
-        
         <PanelStyles.PortalHeader $race={race}>
-          <PanelStyles.PortalVortex $race={race} />
           <PanelStyles.PortalCore $race={race}>
             {currentRace.icon}
           </PanelStyles.PortalCore>
-          <PanelStyles.PanelTitle $race={race} style={{ marginTop: '20px', marginBottom: '0' }}>
-            PORTAL DIMENSIONAL
+          <PanelStyles.PanelTitle $race={race}>
+            Portal Dimensional
           </PanelStyles.PanelTitle>
-        </PanelStyles.PortalHeader>
-
-        <PanelStyles.PanelContent>
-          {/* Sección de viajes disponibles */}
           <PanelStyles.TravelsSection $race={race}>
-            <PanelStyles.TravelsTitle $race={race}>Cargas de Energía:</PanelStyles.TravelsTitle>
             <PanelStyles.TravelsCounter $race={race} $isLow={travelCount <= 2}>
               <PanelStyles.TravelsNumber $isCritical={travelCount === 0}>
                 {travelCount} / {maxTravels}
               </PanelStyles.TravelsNumber>
             </PanelStyles.TravelsCounter>
-            {travelCount === 0 && (
-              <PanelStyles.NoTravelsWarning $race={race}>
-                Energía agotada. Esperando estabilización...
-              </PanelStyles.NoTravelsWarning>
-            )}
           </PanelStyles.TravelsSection>
-          
+        </PanelStyles.PortalHeader>
+
+        <PanelStyles.PanelContent>
+          {travelCount === 0 && (
+            <PanelStyles.NoTravelsWarning $race={race}>
+              ⚠️ Energía agotada. Esperando estabilización...
+            </PanelStyles.NoTravelsWarning>
+          )}
+
           {/* Tabs para cambiar entre Players y Locations */}
           <PanelStyles.Tabs $race={race}>
-            <PanelStyles.TabButton 
-              $active={activeTab === 'players'} 
+            <PanelStyles.TabButton
+              $active={activeTab === 'players'}
               onClick={() => onTabChange('players')}
               $race={race}
               disabled={countdown !== null || !hasTravelsAvailable}
             >
               Jugadores
             </PanelStyles.TabButton>
-            <PanelStyles.TabButton 
-              $active={activeTab === 'system'} 
+            <PanelStyles.TabButton
+              $active={activeTab === 'system'}
               onClick={() => onTabChange('system')}
               $race={race}
               disabled={countdown !== null || !hasTravelsAvailable}
@@ -199,10 +174,9 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
               Ubicaciones
             </PanelStyles.TabButton>
           </PanelStyles.Tabs>
-          
+
           <PanelStyles.TargetGrid>
             {(activeTab === 'players' ? playersData : systemPlayersData).map((target) => {
-              const meta = getTargetMeta(target.id);
               const targetRace = (target as any).race ? raceColors[(target as any).race as keyof typeof raceColors] : currentRace;
               const isCurrent = currentTarget === target.id && countdown !== null;
               const isDisabled = (countdown !== null && !isCurrent) || !hasTravelsAvailable;
@@ -217,32 +191,22 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
 
                     <PanelStyles.TargetInfo>
                       <PanelStyles.TargetName>{target.name}</PanelStyles.TargetName>
-                      <PanelStyles.RiskBadge $level={meta.risk}>
-                        {meta.risk}
-                      </PanelStyles.RiskBadge>
                     </PanelStyles.TargetInfo>
 
-                    <PanelStyles.IconButton 
-                      $action={activeTab === 'players' ? 'attack' : 'gather'} 
+                    <PanelStyles.IconButton
+                      $action={activeTab === 'players' ? 'attack' : 'gather'}
                       $race={race}
                       onClick={() => handleAction(target.id)}
                       disabled={isDisabled}
                       $isDisabled={isDisabled}
                       title={activeTab === 'players' ? 'Atacar' : 'Recolectar'}
                     >
-                      {isCurrent 
-                        ? '⏳' 
+                      {isCurrent
+                        ? '⏳'
                         : activeTab === 'players' ? '⚔️' : '⛏️'}
                     </PanelStyles.IconButton>
                   </PanelStyles.CardMainRow>
 
-                  <PanelStyles.LootPreview>
-                    {meta.selectedLoot.map((loot, idx) => (
-                      <PanelStyles.LootItem key={idx} title={loot.label}>
-                        {loot.icon}
-                      </PanelStyles.LootItem>
-                    ))}
-                  </PanelStyles.LootPreview>
 
                   {isCurrent && (
                     <PanelStyles.ProgressWrapper $race={race}>

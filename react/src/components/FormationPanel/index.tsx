@@ -326,28 +326,28 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
 
               <UnitStatsContainer>
                 <StatItem $race={race}>
-                  <StatLabel $race={race}>Salud:</StatLabel>
+                  <StatLabel $race={race}>❤️ SALUD</StatLabel>
                   <StatValue $race={race}>{showUnitInfo.hp}</StatValue>
                 </StatItem>
                 <StatItem $race={race}>
-                  <StatLabel $race={race}>Ataque Terrestre:</StatLabel>
+                  <StatLabel $race={race}>⚔️ ATAQUE</StatLabel>
                   <StatValue $race={race}>{showUnitInfo.attack}</StatValue>
                 </StatItem>
                 <StatItem $race={race}>
-                  <StatLabel $race={race}>Ataque Aéreo:</StatLabel>
-                  <StatValue $race={race}>{showUnitInfo.attack}</StatValue>
-                </StatItem>
-                <StatItem $race={race}>
-                  <StatLabel $race={race}>Armadura:</StatLabel>
+                  <StatLabel $race={race}>🛡️ ARMADURA</StatLabel>
                   <StatValue $race={race}>{showUnitInfo.armor}</StatValue>
                 </StatItem>
                 <StatItem $race={race}>
-                  <StatLabel $race={race}>Tipo de Arma:</StatLabel>
+                  <StatLabel $race={race}>🏹 ARMA</StatLabel>
                   <StatValue $race={race}>{showUnitInfo.weaponType}</StatValue>
                 </StatItem>
                 <StatItem $race={race}>
-                  <StatLabel $race={race}>Habilidad:</StatLabel>
-                  <StatValue $race={race}>{showUnitInfo.special}</StatValue>
+                  <StatLabel $race={race}>📦 CARGA</StatLabel>
+                  <StatValue $race={race}>{showUnitInfo.carryCapacity}</StatValue>
+                </StatItem>
+                <StatItem $race={race}>
+                  <StatLabel $race={race}>✨ HABILIDAD</StatLabel>
+                  <StatValue $race={race} style={{ fontSize: '0.8rem' }}>{showUnitInfo.special}</StatValue>
                 </StatItem>
 
                 <FormationButton 

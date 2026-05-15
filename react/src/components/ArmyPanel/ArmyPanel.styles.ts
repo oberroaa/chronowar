@@ -13,140 +13,104 @@ export const hexToRgb = (hex: string): string => {
 // Contenedor principal del panel izquierdo
 export const LeftPanelContainer = styled.div<{ $isOpen: boolean; $race: RaceType }>`
   position: fixed;
-  left: ${({ $isOpen }) => $isOpen ? '0' : '-350px'};
+  left: ${({ $isOpen }) => $isOpen ? '0' : '-400px'};
   top: 0;
-  width: 350px;
+  width: 400px;
   height: 100vh;
-  background: ${({ $race }) => raceColors[$race].background || 'rgba(0, 0, 0, 0.9)'};
+  background: ${({ $race }) => raceColors[$race].background || 'rgba(10, 10, 15, 0.98)'};
   border-right: 2px solid ${({ $race }) => raceColors[$race].color};
   z-index: 98;
-  transition: left 0.3s ease;
-  padding: 20px;
-  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+  transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0; /* Quitamos padding global para el HUD */
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.8);
   color: ${({ $race }) => raceColors[$race].textColor || 'white'};
   overflow-y: auto;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, 
-      ${({ $race }) => raceColors[$race].color} 0%, 
-      ${({ $race }) => raceColors[$race].secondaryColor} 100%);
-  }
+  overflow-x: hidden;
 
-  @media (max-width: 400px) {
-    width: 300px;
-    padding: 15px;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+  &::-webkit-scrollbar-thumb { 
+    background: ${({ $race }) => raceColors[$race].color};
+    border-radius: 10px;
   }
 `;
 
-// Botón para cerrar el panel
-export const CloseButton = styled.button<{ $race: RaceType }>`
-  position: absolute;
-  left: 50%;
-  top: 10px;
-  transform: translateX(-50%);
-  background: none;
-  border: none;
-  color: ${({ $race }) => raceColors[$race].color};
-  font-size: 1.5rem;
-  cursor: pointer;
-  z-index: 99;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    color: ${({ $race }) => raceColors[$race].secondaryColor || 'white'};
-    text-shadow: 0 0 5px ${({ $race }) => raceColors[$race].color};
-    transform: translateX(-50%) scale(1.2);
-  }
+/* Cabecera HUD - Sincronizado con Portal */
+export const PanelHeader = styled.div<{ $race: RaceType }>`
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between; /* Mantiene la población a la derecha */
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(12, 12, 18, 0.98);
+  border-bottom: 1px solid ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.4)`};
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+`;
+
+export const HeaderOrbe = styled.div<{ $race: RaceType }>`
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle, #fff 20%, ${({ $race }) => raceColors[$race].color} 100%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  box-shadow: 0 0 12px ${({ $race }) => raceColors[$race].color};
 `;
 
 // Título del panel
 export const PanelTitle = styled.h2<{ $race: RaceType }>`
-  color: ${({ $race }) => raceColors[$race].color};
+  color: #fff;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 300;
+  margin: 0;
+  flex: 1;
   text-align: center;
-  margin-bottom: 20px;
-  font-family: ${({ $race }) => raceColors[$race].textColor || "'Arial', sans-serif"};
-  text-shadow: 1px 1px 2px black;
-  position: relative;
-  font-size: 1.5rem;
-  letter-spacing: 1px;
-  
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 30px;
-    height: 2px;
-    background: ${({ $race }) => raceColors[$race].color};
-    opacity: 0.7;
-  }
-  
-  &::before {
-    left: 10px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      ${({ $race }) => raceColors[$race].color} 100%);
-  }
-  
-  &::after {
-    right: 10px;
-    background: linear-gradient(90deg, 
-      ${({ $race }) => raceColors[$race].color} 0%, 
-      transparent 100%);
-  }
-
-  @media (max-width: 400px) {
-    font-size: 1.3rem;
-    
-    &::before, &::after {
-      width: 20px;
-    }
-  }
+  text-shadow: 0 0 8px ${({ $race }) => raceColors[$race].color};
+  opacity: 0.85;
 `;
 
-// Contenedor de pestañas
+// Contenedor de pestañas - Sincronizado
 export const Tabs = styled.div<{ $race: RaceType }>`
   display: flex;
-  margin-bottom: 15px;
-  border-bottom: 1px solid ${({ $race }) => raceColors[$race].secondaryColor};
-  gap: 5px;
-  overflow-x: auto;
-  padding-bottom: 5px;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 0;
+  background: rgba(5, 5, 10, 0.6);
+  padding: 0;
 `;
 
 // Botones de pestaña
 export const TabButton = styled.button<{ $active: boolean; $race: RaceType }>`
-  padding: 8px 12px;
+  flex: 1;
+  padding: 12px;
   background: ${({ $active, $race }) => $active ? 
-    `rgba(${hexToRgb(raceColors[$race].color)}, 0.3)` : 
+    `rgba(${hexToRgb(raceColors[$race].color)}, 0.1)` : 
     'transparent'};
   color: ${({ $active, $race }) => $active ? 
     raceColors[$race].color : 
-    raceColors[$race].textColor || '#ccc'};
+    'rgba(255,255,255,0.6)'};
   border: none;
   border-bottom: ${({ $active, $race }) => $active ? 
     `2px solid ${raceColors[$race].color}` : 
-    'none'};
+    '1px solid transparent'};
   cursor: pointer;
-  font-weight: ${({ $active }) => $active ? 'bold' : 'normal'};
-  font-family: ${({ $race }) => raceColors[$race].textColor || "'Arial', sans-serif"};
+  font-weight: ${({ $active }) => $active ? '600' : '400'};
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
   transition: all 0.2s ease;
-  border-radius: 4px 4px 0 0;
-  white-space: nowrap;
   
-  &:hover {
-    background: ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.2)`};
-    color: ${({ $race }) => raceColors[$race].color};
-  }
-
-  @media (max-width: 400px) {
-    padding: 6px 10px;
-    font-size: 0.8rem;
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
   }
 `;
 
@@ -154,8 +118,8 @@ export const TabButton = styled.button<{ $active: boolean; $race: RaceType }>`
 export const UnitsContainer = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 15px;
-  padding: 5px;
+  gap: 12px;
+  padding: 12px 16px 16px;
 `;
 
 // Tarjeta de unidad individual
@@ -163,21 +127,24 @@ export const UnitCard = styled.div<{ $race: RaceType; $isSelected: boolean }>`
   display: flex;
   background: ${({ $race, $isSelected }) => 
     $isSelected 
-      ? `rgba(${hexToRgb(raceColors[$race].color)}, 0.2)` 
-      : `rgba(${hexToRgb(raceColors[$race].secondaryColor)}, 0.1)`};
+      ? `rgba(${hexToRgb(raceColors[$race].color)}, 0.15)` 
+      : 'rgba(255, 255, 255, 0.04)'};
   border: 1px solid ${({ $race, $isSelected }) => 
     $isSelected 
       ? raceColors[$race].color 
-      : raceColors[$race].secondaryColor};
-  border-radius: 8px;
+      : 'rgba(255, 255, 255, 0.1)'};
+  border-radius: 12px;
   padding: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    border-color: ${({ $race }) => raceColors[$race].color};
+    background: rgba(255, 255, 255, 0.08);
+    border-color: ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.5)`};
+    transform: translateX(4px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   }
 `;
 
@@ -260,18 +227,24 @@ export const UnitName = styled.h3<{ $race: RaceType }>`
 
 // Disponibilidad de la unidad
 export const UnitAvailable = styled.span<{ $race: RaceType }>`
-  font-size: 0.8rem;
-  color: ${({ $race }) => raceColors[$race].secondaryColor};
+  font-size: 0.7rem;
+  color: ${({ $race }) => raceColors[$race].color};
+  background: ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.1)`};
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid ${({ $race }) => `rgba(${hexToRgb(raceColors[$race].color)}, 0.2)`};
+  font-family: 'Orbitron', sans-serif;
 `;
 
 // Estadísticas de la unidad
 export const UnitStats = styled.div<{ $race: RaceType }>`
   display: flex;
-  gap: 10px;
-  margin: 5px 0;
-  padding: 5px 0;
-  border-top: 1px dashed ${({ $race }) => raceColors[$race].secondaryColor};
-  border-bottom: 1px dashed ${({ $race }) => raceColors[$race].secondaryColor};
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 `;
 
 // Item individual de estadística

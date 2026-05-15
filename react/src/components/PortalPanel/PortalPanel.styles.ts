@@ -52,16 +52,16 @@ const pulse = keyframes`
 `;
 
 export const PortalHeader = styled.div<StyledRaceProps>`
-  height: 260px;
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: linear-gradient(180deg, 
-    ${({ $race }) => `rgba(${hexToRgb(raceColors[$race as keyof typeof raceColors].color)}, 0.15)`} 0%, 
-    transparent 100%);
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(12, 12, 18, 0.98);
+  border-bottom: 1px solid ${({ $race }) => `rgba(${hexToRgb(raceColors[$race as keyof typeof raceColors].color)}, 0.4)`};
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
 `;
 
 export const PortalVortex = styled.div<StyledRaceProps>`
@@ -90,75 +90,62 @@ export const PortalVortex = styled.div<StyledRaceProps>`
 `;
 
 export const PortalCore = styled.div<StyledRaceProps>`
-  width: 100px;
-  height: 100px;
-  background: #fff;
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle, #fff 20%, ${({ $race }) => raceColors[$race as keyof typeof raceColors].color} 100%);
   border-radius: 50%;
-  z-index: 1;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  position: relative;
+  font-size: 1rem;
   box-shadow: 
-    0 0 30px #fff,
-    0 0 60px ${({ $race }) => raceColors[$race as keyof typeof raceColors].color},
-    0 0 100px ${({ $race }) => raceColors[$race as keyof typeof raceColors].secondaryColor};
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -20px; left: -20px; right: -20px; bottom: -20px;
-    background: ${({ $race }) => `rgba(${hexToRgb(raceColors[$race as keyof typeof raceColors].color)}, 0.3)`};
-    border-radius: 50%;
-    filter: blur(20px);
-    animation: ${pulse} 4s ease-in-out infinite;
-  }
+    0 0 8px #fff,
+    0 0 15px ${({ $race }) => raceColors[$race as keyof typeof raceColors].color};
+  animation: ${pulse} 3s ease-in-out infinite;
 `;
 
 export const PanelContent = styled.div`
-  padding: 20px;
+  padding: 0 16px 16px;
 `;
 
 /* Botón de cerrar el panel */
 export const CloseButton = styled.button<StyledRaceProps>`
   position: absolute;
-  left: 50%;
-  top: 10px;
-  transform: translateX(-50%);
+  right: 12px;
+  top: 8px;
   background: none;
   border: none;
   color: ${({ $race }) => raceColors[$race].color};
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  z-index: 99;
+  z-index: 100;
+  opacity: 0.6;
   transition: all 0.2s ease;
   
   &:hover {
-    color: ${({ $race }) => raceColors[$race].secondaryColor || 'white'};
-    text-shadow: 0 0 5px ${({ $race }) => raceColors[$race].color};
-    transform: translateX(-50%) scale(1.2);
+    opacity: 1;
+    transform: scale(1.1);
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.2;
     cursor: not-allowed;
-    transform: translateX(-50%);
   }
 `;
 
 /* Título del panel */
 export const PanelTitle = styled.h2<StyledRaceProps>`
   color: #fff;
-  text-align: center;
-  margin-top: 25px;
   font-family: 'Cinzel', serif;
-  font-size: 1.4rem;
-  letter-spacing: 4px;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  font-weight: 300;
-  z-index: 2;
-  text-shadow: 0 0 10px ${({ $race }) => raceColors[$race as keyof typeof raceColors].color};
+  font-weight: 400;
+  margin: 0;
+  text-align: left;
+  text-shadow: 0 0 8px ${({ $race }) => raceColors[$race as keyof typeof raceColors].color};
+  white-space: nowrap; /* Evita que el título se rompa */
 `;
 
 /* Card Layout System */
@@ -303,8 +290,9 @@ export const ProgressBar = styled.div<{ $progress: number; $race: RaceType }>`
 export const Tabs = styled.div<StyledRaceProps>`
   display: flex;
   margin-bottom: 15px;
-  border-bottom: 1px solid ${({ $race }) => raceColors[$race].secondaryColor};
-  gap: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 0;
+  background: rgba(0, 0, 0, 0.3);
 `;
 
 /* Botones de las pestañas */
@@ -312,7 +300,7 @@ export const TabButton = styled.button<StyledActiveProps & StyledRaceProps>`
   flex: 1;
   padding: 10px;
   background: ${({ $active, $race }) => $active ?
-    `rgba(${hexToRgb(raceColors[$race].color)}, 0.3)` :
+    `rgba(${hexToRgb(raceColors[$race].color)}, 0.1)` :
     'transparent'};
   color: ${({ $active, $race }) => $active ?
     raceColors[$race].color :
@@ -320,26 +308,20 @@ export const TabButton = styled.button<StyledActiveProps & StyledRaceProps>`
   border: none;
   border-bottom: ${({ $active, $race }) => $active ?
     `2px solid ${raceColors[$race].color}` :
-    'none'};
+    '1px solid transparent'};
   cursor: pointer;
   font-weight: ${({ $active }) => $active ? 'bold' : 'normal'};
   font-family: ${({ $race }) => raceColors[$race].textColor || "'Arial', sans-serif"};
   transition: all 0.2s ease;
-  border-radius: 4px 4px 0 0;
   
   &:hover {
-    background: ${({ $race, disabled }) => !disabled ? `rgba(${hexToRgb(raceColors[$race].color)}, 0.2)` : 'transparent'};
+    background: ${({ $race, disabled }) => !disabled ? `rgba(${hexToRgb(raceColors[$race].color)}, 0.05)` : 'transparent'};
     color: ${({ $race, disabled }) => !disabled ? raceColors[$race].color : raceColors[$race].textColor};
   }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-
-  @media (max-width: 400px) {
-    padding: 8px;
-    font-size: 0.9rem;
   }
 `;
 
@@ -424,16 +406,9 @@ export const CountdownValue = styled.span`
 
 /* Estilos para la sección de viajes disponibles */
 export const TravelsSection = styled.div<StyledRaceProps>`
-  margin-bottom: 25px;
-  padding: 20px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.05) 0%, 
-    rgba(0, 0, 0, 0.2) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 `;
 
 export const TravelsTitle = styled.div<StyledRaceProps>`
@@ -449,27 +424,24 @@ export const TravelsTitle = styled.div<StyledRaceProps>`
 export const TravelsCounter = styled.div<StyledRaceProps & StyledLowProps>`
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 10px 25px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 30px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
   border: 1px solid ${({ $isLow, $race }) =>
-    $isLow ? raceColors[$race as keyof typeof raceColors].secondaryColor : `rgba(${hexToRgb(raceColors[$race as keyof typeof raceColors].color)}, 0.3)`};
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    $isLow ? '#ff4d4d' : `rgba(${hexToRgb(raceColors[$race as keyof typeof raceColors].color)}, 0.6)`};
 `;
 
 export const TravelsNumber = styled.div<StyledCriticalProps>`
-  font-size: 1.5rem;
+  font-size: 0.9rem;
   font-family: 'Orbitron', sans-serif;
-  font-weight: bold;
+  font-weight: 700;
   color: ${({ $isCritical }) => $isCritical ? '#ff4d4d' : '#fff'};
-  text-shadow: 0 0 10px ${({ $isCritical }) => $isCritical ? '#ff4d4d' : '#4ade80'};
+  text-shadow: 0 0 8px ${({ $isCritical }) => $isCritical ? '#ff4d4d' : '#4ade80'};
   
-  &::after {
-    content: ' CHARGES';
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-    opacity: 0.5;
+  &::before {
+    content: '⚡';
+    margin-right: 4px;
+    font-size: 0.75rem;
   }
 `;
 

@@ -123,6 +123,7 @@ const getUnitsFromBuildings = (): UnitProduction[] => {
         mana: unit.mana,
         manaRegen: unit.manaRegen,
         transportSize: unit.transportSize,
+        carryCapacity: unit.carryCapacity,
         available: unit.available
       });
     });

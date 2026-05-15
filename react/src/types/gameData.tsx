@@ -103,6 +103,7 @@ export type UnitProduction = {
   mana: number,             // float
   manaRegen: number,        // float
   transportSize: number,
+  carryCapacity: number,  // Cantidad de recursos que puede cargar al saquear/recolectar
   available: number
 };
 

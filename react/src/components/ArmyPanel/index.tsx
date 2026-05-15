@@ -5,7 +5,8 @@ import { buildingsData } from '../../types/jsonResponse';
 import type { ArmyPanelProps, UnitImageDisplayProps, ArmyModalProps } from './types';
 import {
   LeftPanelContainer,
-  CloseButton,
+  PanelHeader,
+  HeaderOrbe,
   PanelTitle,
   Tabs,
   TabButton,
@@ -25,7 +26,6 @@ import {
   StatLabel,
   StatValue,
   UnitCost,
-  CostLabel,
   CostValue,
   GoldIcon
 } from './ArmyPanel.styles';
@@ -72,7 +72,7 @@ const UnitImageDisplay: React.FC<UnitImageDisplayProps> = ({ unit, onUnitClick }
   const [gifError, setGifError] = useState(false);
 
   return (
-    <ImageContainer 
+    <ImageContainer
       onMouseEnter={() => unit.gif && !gifError && setShowGif(true)}
       onMouseLeave={() => setShowGif(false)}
       onClick={(e) => {
@@ -88,7 +88,7 @@ const UnitImageDisplay: React.FC<UnitImageDisplayProps> = ({ unit, onUnitClick }
           style={{ display: showGif ? 'none' : 'block' }}
         />
       )}
-      
+
       {unit.gif && !gifError && (
         <UnitGif
           src={unit.gif}
@@ -97,7 +97,7 @@ const UnitImageDisplay: React.FC<UnitImageDisplayProps> = ({ unit, onUnitClick }
           style={{ display: showGif ? 'block' : 'none' }}
         />
       )}
-      
+
       {(imgError || (gifError && showGif)) && (
         <ImageFallback>
           {unit.name}
@@ -123,36 +123,41 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
         <ModalCloseButton $race={race} onClick={onClose}>
           ×
         </ModalCloseButton>
-        
+
         <ModalFlexContainer>
           <ModalImageSection>
             <ModalUnitImage src={unit.image} alt={unit.name} />
             <ModalTitle>{unit.name}</ModalTitle>
-            
-            <ModalInfoBox $race={race}>                  
+
+            <ModalInfoBox $race={race}>
               <ModalInfoRow>
                 <ModalInfoLabel $race={race}>Available:</ModalInfoLabel>
                 <ModalInfoValue>{unit.available}</ModalInfoValue>
               </ModalInfoRow>
-              
+
               <ModalInfoRow>
                 <ModalInfoLabel $race={race}>Build Time:</ModalInfoLabel>
                 <ModalInfoValue>{unit.buildTime}s</ModalInfoValue>
               </ModalInfoRow>
-              
+
               <ModalInfoRow>
                 <ModalInfoLabel $race={race}>Transport Size:</ModalInfoLabel>
                 <ModalInfoValue>{unit.transportSize}</ModalInfoValue>
               </ModalInfoRow>
+
+              <ModalInfoRow>
+                <ModalInfoLabel $race={race}>Carry Capacity:</ModalInfoLabel>
+                <ModalInfoValue>📦 {unit.carryCapacity}</ModalInfoValue>
+              </ModalInfoRow>
             </ModalInfoBox>
           </ModalImageSection>
-          
+
           <ModalInfoSection>
             <ModalSection>
               <ModalSectionTitle $race={race}>
                 <StatsIcon $race={race}>⚔️</StatsIcon> COMBAT STATISTICS
               </ModalSectionTitle>
-              
+
               <ModalStatsContainer>
                 <ModalStatsColumn>
                   <ModalStatItem>
@@ -164,7 +169,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                       )}
                     </ModalStatValue>
                   </ModalStatItem>
-                  
+
                   <ModalStatItem>
                     <ModalStatLabel $race={race}>Attack:</ModalStatLabel>
                     <ModalStatValue>
@@ -172,7 +177,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                     </ModalStatValue>
                   </ModalStatItem>
                 </ModalStatsColumn>
-                
+
                 <ModalStatsColumn>
                   <ModalStatItem>
                     <ModalStatLabel $race={race}>Mana:</ModalStatLabel>
@@ -190,10 +195,17 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                       {unit.armor} <SmallText>({unit.armorType})</SmallText>
                     </ModalStatValue>
                   </ModalStatItem>
+
+                  <ModalStatItem>
+                    <ModalStatLabel $race={race}>Carry Capacity:</ModalStatLabel>
+                    <ModalStatValue>
+                      📦 {unit.carryCapacity} <SmallText>resources</SmallText>
+                    </ModalStatValue>
+                  </ModalStatItem>
                 </ModalStatsColumn>
               </ModalStatsContainer>
             </ModalSection>
-            
+
             <ModalSection>
               <ModalSectionTitle $race={race}>
                 <AbilityIcon $race={race}>✨</AbilityIcon> SPECIAL ABILITY
@@ -205,7 +217,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                 </ModalAbilityDesc>
               </ModalAbilityBox>
             </ModalSection>
-            
+
             <ModalSection>
               <ModalSectionTitle $race={race}>
                 <CostIcon $race={race}>📦</CostIcon> PRODUCTION COSTS
@@ -218,7 +230,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                     <ModalCostResource>Gold</ModalCostResource>
                   </ModalCostDetails>
                 </ModalCostItem>
-                
+
                 {unit.cost.wood && (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>🪵</ModalCostIcon>
@@ -228,7 +240,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                     </ModalCostDetails>
                   </ModalCostItem>
                 )}
-                
+
                 {unit.cost.stone && (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>🪨</ModalCostIcon>
@@ -238,7 +250,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                     </ModalCostDetails>
                   </ModalCostItem>
                 )}
-                
+
                 {unit.cost.food && (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>🍖</ModalCostIcon>
@@ -260,9 +272,8 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
 // Componente principal del panel de ejército
 const ArmyPanel: React.FC<ArmyPanelProps> = ({
   isOpen,
-  onClose,
   race,
-  onUnitSelect, 
+  onUnitSelect,
   selectedUnits = [],
   gameUnits,
 }) => {
@@ -323,24 +334,29 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
   return (
     <>
       <LeftPanelContainer $isOpen={isOpen} $race={race}>
-        <CloseButton onClick={onClose} $race={race}>×</CloseButton>
-        
-        <PanelTitle $race={race}>
-          {currentRace.icon} Army Management {currentRace.icon}
-        </PanelTitle>
-        
+        <PanelHeader $race={race}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+            <HeaderOrbe $race={race}>
+              {currentRace.icon}
+            </HeaderOrbe>
+            <PanelTitle $race={race}>
+              Army
+            </PanelTitle>
+          </div>
+        </PanelHeader>
+
         <Tabs $race={race}>
-          <TabButton 
-            $active={activeTab === 'all'} 
+          <TabButton
+            $active={activeTab === 'all'}
             onClick={() => setActiveTab('all')}
             $race={race}
           >
             All
           </TabButton>
           {unitTypes.map((type) => (
-            <TabButton 
+            <TabButton
               key={type}
-              $active={activeTab === type} 
+              $active={activeTab === type}
               onClick={() => setActiveTab(type)}
               $race={race}
             >
@@ -348,11 +364,11 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
             </TabButton>
           ))}
         </Tabs>
-        
+
         <UnitsContainer>
           {displayUnits.map((unit) => (
-            <UnitCard 
-              key={unit.id} 
+            <UnitCard
+              key={unit.id}
               $race={race}
               $isSelected={selectedUnits.includes(unit.id)}
               onClick={() => onUnitSelect && onUnitSelect(unit.id)}
@@ -360,34 +376,37 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
               <UnitImageContainer>
                 <UnitImageDisplay unit={unit} onUnitClick={handleUnitClick} />
               </UnitImageContainer>
-              
+
               <UnitInfo>
                 <UnitNameContainer>
                   <UnitName $race={race}>{unit.name}</UnitName>
-                  <UnitAvailable $race={race}>{unit.available} available</UnitAvailable>
+                  <UnitAvailable $race={race}>{unit.available}</UnitAvailable>
                 </UnitNameContainer>
-                
+
                 <UnitStats $race={race}>
-                  <StatItem>
-                    <StatLabel $race={race}>HP</StatLabel>
+                  <StatItem title="Health Points">
+                    <StatLabel $race={race}>❤️</StatLabel>
                     <StatValue>{unit.hp}</StatValue>
                   </StatItem>
-                  <StatItem>
-                    <StatLabel $race={race}>ATK</StatLabel>
-                    <StatValue>{unit.attack}{unit.attack > 0 ? `/${unit.attack}` : ''}</StatValue>
+                  <StatItem title="Attack Damage">
+                    <StatLabel $race={race}>⚔️</StatLabel>
+                    <StatValue>{unit.attack}</StatValue>
                   </StatItem>
-                  <StatItem>
-                    <StatLabel $race={race}>ARM</StatLabel>
+                  <StatItem title="Armor / Defense">
+                    <StatLabel $race={race}>🛡️</StatLabel>
                     <StatValue>{unit.armor}</StatValue>
                   </StatItem>
-                  <StatItem>
-                    <StatLabel $race={race}>MANA</StatLabel>
+                  <StatItem title="Mana / Special Points">
+                    <StatLabel $race={race}>✨</StatLabel>
                     <StatValue>{unit.mana || 0}</StatValue>
                   </StatItem>
+                  <StatItem title="Carry Capacity">
+                    <StatLabel $race={race}>📦</StatLabel>
+                    <StatValue>{unit.carryCapacity}</StatValue>
+                  </StatItem>
                 </UnitStats>
-                
+
                 <UnitCost $race={race}>
-                  <CostLabel $race={race}>Cost:</CostLabel>
                   <CostValue>
                     {unit.cost.gold} <GoldIcon>💰</GoldIcon>
                     {unit.cost.wood && ` ${unit.cost.wood} 🪵`}
