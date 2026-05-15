@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import {
   SquaresValdari,
   SquaresGorkar,
@@ -59,86 +59,78 @@ type BattleResultType = {
 const getInitialBuildings = (race: RaceType): Record<string, BuildingData> => {
   const buildings: Record<string, BuildingData> = {};
 
-  // Filtramos los edificios por raza y creamos el objeto inicial
-  Object.values(buildingsData) // Convierte el objeto buildingsData en un array de sus valores
-    .filter(building => building.race === race) // Filtra solo los edificios de la raza actual
+  Object.values(buildingsData)
+    .filter(building => building.race === race)
     .forEach(building => {
-      buildings[building.name.toLowerCase()] = { // Crea una propiedad con el nombre del edificio
-        image: building.image, // Guarda la imagen del edificio
-        level: building.level // Guarda el nivel inicial del edificio
+      buildings[building.name.toLowerCase()] = {
+        image: building.image,
+        level: building.level
       };
     });
 
-  return buildings; // Devuelve el objeto con todos los edificios de la raza
+  return buildings;
 };
 
-// Obtener datos específicos para cada raza
 const getRaceOption = (race: RaceType) => {
-  const option = raceOptions.find(r => r.value === race); // Busca la raza en las opciones
-  if (!option) throw new Error(`Race ${race} not found in options`); // Error si no se encuentra
-  return option; // Devuelve los datos de la raza
+  const option = raceOptions.find(r => r.value === race);
+  if (!option) throw new Error(`Race ${race} not found in options`);
+  return option;
 };
 
-// Datos específicos para cada raza
 const raceData = {
   valdari: {
-    backgroundImage: getRaceOption('valdari').backgroundImage, // Imagen de fondo Valdari
-    squares: SquaresValdari, // Cuadros de construcción Valdari
-    description: getRaceOption('valdari').desc // Descripción Valdari
+    backgroundImage: getRaceOption('valdari').backgroundImage,
+    squares: SquaresValdari,
+    description: getRaceOption('valdari').desc
   },
   gorkar: {
-    backgroundImage: getRaceOption('gorkar').backgroundImage, // Imagen de fondo Gorkar
-    squares: SquaresGorkar, // Cuadros de construcción Gorkar
-    description: getRaceOption('gorkar').desc // Descripción Gorkar
+    backgroundImage: getRaceOption('gorkar').backgroundImage,
+    squares: SquaresGorkar,
+    description: getRaceOption('gorkar').desc
   },
   sylvaran: {
-    backgroundImage: getRaceOption('sylvaran').backgroundImage, // Imagen de fondo Sylvaran
-    squares: SquaresSylvaran, // Cuadros de construcción Sylvaran
-    description: getRaceOption('sylvaran').desc // Descripción Sylvaran
+    backgroundImage: getRaceOption('sylvaran').backgroundImage,
+    squares: SquaresSylvaran,
+    description: getRaceOption('sylvaran').desc
   },
   mortharim: {
-    backgroundImage: getRaceOption('mortharim').backgroundImage, // Imagen de fondo Mortharim
-    squares: SquaresMortharim, // Cuadros de construcción Mortharim
-    description: getRaceOption('mortharim').desc // Descripción Mortharim
+    backgroundImage: getRaceOption('mortharim').backgroundImage,
+    squares: SquaresMortharim,
+    description: getRaceOption('mortharim').desc
   }
 };
 
-// Función para extraer unidades de buildingsData
 const getUnitsFromBuildings = (): UnitProduction[] => {
-  const allUnits: UnitProduction[] = []; // Array para almacenar todas las unidades
+  const allUnits: UnitProduction[] = [];
 
-  // Recorre todos los edificios
   Object.values(buildingsData).forEach(building => {
-    // Por cada edificio, recorre sus unidades producidas
     building.unitsProduced.forEach(unit => {
-      // Agrega la unidad al array
       allUnits.push({
-        id: unit.id, // ID de la unidad
-        name: unit.name, // Nombre de la unidad
-        unitType: unit.unitType, // Tipo de unidad
-        cost: unit.cost, // Costo de producción
-        buildTime: unit.buildTime, // Tiempo de construcción
-        image: unit.image, // Imagen de la unidad
-        gif: unit.gif || '', // Animación GIF (si existe)
-        special: unit.special, // Habilidades especiales
-        attack: unit.attack, // Poder de ataque
-        weaponType: unit.weaponType, // Tipo de arma
-        armorType: unit.armorType, // Tipo de armadura
-        armor: unit.armor, // Nivel de armadura
-        hp: unit.hp, // Puntos de vida
-        hpRegen: unit.hpRegen, // Regeneración de vida
-        mana: unit.mana, // Puntos de maná
-        manaRegen: unit.manaRegen, // Regeneración de maná
-        transportSize: unit.transportSize, // Capacidad de transporte
-        available: unit.available // Disponibilidad inicial
+        id: unit.id,
+        name: unit.name,
+        unitType: unit.unitType,
+        cost: unit.cost,
+        buildTime: unit.buildTime,
+        image: unit.image,
+        gif: unit.gif || '',
+        special: unit.special,
+        attack: unit.attack,
+        weaponType: unit.weaponType,
+        armorType: unit.armorType,
+        armor: unit.armor,
+        hp: unit.hp,
+        hpRegen: unit.hpRegen,
+        mana: unit.mana,
+        manaRegen: unit.manaRegen,
+        transportSize: unit.transportSize,
+        available: unit.available
       });
     });
   });
 
-  return allUnits; // Devuelve todas las unidades
+  return allUnits;
 };
 
-// Función para simular resultados de batalla/recolección
 const simulateBattle = (action: 'attack' | 'gather', targetLevel: number): BattleResultType => {
   const successRate = 0.7 - (targetLevel * 0.05);
   const isSuccess = Math.random() < successRate;
@@ -168,45 +160,29 @@ const simulateBattle = (action: 'attack' | 'gather', targetLevel: number): Battl
   }
 };
 
-// Componente principal RacePage
 const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
-  // Obtiene los datos específicos de la raza actual
   const currentRaceData = raceData[race];
-
-  // Estado para los edificios construidos (imagen y nivel)
-  const [constructions, setConstructions] = useState<Record<string, BuildingData>>(
-    getInitialBuildings(race) // Inicializa con los edificios de la raza
-  );
-
-  // Usar el Store Global de Zustand
+  const [constructions, setConstructions] = useState<Record<string, BuildingData>>(getInitialBuildings(race));
   const { resources, setResources } = useGameStore();
 
-  // Estados para controlar la visibilidad de los paneles
-  const [showTroops, setShowTroops] = useState(false); // Panel de ejército
-  const [showPortal, setShowPortal] = useState(false); // Panel de portal
-  const [showUnits, setShowUnits] = useState(false);   // Panel de formación
-  const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null); // Edificio seleccionado
-
-  // Estado para las unidades disponibles
+  const [showTroops, setShowTroops] = useState(false);
+  const [showPortal, setShowPortal] = useState(false);
+  const [showUnits, setShowUnits] = useState(false);
+  const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [gameUnits, setGameUnits] = useState<UnitProduction[]>(getUnitsFromBuildings());
 
-  // Estados para el portal (ahora en el componente padre)
   const [portalCountdown, setPortalCountdown] = useState<number | null>(null);
   const [portalCurrentTarget, setPortalCurrentTarget] = useState<number | null>(null);
   const [portalBattleResult, setPortalBattleResult] = useState<BattleResultType | null>(null);
   const [portalActiveTab, setPortalActiveTab] = useState<'players' | 'system'>('players');
 
-  // NUEVOS ESTADOS PARA EL SISTEMA DE VIAJES
-  const [travelCount, setTravelCount] = useState(5); // Inicia con 5 viajes
-  const maxTravels = 5; // Máximo de viajes
+  const [travelCount, setTravelCount] = useState(5);
+  const maxTravels = 5;
 
-  // Función que se ejecuta cuando se usa un viaje
   const handleTravelUsed = () => {
     setTravelCount(prev => Math.max(0, prev - 1));
   };
 
-
-  // Efecto para manejar la cuenta regresiva del portal
   useEffect(() => {
     if (portalCountdown === null) return;
 
@@ -214,7 +190,6 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
       if (portalCountdown > 0) {
         setPortalCountdown(portalCountdown - 1);
       } else {
-        // Cuando la cuenta regresiva termina, simular la batalla/recolección
         const target = portalCurrentTarget !== null ?
           (portalActiveTab === 'players'
             ? jsonPlayersData.find(p => p.id === portalCurrentTarget)
@@ -236,56 +211,48 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
     return () => clearTimeout(timer);
   }, [portalCountdown, portalCurrentTarget, portalActiveTab]);
 
-  // Maneja la selección de un edificio
   const handleAddConstruction = (name: string) => {
-    if (constructions[name.toLowerCase()]) { // Verifica si el edificio existe
-      setSelectedBuilding(name); // Establece el edificio como seleccionado
+    if (constructions[name.toLowerCase()]) {
+      setSelectedBuilding(name);
     }
   };
 
-  // Actualiza el nivel de un edificio
   const handleBuildingUpgraded = (buildingName: string, newLevel: number) => {
     setConstructions(prev => ({
-      ...prev, // Mantiene los edificios existentes
-      [buildingName.toLowerCase()]: { // Actualiza el edificio específico
-        ...prev[buildingName.toLowerCase()], // Mantiene la imagen
-        level: newLevel // Actualiza el nivel
+      ...prev,
+      [buildingName.toLowerCase()]: {
+        ...prev[buildingName.toLowerCase()],
+        level: newLevel
       }
     }));
   };
 
-  // Alternar visibilidad del panel de ejército
   const toggleTroopsPanel = () => {
-    setShowTroops(!showTroops); // Cambia el estado de visibilidad
-    setShowPortal(false); // Cierra otros paneles
-    setShowUnits(false); // Cierra otros paneles
-    setSelectedBuilding(null); // Deselecciona edificios
+    setShowTroops(!showTroops);
+    setShowPortal(false);
+    setShowUnits(false);
+    setSelectedBuilding(null);
   };
 
-  // Alternar visibilidad del panel de portal
   const togglePortalPanel = () => {
-    setShowPortal(!showPortal); // Cambia el estado de visibilidad
-    setShowTroops(false); // Cierra otros paneles
-    setShowUnits(false); // Cierra otros paneles
-    setSelectedBuilding(null); // Deselecciona edificios
+    setShowPortal(!showPortal);
+    setShowTroops(false);
+    setShowUnits(false);
+    setSelectedBuilding(null);
   };
 
-  // Alternar visibilidad del panel de formación
   const toggleUnitsPanel = () => {
-    setShowUnits(!showUnits); // Cambia el estado de visibilidad
-    setShowTroops(false); // Cierra otros paneles
-    setShowPortal(false); // Cierra otros paneles
-    setSelectedBuilding(null); // Deselecciona edificios
+    setShowUnits(!showUnits);
+    setShowTroops(false);
+    setShowPortal(false);
+    setSelectedBuilding(null);
   };
 
-  // Manejar inicio de acción en el portal
   const handlePortalActionStart = (targetId: number) => {
     setPortalCurrentTarget(targetId);
-    // En lugar de esperar 60 segundos, vamos directo a la batalla
-    onBattle(); 
+    onBattle();
   };
 
-  // Cerrar resultado del portal
   const handlePortalResultClose = () => {
     setPortalBattleResult(null);
     setPortalCurrentTarget(null);
@@ -294,33 +261,29 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
 
   return (
     <PageContainer>
-      {/* Panel superior de recursos */}
       <ResourcePanel resources={resources} race={race} />
 
-      {/* Botones para abrir/cerrar paneles laterales */}
       <LeftPanelButton onClick={toggleTroopsPanel} $race={race}>
-        {showTroops ? '◄' : '►'} Army {/* Cambia el ícono según el estado */}
+        {showTroops ? '◄' : '►'} Army
       </LeftPanelButton>
 
       <RightPanelButton onClick={togglePortalPanel} $race={race}>
-        {showPortal ? '►' : '◄'} Portal {/* Cambia el ícono según el estado */}
+        {showPortal ? '►' : '◄'} Portal
       </RightPanelButton>
 
       <BottomPanelButton onClick={toggleUnitsPanel} $race={race}>
-        {showUnits ? '▼' : '▲'} Formation {/* Cambia el ícono según el estado */}
+        {showUnits ? '▼' : '▲'} Formation
       </BottomPanelButton>
 
-      {/* Botón para salir al menú principal */}
       <ExitGameButton onClick={onExit} $race={race}>
         ⏏ Salir
       </ExitGameButton>
 
-      {/* Paneles desplegables */}
       <ArmyPanel
-        isOpen={showTroops} // Estado de visibilidad
-        onClose={toggleTroopsPanel} // Función para cerrar
-        race={race} // Raza actual
-        gameUnits={gameUnits} // Unidades disponibles
+        isOpen={showTroops}
+        onClose={toggleTroopsPanel}
+        race={race}
+        gameUnits={gameUnits}
       />
 
       <PortalPanel
@@ -334,7 +297,6 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         onResultClose={handlePortalResultClose}
         activeTab={portalActiveTab}
         onTabChange={setPortalActiveTab}
-        // NUEVAS PROPS PARA EL SISTEMA DE VIAJES
         travelCount={travelCount}
         maxTravels={maxTravels}
         onTravelUsed={handleTravelUsed}
@@ -344,16 +306,13 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         isOpen={showUnits}
         onClose={toggleUnitsPanel}
         race={race}
-        gameUnits={gameUnits} // ← Agrega esta línea
+        gameUnits={gameUnits}
       />
 
-      {/* Contenedor principal con el fondo unificado */}
-      {/* Escenario del mapa que mantiene las proporciones */}
-      <MapWrapper>
+      <MapWrapper $bg={currentRaceData.backgroundImage}>
         <MapStage>
           <BackgroundImage src={currentRaceData.backgroundImage} alt={`${race} city`} />
           <SquaresOverlay>
-            {/* Mapea cada square (cuadrado de construcción) de la raza actual */}
             {currentRaceData.squares.map((square) => (
               <ConstructionSquare
                 key={square.name}
@@ -383,39 +342,46 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         </MapStage>
       </MapWrapper>
 
-      {/* Panel de información del edificio seleccionado */}
       <BuildingInfoPanel
-        buildingId={selectedBuilding} // ID del edificio seleccionado
-        onClose={() => setSelectedBuilding(null)} // Función para cerrar
-        resources={resources} // Recursos actuales
-        setResources={setResources} // Función para actualizar recursos
-        race={race} // Raza actual
+        buildingId={selectedBuilding}
+        onClose={() => setSelectedBuilding(null)}
+        resources={resources}
+        setResources={setResources}
+        race={race}
         buildings={Object.entries(constructions).map(([name, data]) => ({
-          id: name, // ID del edificio
-          level: data.level // Nivel del edificio
+          id: name,
+          level: data.level
         }))}
-        onBuildingUpgraded={handleBuildingUpgraded} // Función para mejorar edificios
-        currentLevel={selectedBuilding ? constructions[selectedBuilding.toLowerCase()]?.level || 1 : 1} // Nivel actual
-        gameUnits={gameUnits} // Unidades disponibles
-        setGameUnits={setGameUnits} // Función para actualizar unidades
+        onBuildingUpgraded={handleBuildingUpgraded}
+        currentLevel={selectedBuilding ? constructions[selectedBuilding.toLowerCase()]?.level || 1 : 1}
+        gameUnits={gameUnits}
+        setGameUnits={setGameUnits}
       />
     </PageContainer>
   );
 };
 
-// Contenedor principal (full viewport)
+/* =========================================================
+   ESTILOS ACTUALIZADOS (UI Mejorada)
+========================================================= */
+
 const PageContainer = styled.div`
-  position: fixed; // Posición fija en la pantalla
-  top: 0; // Desde arriba
-  left: 0; // Desde la izquierda
-  width: 100vw; // Ancho completo del viewport
-  height: 100vh; // Alto completo del viewport
-  overflow: hidden; // Oculta el overflow
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif; /* Tipografía más épica */
 `;
 
+const ambientMotion = keyframes`
+  0% { transform: scale(1.05) translate(0, 0); }
+  50% { transform: scale(1.15) translate(-1%, 1%); }
+  100% { transform: scale(1.05) translate(0, 0); }
+`;
 
-
-const MapWrapper = styled.div`
+const MapWrapper = styled.div<{ $bg: string }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -425,7 +391,23 @@ const MapWrapper = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 0;
-  background: #000;
+  background: #0a0805; /* Fondo más cálido en lugar de negro puro */
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -5%;
+    left: -5%;
+    right: -5%;
+    bottom: -5%;
+    background-image: url(${props => props.$bg});
+    background-size: cover;
+    background-position: center;
+    filter: blur(40px) brightness(0.35) saturate(1.2);
+    z-index: -1;
+    animation: ${ambientMotion} 20s ease-in-out infinite;
+  }
 `;
 
 const MapStage = styled.div`
@@ -433,11 +415,26 @@ const MapStage = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  /* El contenedor debe medir lo mismo que la imagen */
   width: fit-content;
   height: fit-content;
   max-width: 100vw;
   max-height: 100vh;
+  
+  /* MÁSCARA MEJORADA: Degradado radial más orgánico para que las nubes se pierdan en el infinito */
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 95%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 95%);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-shadow: inset 0 0 120px 30px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 1;
+  }
 `;
 
 const BackgroundImage = styled.img`
@@ -460,122 +457,153 @@ const SquaresOverlay = styled.div`
   }
 `;
 
-// Cuadro individual de construcción
+/* EDIFICIOS: Interacción y Sombras mejoradas */
 const ConstructionSquare = styled.div<ConstructionSquareProps>`
-  position: absolute; // Posición absoluta
+  position: absolute;
   width: 15%; 
   height: 15%;
-  /* Eliminamos la rotación de aquí para que el contenedor se estire igual que el fondo */
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   cursor: pointer;
   z-index: 2;
-  border-radius: ${props => props.$race === 'sylvaran' ? '50%' : '0'}; // Redondo para Sylvaran
+  border-radius: ${props => props.$race === 'sylvaran' ? '50%' : '0'};
+  
+  /* Sombra base para asentar el edificio en el terreno */
+  filter: drop-shadow(0px 15px 15px rgba(0,0,0,0.7));
+
+  &:hover {
+    transform: translateY(-8px); /* Efecto de flotación al pasar el ratón */
+    z-index: 10;
+  }
+
+  /* Aplica un brillo al edificio hijo cuando se hace hover */
+  &:hover img {
+    filter: drop-shadow(0 0 15px ${props => raceColors[props.$race].primary}) brightness(1.2) ${props => props.$race === 'mortharim' ? 'sepia(50%) hue-rotate(240deg)' : ''};
+  }
 `;
 
-// Contenido interno del cuadro
 const SquareInner = styled.div`
-  width: 100%; // Ancho completo
-  height: 100%; // Alto completo
-  display: flex; // Flexbox para centrar
-  align-items: center; // Centrado vertical
-  justify-content: center; // Centrado horizontal
-  /* Combinamos las rotaciones aquí: 90 del padre + (-45) del hijo = 45 */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transform: rotate(45deg); 
   position: relative;
 `;
 
-// Símbolo arcano (mostrado cuando no hay edificio)
 const ArcaneSymbol = styled.span<RaceStyledProps>`
-  font-size: 2vw; // Tamaño de fuente relativo
-  color: ${props => raceColors[props.$race].primary}; // Color según la raza
-  text-shadow: ${props => raceColors[props.$race].primary}; // Sombra según la raza
+  font-size: 2vw;
+  color: ${props => raceColors[props.$race].primary};
+  text-shadow: 0 0 10px ${props => raceColors[props.$race].primary};
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0% { opacity: 0.6; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0.6; transform: scale(0.9); }
+  }
 `;
 
-// Imagen del edificio
 const BuildingImage = styled.img<RaceStyledProps>`
-  width: 100%; // Ancho completo
-  height: 100%; // Alto completo
-  object-fit: contain; // Mantiene la proporción
-  transform: rotate(-45deg) scale(1.4); // Compensa rotación y escala
-  filter: ${props => props.$race === 'mortharim' ? 'sepia(50%) hue-rotate(240deg)' : 'none'}; // Filtro para Mortharim
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: rotate(-45deg) scale(1.4);
+  filter: ${props => props.$race === 'mortharim' ? 'sepia(50%) hue-rotate(240deg)' : 'none'};
+  transition: filter 0.3s ease;
 `;
 
-// Estilo base para botones de panel
+/* HUD BOTONES: Estilo Glassmorphism / UI Cima de juego */
 const PanelButtonBase = styled.button<RaceStyledProps>`
-  position: fixed; // Posición fija
-  background: rgba(0, 0, 0, 0.7); // Fondo semitransparente
-  color: ${props => raceColors[props.$race].primary}; // Color según la raza
-  border: 2px solid ${props => raceColors[props.$race].primary}; // Borde según la raza
-  cursor: pointer; // Cursor de pointer
-  z-index: 99; // Por encima de casi todo
-  font-weight: bold; // Texto en negrita
-  font-size: 1.2rem; // Tamaño de fuente
-  transition: all 0.3s ease; // Transición suave
+  position: fixed;
+  background: rgba(15, 15, 20, 0.6); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  color: ${props => raceColors[props.$race].primary};
+  border: 1px solid rgba(255, 255, 255, 0.1); 
+  border-bottom: 2px solid ${props => raceColors[props.$race].primary};
+  
+  cursor: pointer;
+  z-index: 99;
+  font-weight: 700;
+  font-size: 1.1rem;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   
   &:hover {
-    background: rgba(50, 50, 50, 0.8); // Fondo más claro al hover
+    background: rgba(30, 30, 40, 0.8);
+    box-shadow: 0 0 20px ${props => raceColors[props.$race].primary}40;
+    text-shadow: 0 0 8px ${props => raceColors[props.$race].primary};
   }
 `;
 
-// Botón del panel izquierdo (ejército)
 const LeftPanelButton = styled(PanelButtonBase)`
-  left: 0; // A la izquierda
-  top: 5%; // 5% desde arriba
-  transform: translateY(-50%); // Centrado vertical
-  border-left: none; // Sin borde izquierdo
-  border-radius: 0 10px 10px 0; // Bordes redondeados a la derecha
-  padding: 15px 5px; // Espaciado interno
+  left: 0;
+  top: 5%;
+  transform: translateY(-50%);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
   
   &:hover {
-    padding-left: 10px; // Efecto de expansión al hover
+    padding-left: 20px; 
   }
 `;
 
-// Botón del panel derecho (portal)
 const RightPanelButton = styled(PanelButtonBase)`
-  right: 0; // A la derecha
-  top: 5%; // 5% desde arriba
-  transform: translateY(-50%); // Centrado vertical
-  border-right: none; // Sin borde derecho
-  border-radius: 10px 0 0 10px; // Bordes redondeados a la izquierda
-  padding: 15px 5px; // Espaciado interno
+  right: 0;
+  top: 5%;
+  transform: translateY(-50%);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 12px 16px;
   
   &:hover {
-    padding-right: 10px; // Efecto de expansión al hover
+    padding-right: 20px;
   }
 `;
 
-// Botón del panel inferior (formación)
 const BottomPanelButton = styled(PanelButtonBase)`
-  bottom: 1%; // 1% desde abajo
-  left: 50%; // Centrado horizontal
-  transform: translateX(-50%); // Compensación para centrar
-  border-bottom: none; // Sin borde inferior
-  border-radius: 10px 10px 0 0; // Bordes redondeados arriba
-  padding: 10px 20px; // Espaciado interno
+  bottom: 1%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom: none;
+  border-top: 2px solid ${props => raceColors[props.$race].primary};
+  border-radius: 8px 8px 0 0;
+  padding: 12px 24px;
   
   &:hover {
-    padding-bottom: 15px; // Efecto de expansión al hover
+    padding-bottom: 18px;
+    transform: translateX(-50%) translateY(-2px);
   }
 `;
 
-// Botón para salir al menú principal
+/* Botón de Salir - Estilo de Peligro / Advertencia */
 const ExitGameButton = styled(PanelButtonBase)`
   bottom: 20px;
   left: 20px;
   border-radius: 8px;
-  padding: 8px 16px;
-  background: rgba(180, 20, 20, 0.7);
-  border-color: #ff4444;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(40, 10, 10, 0.6); 
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-left: 3px solid #ff4444; 
+  color: #ffcccc;
+  border-bottom: 1px solid rgba(255, 68, 68, 0.3); /* Sobrescribe la línea de raza */
   
   &:hover {
-    background: rgba(220, 30, 30, 0.9);
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+    background: rgba(80, 20, 20, 0.8);
+    border-color: #ff4444;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+    text-shadow: 0 0 8px #ff4444;
   }
 `;
 
