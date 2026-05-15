@@ -373,6 +373,15 @@ const PageContainer = styled.div`
   height: 100vh;
   overflow: hidden;
   font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif; /* Tipografía más épica */
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.9) 100%);
+    pointer-events: none;
+    z-index: 5; /* Por encima del mapa, por debajo de la UI */
+  }
 `;
 
 const ambientMotion = keyframes`
@@ -420,9 +429,9 @@ const MapStage = styled.div`
   max-width: 100vw;
   max-height: 100vh;
   
-  /* MÁSCARA MEJORADA: Degradado radial más orgánico para que las nubes se pierdan en el infinito */
-  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 95%);
-  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 95%);
+  /* MÁSCARA MEJORADA: Degradado radial mucho más agresivo para difuminar las esquinas y bordes rectos */
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0.8) 65%, rgba(0,0,0,0) 85%);
+  -webkit-mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0.8) 65%, rgba(0,0,0,0) 85%);
 
   &::after {
     content: '';
@@ -431,7 +440,7 @@ const MapStage = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    box-shadow: inset 0 0 120px 30px rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 150px 60px rgba(0, 0, 0, 0.8), inset 0 0 300px rgba(0,0,0,0.4);
     pointer-events: none;
     z-index: 1;
   }
@@ -528,9 +537,10 @@ const PanelButtonBase = styled.button<RaceStyledProps>`
   z-index: 99;
   font-weight: 700;
   font-size: 1.1rem;
-  font-family: inherit;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+  font-family: 'Almendra', 'Cinzel', serif;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  font-size: 1.25rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
