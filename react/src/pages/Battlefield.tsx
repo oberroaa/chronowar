@@ -1,578 +1,1172 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState, useEffect, useMemo,
+  useCallback, useRef
+} from 'react';
 import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
 import { raceColors } from '../types/raceColors';
 import { savedFormations, buildingsData } from '../types/jsonResponse';
 
+/* ══════════════════════════════════════════════════════════════
+   TYPES
+══════════════════════════════════════════════════════════════ */
 type Race = 'valdari' | 'gorkar' | 'sylvaran' | 'mortharim';
+type GamePhase = 'playerTurn' | 'processing' | 'enemyThinking' | 'enemyTurn' | 'victory' | 'defeat';
+type FloatKind = 'dmg' | 'heal' | 'crit' | 'combo' | 'skill';
+type Side = 'player' | 'enemy';
 
 interface Gem {
   id: string;
   type: Race;
+  special: 'none' | 'power' | 'lightning';
   isMatched?: boolean;
   isFalling?: boolean;
 }
-
-interface BattlefieldProps {
-  race: Race;
-  onExit: () => void;
+interface Unit {
+  name: string;
+  img: string;
+  hp: number;
+  maxHp: number;
+  mana: number;
+  maxMana: number;
+  attack: number;
+  defense: number;
+  isDead: boolean;
+  isAttacking: boolean;
+  isHit: boolean;
+  isSkillReady: boolean;
+  skillName: string;
+  skillDesc: string;
 }
+interface FloatNum { id: string; text: string; x: number; y: number; kind: FloatKind; }
+interface MatchGroup { indices: number[]; type: Race; centerIdx: number; length: number; }
+interface CascadeResult { gems: Gem[]; enemies: Unit[]; heroes: Unit[]; ended: boolean; }
+interface SkillResult { E: Unit[]; H: Unit[]; ended: boolean; }
+interface BattlefieldProps { race: Race; onExit: () => void; }
 
-const raceBackgrounds: Record<string, string> = {
-  valdari: '/images/battlefields/download.png',
-  gorkar: '/images/battlefields/download.png',
-  sylvaran: '/images/battlefields/download.png',
-  mortharim: '/images/battlefields/download.png'
+/* ══════════════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════════════ */
+const SLEEP = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+const RACES: Race[] = ['valdari', 'gorkar', 'sylvaran', 'mortharim'];
+
+const GEM_FX: Record<Race, { dmg: number; manaGain: number; heal: number }> = {
+  valdari: { dmg: 20, manaGain: 10, heal: 0 },
+  gorkar: { dmg: 35, manaGain: 5, heal: 0 },
+  sylvaran: { dmg: 0, manaGain: 15, heal: 25 },
+  mortharim: { dmg: 25, manaGain: 20, heal: 0 },
 };
 
-// --- ANIMATION KEYFRAMES ---
+const AI_PREF: Record<Race, number> = {
+  gorkar: 3.5,
+  sylvaran: 2.8,
+  mortharim: 2.3,
+  valdari: 1.6,
+};
+
+// ← Each enemy now has mana cap + full skill definition
+const ENEMY_DEFS = [
+  {
+    name: 'Berserker', img: '/images/GorKar/units/Berserker.png',
+    maxHp: 300, atk: 24, def: 5, maxMana: 90,
+    skillName: 'Furia Berserker',
+    skillDesc: 'Golpea 2 héroes aleatorios con 1.5× daño',
+  },
+  {
+    name: 'Machacador', img: '/images/GorKar/units/Machacador.png',
+    maxHp: 250, atk: 28, def: 3, maxMana: 100,
+    skillName: 'Aplastamiento',
+    skillDesc: '90 de daño al héroe con más HP',
+  },
+  {
+    name: 'JEFE', img: '/images/GorKar/units/Jinete.png',
+    maxHp: 600, atk: 45, def: 15, maxMana: 120,
+    skillName: 'Grito de Guerra',
+    skillDesc: '40 de daño a TODOS los héroes',
+  },
+  {
+    name: 'Chamán', img: '/images/GorKar/units/Chaman.png',
+    maxHp: 200, atk: 18, def: 8, maxMana: 80,
+    skillName: 'Curación Tribal',
+    skillDesc: 'Cura 60 HP a todos los enemigos vivos',
+  },
+  {
+    name: 'Raider', img: '/images/GorKar/units/Raider.png',
+    maxHp: 180, atk: 32, def: 2, maxMana: 100,
+    skillName: 'Emboscada',
+    skillDesc: '3 golpes de 25 daño a héroes aleatorios',
+  },
+];
+
+const HERO_SKILLS = [
+  { skillName: 'Golpe Crítico', skillDesc: '3× daño al enemigo con menos HP' },
+  { skillName: 'Escudo Divino', skillDesc: 'Cura 80 HP a todos los aliados' },
+  { skillName: 'Devastación', skillDesc: '60 daño a TODOS los enemigos' },
+  { skillName: 'Lluvia de Flechas', skillDesc: '45 daño a 3 enemigos aleatorios' },
+  { skillName: 'Sanación Mayor', skillDesc: 'Restaura 120 HP al aliado más herido' },
+];
+const HERO_DEFS = [
+  { maxHp: 280, atk: 22, def: 8 },
+  { maxHp: 320, atk: 18, def: 15 },
+  { maxHp: 420, atk: 35, def: 10 },
+  { maxHp: 260, atk: 28, def: 6 },
+  { maxHp: 240, atk: 15, def: 5 },
+];
+const BG: Record<Race, string> = {
+  valdari: '/images/battlefields/download.png', gorkar: '/images/battlefields/download.png',
+  sylvaran: '/images/battlefields/download.png', mortharim: '/images/battlefields/download.png',
+};
+
+/* ══════════════════════════════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════════════════════════════ */
 const gemPulse = keyframes`
-  0%, 100% { filter: brightness(1) drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
-  50% { filter: brightness(1.3) drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
+  0%,100%{ filter:brightness(1) drop-shadow(0 0 2px rgba(255,255,255,.2)); }
+  50%    { filter:brightness(1.3) drop-shadow(0 0 8px rgba(255,255,255,.6)); }
+`;
+const powerPulse = keyframes`
+  0%,100%{ box-shadow:0 0 8px  #ff8800,inset 0 0 5px  rgba(255,136,0,.5); }
+  50%    { box-shadow:0 0 22px #ff8800,inset 0 0 14px rgba(255,136,0,.9); }
+`;
+const lightPulse = keyframes`
+  0%,100%{ box-shadow:0 0 8px  #fff,inset 0 0 5px  rgba(255,255,255,.5); }
+  50%    { box-shadow:0 0 26px #fff,inset 0 0 16px rgba(255,255,255,.95); }
+`;
+const enemySelect = keyframes`
+  0%,100%{
+    box-shadow:0 0 12px #f44,0 0 28px rgba(255,0,0,.6),inset 0 0 10px rgba(255,50,50,.7);
+    border-color:#ff5555; transform:scale(1.1);
+  }
+  50%{
+    box-shadow:0 0 26px #f44,0 0 55px rgba(255,0,0,.9),inset 0 0 20px rgba(255,80,80,.95);
+    border-color:#ffaaaa; transform:scale(1.18);
+  }
+`;
+const gemFall = keyframes`from{transform:translateY(-120%);opacity:0;}to{transform:translateY(0);opacity:1;}`;
+const matchPop = keyframes`0%{transform:scale(1) rotate(0);opacity:1;}50%{transform:scale(1.5) rotate(90deg);opacity:.7;}100%{transform:scale(0) rotate(180deg);opacity:0;}`;
+const floatUp = keyframes`0%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}40%{opacity:1;transform:translateX(-50%) translateY(-32px) scale(1.25);}100%{opacity:0;transform:translateX(-50%) translateY(-75px) scale(.8);}`;
+const hitFlash = keyframes`0%,100%{filter:brightness(1);}25%{filter:brightness(5) saturate(0);}60%{filter:brightness(2.5);}`;
+const attackBounce = keyframes`0%{transform:translateY(0) scale(1.05);}35%{transform:translateY(-20px) scale(1.12);}65%{transform:translateY(12px) scale(.96);}100%{transform:translateY(0) scale(1.05);}`;
+const screenShake = keyframes`0%,100%{transform:translate(0,0);}15%{transform:translate(-8px,3px);}30%{transform:translate(8px,-3px);}50%{transform:translate(-6px,6px);}70%{transform:translate(6px,-6px);}85%{transform:translate(-3px,2px);}`;
+const slideDown = keyframes`from{transform:translateY(-70px);opacity:0;}to{transform:translateY(0);opacity:1;}`;
+const slideUp = keyframes`from{transform:translateY(70px);opacity:0;}to{transform:translateY(0);opacity:1;}`;
+const victoryGlow = keyframes`0%,100%{text-shadow:0 0 20px #ffd700,0 0 50px #ffd700;}50%{text-shadow:0 0 50px #fff,0 0 100px #ffd700;}`;
+const defeatGlow = keyframes`0%,100%{text-shadow:0 0 20px #f00,0 0 50px #f00;}50%{text-shadow:0 0 50px #fff,0 0 100px #f00;}`;
+// ← Gold glow for hero skills
+const heroSkillAnim = keyframes`
+  0%,100%{box-shadow:0 0 10px #ffd700,inset 0 0 10px rgba(255,215,0,.3);border-color:#ffd700;}
+  50%    {box-shadow:0 0 28px #ffd700,inset 0 0 22px rgba(255,215,0,.7);border-color:#fff;}
+`;
+// ← Red glow for enemy skills
+const enemySkillAnim = keyframes`
+  0%,100%{box-shadow:0 0 10px #f44,inset 0 0 10px rgba(255,68,68,.3);border-color:#f44;}
+  50%    {box-shadow:0 0 28px #f44,inset 0 0 22px rgba(255,68,68,.7);border-color:#faa;}
+`;
+const popIn = keyframes`0%{opacity:0;transform:translateX(-50%) scale(.4);}70%{transform:translateX(-50%) scale(1.2);}100%{opacity:1;transform:translateX(-50%) scale(1);}`;
+const overlayIn = keyframes`from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}`;
+const thinkBlink = keyframes`0%,100%{opacity:.35;}50%{opacity:1;}`;
+// ← Brief flash when a skill fires
+const skillCastFlash = keyframes`
+  0%  {box-shadow:0 0 0   rgba(255,255,255,0);}
+  30% {box-shadow:0 0 60px rgba(255,255,255,.9),inset 0 0 30px rgba(255,255,255,.6);}
+  100%{box-shadow:0 0 0   rgba(255,255,255,0);}
 `;
 
-const slideDown = keyframes`
-  from { transform: translateY(-40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-`;
-
-const slideUp = keyframes`
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-`;
-
-const gemFall = keyframes`
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-`;
-
-// --- GLOBAL STYLES ---
+/* ══════════════════════════════════════════════════════════════
+   GLOBAL STYLES
+══════════════════════════════════════════════════════════════ */
 const GlobalStyle = createGlobalStyle`
-  * { box-sizing: border-box; }
-  html, body, #root {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #050510;
+  *{box-sizing:border-box;}
+  html,body,#root{
+    margin:0;padding:0;width:100%;height:100%;
+    overflow:hidden;background:#050510;
+    font-family:'Cinzel Decorative','Palatino Linotype',serif;
   }
 `;
 
-// --- STYLED COMPONENTS ---
-const BattlefieldContainer = styled.div<{ $race: Race }>`
-  width: 100vw;
-  height: 100vh;
-  background: ${props => `url(${raceBackgrounds[props.$race]})`};
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    /* Viñeta oscura para enfocar la acción en el centro */
-    background: radial-gradient(circle at center, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.85) 100%);
-    backdrop-filter: blur(2px);
-    z-index: 0;
+/* ══════════════════════════════════════════════════════════════
+   STYLED COMPONENTS — LAYOUT
+══════════════════════════════════════════════════════════════ */
+const BattlefieldWrap = styled.div<{ $race: Race; $shaking: boolean }>`
+  width:100vw;height:100vh;
+  background:url(${p => BG[p.$race]}) center/cover no-repeat;
+  display:flex;flex-direction:column;justify-content:center;
+  overflow:hidden;position:relative;
+  ${p => p.$shaking && css`animation:${screenShake} .5s cubic-bezier(.36,.07,.19,.97);`}
+  &::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at center,rgba(0,0,0,.08) 20%,rgba(0,0,0,.86) 100%);
+    backdrop-filter:blur(2px);z-index:0;
   }
 `;
-
 const BattleContent = styled.div`
-  width: 100%;
-  max-width: 500px; /* Tamaño ideal para un match 3 vertical */
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px; /* Más aire entre el tablero y las cartas */
-  z-index: 10;
-  position: relative;
+  width:100%;max-width:500px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;
+  gap:14px;z-index:10;position:relative;
 `;
 
+/* ══════════════════════════════════════════════════════════════
+   STYLED COMPONENTS — HUD
+══════════════════════════════════════════════════════════════ */
+const HUDBar = styled.div`
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:12px;z-index:200;
+`;
+const TurnTag = styled.div<{ $enemy: boolean }>`
+  background:linear-gradient(180deg,rgba(20,20,30,.96),rgba(0,0,0,.96));
+  padding:7px 24px;border-radius:4px;
+  border-top:2px solid    ${p => p.$enemy ? '#f44' : '#ffd700'};
+  border-bottom:2px solid ${p => p.$enemy ? '#f44' : '#ffd700'};
+  border-left:1px solid   ${p => p.$enemy ? 'rgba(255,68,68,.4)' : 'rgba(255,215,0,.4)'};
+  border-right:1px solid  ${p => p.$enemy ? 'rgba(255,68,68,.4)' : 'rgba(255,215,0,.4)'};
+  color:${p => p.$enemy ? '#f77' : '#ffd700'};
+  font-weight:900;font-size:.82rem;letter-spacing:3px;text-transform:uppercase;
+  box-shadow:0 8px 20px rgba(0,0,0,.8),inset 0 0 12px rgba(0,0,0,.4);
+  text-shadow:0 2px 4px rgba(0,0,0,1);white-space:nowrap;
+`;
+const ThinkingTag = styled.div`
+  background:linear-gradient(180deg,rgba(35,5,5,.97),rgba(0,0,0,.97));
+  padding:7px 24px;border-radius:4px;
+  border:2px solid #f44;color:#f99;
+  font-weight:900;font-size:.82rem;letter-spacing:3px;text-transform:uppercase;
+  animation:${thinkBlink} .75s ease-in-out infinite;white-space:nowrap;
+`;
+const ComboTag = styled.div<{ $enemy: boolean }>`
+  background:${p => p.$enemy
+    ? 'linear-gradient(to right,#cc2222,#ff4444)'
+    : 'linear-gradient(to right,#ff8800,#ffcc00)'};
+  color:${p => p.$enemy ? '#fff' : '#000'};
+  padding:6px 18px;border-radius:20px;
+  font-weight:900;font-size:.9rem;letter-spacing:2px;
+  box-shadow:0 0 20px ${p => p.$enemy ? 'rgba(255,50,50,.8)' : 'rgba(255,180,0,.8)'};
+  animation:${popIn} .3s ease-out;white-space:nowrap;
+`;
+const ExitBtn = styled.button`
+  position:absolute;top:20px;left:20px;
+  background:linear-gradient(to bottom,#444,#111);
+  color:#ddd;border:2px solid #555;padding:8px 20px;border-radius:4px;
+  cursor:pointer;z-index:300;font-weight:bold;
+  box-shadow:0 4px 6px rgba(0,0,0,.6);transition:all .2s;
+  &:hover{background:linear-gradient(to bottom,#f55,#a00);border-color:#faa;color:#fff;box-shadow:0 0 16px rgba(255,0,0,.5);}
+`;
+
+/* ══════════════════════════════════════════════════════════════
+   STYLED COMPONENTS — UNIT CARDS
+══════════════════════════════════════════════════════════════ */
 const UnitRow = styled.div<{ $side: 'top' | 'bottom' }>`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 10px;
-  z-index: 10;
-  animation: ${props => props.$side === 'top' ? slideDown : slideUp} 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  width:100%;display:flex;justify-content:space-between;padding:0 10px;
+  animation:${p => p.$side === 'top' ? slideDown : slideUp} .8s cubic-bezier(.2,.9,.3,1.3);
 `;
 
-const UnitCard = styled.div<{ $race: Race; $isEnemy: boolean; $isHero?: boolean }>`
-  width: ${props => props.$isHero ? '19%' : '18%'};
-  aspect-ratio: 3.5/5;
-  background: #111;
-  /* Marco dorado para héroes, metálico oscuro para el resto */
-  border: ${props => props.$isHero ? '2px solid #ffd700' : '2px solid #4a4a5a'};
-  border-radius: 8px;
-  position: relative;
-  overflow: visible;
-  /* Sombra agresiva para que resalte del tablero */
-  box-shadow: ${props => props.$isHero
-    ? '0 8px 25px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.2)'
-    : '0 8px 20px rgba(0,0,0,0.8)'};
-  transition: all 0.2s ease-out;
-  cursor: pointer;
-  z-index: ${props => props.$isHero ? 2 : 1};
-  transform: ${props => props.$isHero ? 'scale(1.05)' : 'scale(1)'}; /* Héroe un poco más grande */
+// ← $isEnemyUnit controls which colour the skill-ready glow uses
+const UnitCard = styled.div<{
+  $race: Race; $isHero: boolean; $isDead: boolean;
+  $attacking: boolean; $hit: boolean; $skillReady: boolean;
+  $isEnemyUnit: boolean; $casting: boolean;
+}>`
+  width:${p => p.$isHero ? '19%' : '18%'};aspect-ratio:3.5/5;
+  background:#111;
+  border:2px solid ${p =>
+    p.$skillReady && !p.$isDead
+      ? (p.$isEnemyUnit ? '#f44' : '#ffd700')
+      : p.$isHero ? '#ffd700' : '#4a4a5a'
+  };
+  border-radius:8px;position:relative;overflow:visible;
+  box-shadow:${p => p.$isHero
+    ? '0 8px 25px rgba(255,215,0,.3),inset 0 0 10px rgba(255,215,0,.2)'
+    : '0 8px 20px rgba(0,0,0,.8)'};
+  cursor:pointer;transition:opacity .3s,filter .3s;
+  z-index:${p => p.$isHero ? 2 : 1};
+  transform:${p => p.$isHero ? 'scale(1.05)' : 'scale(1)'};
+  opacity:${p => p.$isDead ? .22 : 1};
+  filter:${p => p.$isDead ? 'grayscale(1)' : 'none'};
 
-  &:hover {
-    border-color: #fff;
-    transform: translateY(-5px) scale(${props => props.$isHero ? '1.1' : '1.05'});
-    box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 15px ${props => raceColors[props.$race].accent};
+  ${p => p.$attacking && css`animation:${attackBounce}   .52s ease-in-out;`}
+  ${p => p.$hit && css`animation:${hitFlash}       .42s ease-out;`}
+  ${p => p.$casting && css`animation:${skillCastFlash} .6s  ease-out;`}
+  ${p => p.$skillReady && !p.$isDead && !p.$attacking && !p.$hit && !p.$casting && css`
+    animation:${p.$isEnemyUnit ? enemySkillAnim : heroSkillAnim} 1.6s ease-in-out infinite;
+  `}
+
+  &:hover{
+    ${p => !p.$isDead && css`
+      border-color:#fff;
+      transform:translateY(-5px) scale(${p.$isHero ? 1.1 : 1.05});
+      box-shadow:0 12px 30px rgba(0,0,0,.9),
+        0 0 15px ${(raceColors as any)[p.$race]?.accent || '#fff'};
+    `}
   }
 `;
-
-const UnitImageContainer = styled.div`
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  /* Efecto Viñeta Interna (oscurece bordes de la foto) */
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
-    pointer-events: none;
+const UnitImgWrap = styled.div`
+  width:100%;height:100%;border-radius:6px;overflow:hidden;position:relative;
+  img{width:100%;height:100%;object-fit:cover;display:block;}
+  &::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 22px rgba(0,0,0,.92);pointer-events:none;}
+`;
+const DeadMask = styled.div`
+  position:absolute;inset:0;background:rgba(0,0,0,.6);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:1.8rem;z-index:5;
+`;
+const HPBar = styled.div<{ $pct: number; $clr: string; $pos: 'top' | 'bot' }>`
+  position:absolute;${p => p.$pos === 'top' ? 'top:-6px;' : 'bottom:-6px;'}
+  left:5%;width:90%;height:6px;
+  background:#000;border:1px solid #222;border-radius:3px;z-index:10;overflow:hidden;
+  &::after{
+    content:'';position:absolute;left:0;top:0;bottom:0;
+    width:${p => Math.max(0, Math.min(100, p.$pct))}%;
+    background:linear-gradient(90deg,${p => p.$clr},rgba(255,255,255,.65));
+    box-shadow:0 0 6px ${p => p.$clr};border-radius:2px;transition:width .4s ease-out;
   }
 `;
-
-const StatusBar = styled.div<{ $color: string; $width: number; $position: 'top' | 'bottom' }>`
-  position: absolute;
-  ${props => props.$position === 'top' ? 'top: -6px;' : 'bottom: -6px;'}
-  left: 5%;
-  width: 90%;
-  height: 6px;
-  background: #000;
-  border: 1px solid #333;
-  border-radius: 3px;
-  z-index: 10;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.8);
-  
-  &::after {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: ${props => props.$width}%;
-    background: linear-gradient(90deg, ${props => props.$color}, #fff); /* Destello en la barra */
-    box-shadow: 0 0 5px ${props => props.$color};
-    border-radius: 2px;
-  }
+const BossLabel = styled.div`
+  position:absolute;top:-17px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(to bottom,#ff7777,#cc0000,#880000);
+  border:1px solid #ff8888;color:#fff;padding:2px 10px;border-radius:12px;
+  font-size:.62rem;font-weight:900;text-transform:uppercase;z-index:20;
+  box-shadow:0 4px 10px rgba(0,0,0,.85);white-space:nowrap;
+`;
+// Gold badge for hero skills
+const HeroSkillBadge = styled.div`
+  position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(to bottom,#ffd700,#ff8800);
+  border:1px solid rgba(255,255,255,.8);color:#000;
+  padding:1px 9px;border-radius:10px;
+  font-size:.54rem;font-weight:900;text-transform:uppercase;z-index:20;
+  box-shadow:0 0 10px rgba(255,215,0,.9);white-space:nowrap;
+  animation:${popIn} .35s ease-out;
+`;
+// Red badge for enemy skills
+const EnemySkillBadge = styled.div`
+  position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(to bottom,#ff5555,#aa0000);
+  border:1px solid rgba(255,200,200,.8);color:#fff;
+  padding:1px 9px;border-radius:10px;
+  font-size:.52rem;font-weight:900;text-transform:uppercase;z-index:20;
+  box-shadow:0 0 12px rgba(255,68,68,.95);white-space:nowrap;
+  animation:${popIn} .35s ease-out;
+`;
+// Tooltip for hero skills (gold)
+const HeroTip = styled.div`
+  position:absolute;bottom:calc(100% + 14px);left:50%;transform:translateX(-50%);
+  background:rgba(5,5,18,.97);border:1px solid #ffd700;border-radius:7px;
+  padding:7px 12px;font-size:.6rem;color:#ffd700;white-space:nowrap;
+  z-index:400;box-shadow:0 6px 18px rgba(0,0,0,.9);line-height:1.6;
+  &::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:#ffd700;}
+`;
+// Tooltip for enemy skills (red)
+const EnemyTip = styled.div`
+  position:absolute;bottom:calc(100% + 14px);left:50%;transform:translateX(-50%);
+  background:rgba(18,4,4,.97);border:1px solid #f44;border-radius:7px;
+  padding:7px 12px;font-size:.6rem;color:#f99;white-space:nowrap;
+  z-index:400;box-shadow:0 6px 18px rgba(0,0,0,.9);line-height:1.6;
+  &::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:#f44;}
 `;
 
-const HeroLabel = styled.div`
-  position: absolute;
-  top: -16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(to bottom, #fff8cc, #ffd700, #b8860b);
-  border: 1px solid #fff;
-  color: #331100;
-  padding: 2px 14px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  z-index: 20;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.8);
-  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-  white-space: nowrap;
+/* ══════════════════════════════════════════════════════════════
+   STYLED COMPONENTS — BOARD
+══════════════════════════════════════════════════════════════ */
+const BoardWrap = styled.div`width:100%;display:flex;justify-content:center;padding:0 10px;`;
+const BoardFrame = styled.div`
+  width:100%;aspect-ratio:1/1.05;padding:10px;
+  background:rgba(10,15,25,.86);border-radius:12px;
+  border:3px solid #3a3a4a;border-top-color:#5a5a6a;border-bottom-color:#1a1a2a;
+  box-shadow:0 15px 35px rgba(0,0,0,.92),inset 0 0 40px rgba(0,0,0,1);
+  backdrop-filter:blur(10px);
 `;
-
-// --- HUD STYLES ---
-/*
-201: const BattleHUD = styled.div`
-202:   position: absolute;
-203:   top: 20px;
-204:   left: 50%;
-205:   transform: translateX(-50%);
-206:   background: linear-gradient(180deg, rgba(20,20,30,0.9), rgba(0,0,0,0.9));
-207:   padding: 10px 40px;
-208:   border-radius: 4px;
-209:   border-top: 2px solid #ffd700;
-210:   border-bottom: 2px solid #ffd700;
-211:   border-left: 1px solid rgba(255, 215, 0, 0.5);
-212:   border-right: 1px solid rgba(255, 215, 0, 0.5);
-213:   color: #ffd700;
-214:   font-weight: 900;
-215:   font-size: 1.1rem;
-216:   text-transform: uppercase;
-217:   letter-spacing: 3px;
-218:   z-index: 100;
-219:   box-shadow: 0 10px 20px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,215,0,0.1);
-220:   text-shadow: 0 2px 4px rgba(0,0,0,1);
-221: `;
-*/
-
-const ExitButton = styled.button`
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: linear-gradient(to bottom, #444, #111);
-  color: #ddd;
-  border: 2px solid #555;
-  padding: 8px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  z-index: 110;
-  font-weight: bold;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.6);
-  transition: all 0.2s;
-  
-  &:hover {
-    background: linear-gradient(to bottom, #ff5555, #aa0000);
-    border-color: #ffaaaa;
-    color: #fff;
-    box-shadow: 0 0 15px rgba(255,0,0,0.5);
-  }
-`;
-
-// --- BOARD STYLES ---
-const BoardSection = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0 10px;
-`;
-
-const BoardOuterFrame = styled.div`
-  width: 100%;
-  aspect-ratio: 1 / 1.05; /* Un poco mas alto que ancho para que las gemas tengan espacio */
-  padding: 10px;
-  /* Fondo estilo tablero mágico / piedra tallada */
-  background: rgba(10, 15, 25, 0.85); 
-  border-radius: 12px;
-  border: 3px solid #3a3a4a;
-  border-top-color: #5a5a6a;
-  border-bottom-color: #1a1a2a;
-  box-shadow: 
-    0 15px 35px rgba(0,0,0,0.9), 
-    inset 0 0 40px rgba(0,0,0,1);
-  backdrop-filter: blur(10px);
-`;
-
 const GemGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
-  gap: 5px; /* Más espacio entre gemas */
-  width: 100%;
-  height: 100%;
-  padding: 4px;
-  background: rgba(0,0,0,0.4); /* Foso oscuro para las gemas */
-  border-radius: 8px;
-  box-shadow: inset 0 5px 15px rgba(0,0,0,0.8);
+  display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+  gap:5px;width:100%;height:100%;padding:4px;
+  background:rgba(0,0,0,.42);border-radius:8px;box-shadow:inset 0 5px 15px rgba(0,0,0,.85);
 `;
-
-const GemItem = styled.div<{ $race: Race; $isSelected?: boolean; $isMatched?: boolean; $isFalling?: boolean }>`
-  width: 100%;
-  height: 100%;
-  border-radius: 50%; /* Convertimos en orbe circular */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: clamp(1rem, 2.5vw, 1.8rem);
-  cursor: pointer;
-  position: relative;
-  
-  /* ESTILO 3D (Reflejo superior y sombra inferior) */
-  background: radial-gradient(
-    circle at 35% 30%, 
-    rgba(255, 255, 255, 0.4) 0%, 
-    ${props => raceColors[props.$race].background || '#000'} 40%, 
+const GemEl = styled.div<{
+  $race: Race; $special: 'none' | 'power' | 'lightning';
+  $sel: boolean; $matched: boolean; $falling: boolean; $enemyTarget: boolean;
+}>`
+  width:100%;height:100%;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(.75rem,2.1vw,1.5rem);cursor:pointer;position:relative;
+  background:radial-gradient(
+    circle at 35% 30%,
+    rgba(255,255,255,.42) 0%,
+    ${p => (raceColors as any)[p.$race]?.background || '#111'} 40%,
     #000 100%
   );
-  box-shadow: 
-    inset 0 -4px 6px rgba(0,0,0,0.7), /* Sombra abajo */
-    inset 0 2px 4px rgba(255,255,255,0.4), /* Luz arriba */
-    0 3px 5px rgba(0,0,0,0.5); /* Sombra de caída */
-  
-  border: 1px solid ${props => raceColors[props.$race].accent}66;
-  
-  animation: ${gemPulse} 3s infinite alternate ease-in-out;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
-  ${props => props.$isSelected && css`
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-    box-shadow: 0 0 20px #fff, inset 0 0 10px #fff;
-    z-index: 5;
-    transform: scale(1.15);
-  `}
-
-  ${props => props.$isMatched && css`
-    opacity: 0;
-    transform: scale(0) rotate(180deg);
-    transition: all 0.3s ease-in;
-  `}
-
-  ${props => props.$isFalling && css`
-    animation: ${gemFall} 0.4s cubic-bezier(0.175, 0.885, 0.32, 1) forwards;
-  `}
-
-  &:hover {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 
-      0 5px 15px ${props => raceColors[props.$race].accent},
-      inset 0 -4px 6px rgba(0,0,0,0.5), 
-      inset 0 4px 8px rgba(255,255,255,0.6);
+  box-shadow:inset 0 -4px 7px rgba(0,0,0,.72),inset 0 2px 4px rgba(255,255,255,.42),0 3px 5px rgba(0,0,0,.55);
+  border:${p =>
+    p.$special === 'power' ? '2px solid #ff8800' :
+      p.$special === 'lightning' ? '2px solid #ffffff' :
+        `1px solid ${(raceColors as any)[p.$race]?.accent || '#fff'}55`};
+  transition:transform .18s cubic-bezier(.175,.885,.32,1.275);
+  animation:${p =>
+    p.$enemyTarget ? css`${enemySelect}  .65s ease-in-out infinite` :
+      p.$special === 'power' ? css`${powerPulse}   1s   infinite alternate` :
+        p.$special === 'lightning' ? css`${lightPulse}   .8s  infinite alternate` :
+          css`${gemPulse} 3s infinite alternate ease-in-out`
+  };
+  ${p => p.$sel && css`outline:2.5px solid #fff;outline-offset:2px;box-shadow:0 0 22px #fff,inset 0 0 12px #fff;z-index:5;transform:scale(1.18);`}
+  ${p => p.$matched && css`animation:${matchPop} .38s ease-in forwards;`}
+  ${p => p.$falling && css`animation:${gemFall}  .42s cubic-bezier(.175,.885,.32,1) forwards;`}
+  &:hover{
+    transform:scale(1.12) translateY(-2px);
+    box-shadow:0 5px 18px ${p => (raceColors as any)[p.$race]?.accent || '#fff'},
+      inset 0 -4px 7px rgba(0,0,0,.5),inset 0 4px 9px rgba(255,255,255,.65);
   }
-
-  &::before {
-    content: '${props => raceColors[props.$race].icon}';
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); /* Mejora la lectura del icono */
+  &::before{
+    content:'${p => p.$special === 'power' ? '✨' : p.$special === 'lightning' ? '⚡' : (raceColors as any)[p.$race]?.icon || '?'}';
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.9));
   }
 `;
 
-// --- MAIN COMPONENT ---
-const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) => {
-  const [gems, setGems] = useState<Gem[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const gemRaces: Race[] = ['valdari', 'gorkar', 'sylvaran', 'mortharim'];
+/* ══════════════════════════════════════════════════════════════
+   STYLED COMPONENTS — FLOATS & OVERLAYS
+══════════════════════════════════════════════════════════════ */
+const FloatEl = styled.div<{ $kind: FloatKind; $x: number; $y: number }>`
+  position:absolute;left:${p => p.$x}px;top:${p => p.$y}px;
+  color:${p =>
+    p.$kind === 'crit' ? '#ff9900' :
+      p.$kind === 'heal' ? '#33ff77' :
+        p.$kind === 'combo' ? '#ffd700' :
+          p.$kind === 'skill' ? '#dd88ff' :
+            '#ff4444'};
+  font-size:${p => ['crit', 'combo', 'skill'].includes(p.$kind) ? '1.4rem' : '1.1rem'};
+  font-weight:900;text-shadow:0 2px 5px rgba(0,0,0,1),0 0 10px currentColor;
+  animation:${floatUp} 1.35s ease-out forwards;pointer-events:none;z-index:500;white-space:nowrap;
+`;
+const OverlayWrap = styled.div<{ $win: boolean }>`
+  position:absolute;inset:0;
+  background:${p => p.$win
+    ? 'radial-gradient(circle at center,rgba(0,50,10,.94),rgba(0,0,0,.97))'
+    : 'radial-gradient(circle at center,rgba(80,0,0,.94),rgba(0,0,0,.97))'};
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;z-index:1000;animation:${overlayIn} .7s ease-out;
+`;
+const OverlayTitle = styled.h1<{ $win: boolean }>`
+  font-size:3.8rem;font-weight:900;margin:0;text-transform:uppercase;letter-spacing:6px;
+  color:${p => p.$win ? '#ffd700' : '#ff4444'};
+  animation:${p => p.$win ? css`${victoryGlow} 1.5s infinite` : css`${defeatGlow} 1.5s infinite`};
+`;
+const OverlayBtn = styled.button<{ $primary?: boolean }>`
+  padding:13px 38px;
+  background:${p => p.$primary ? 'linear-gradient(to bottom,#ffd700,#b8860b)' : 'linear-gradient(to bottom,#444,#111)'};
+  color:${p => p.$primary ? '#000' : '#ddd'};
+  border:2px solid ${p => p.$primary ? '#ffd700' : '#555'};
+  border-radius:6px;font-size:.9rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.6);transition:all .2s;font-family:inherit;
+  &:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.8),
+    0 0 18px ${p => p.$primary ? 'rgba(255,215,0,.5)' : 'rgba(255,255,255,.2)'};}
+`;
 
-  useEffect(() => {
-    const newGems: Gem[] = [];
-    for (let i = 0; i < 64; i++) {
-      const row = Math.floor(i / 8);
-      const col = i % 8;
-
-      let availableRaces = [...gemRaces];
-      let selectedType: Race;
-
-      while (true) {
-        selectedType = availableRaces[Math.floor(Math.random() * availableRaces.length)];
-
-        // Check horizontal match
-        const horizontalMatch = col >= 2 &&
-          newGems[i - 1].type === selectedType &&
-          newGems[i - 2].type === selectedType;
-
-        // Check vertical match
-        const verticalMatch = row >= 2 &&
-          newGems[i - 8].type === selectedType &&
-          newGems[i - 16].type === selectedType;
-
-        if (!horizontalMatch && !verticalMatch) {
-          break;
-        } else {
-          // If match found, remove this type and try another
-          availableRaces = availableRaces.filter(r => r !== selectedType);
-          if (availableRaces.length === 0) {
-            // Fallback (shouldn't happen with 4 types and 3-matches)
-            break;
-          }
-        }
-      }
-
-      newGems.push({
-        id: `gem-${i}-${Math.random()}`,
-        type: selectedType
-      });
+/* ══════════════════════════════════════════════════════════════
+   PURE HELPERS (outside component — no closure issues)
+══════════════════════════════════════════════════════════════ */
+function findMatchGroups(gems: Gem[]): MatchGroup[] {
+  const groups: MatchGroup[] = [];
+  for (let row = 0; row < 8; row++) {
+    let c = 0; while (c < 8) {
+      const type = gems[row * 8 + c]?.type; if (!type) { c++; continue; }
+      let len = 1; while (c + len < 8 && gems[row * 8 + c + len]?.type === type) len++;
+      if (len >= 3) { const idx = Array.from({ length: len }, (_, k) => row * 8 + c + k); groups.push({ indices: idx, type, centerIdx: idx[Math.floor(len / 2)], length: len }); }
+      c += len;
     }
-    setGems(newGems);
+  }
+  for (let col = 0; col < 8; col++) {
+    let r = 0; while (r < 8) {
+      const type = gems[r * 8 + col]?.type; if (!type) { r++; continue; }
+      let len = 1; while (r + len < 8 && gems[(r + len) * 8 + col]?.type === type) len++;
+      if (len >= 3) { const idx = Array.from({ length: len }, (_, k) => (r + k) * 8 + col); groups.push({ indices: idx, type, centerIdx: idx[Math.floor(len / 2)], length: len }); }
+      r += len;
+    }
+  }
+  return groups;
+}
+
+function expandForSpecials(allIdx: number[], gems: Gem[]): number[] {
+  const set = new Set(allIdx);
+  for (const idx of allIdx) {
+    const g = gems[idx]; if (!g) continue;
+    const row = Math.floor(idx / 8), col = idx % 8;
+    if (g.special === 'power')
+      for (let dr = -1; dr <= 1; dr++)for (let dc = -1; dc <= 1; dc++) { const nr = row + dr, nc = col + dc; if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) set.add(nr * 8 + nc); }
+    if (g.special === 'lightning')
+      for (let i = 0; i < 8; i++) { set.add(row * 8 + i); set.add(i * 8 + col); }
+  }
+  return Array.from(set);
+}
+
+function findBestEnemySwap(gems: Gem[]): [number, number] | null {
+  const candidates: { i: number; j: number; score: number }[] = [];
+  for (let i = 0; i < 64; i++) {
+    const neighbors: number[] = [];
+    if (i % 8 < 7) neighbors.push(i + 1);
+    if (i < 56) neighbors.push(i + 8);
+    for (const j of neighbors) {
+      const test = [...gems];[test[i], test[j]] = [test[j], test[i]];
+      const groups = findMatchGroups(test); if (!groups.length) continue;
+      let score = 0; for (const g of groups) score += g.length * g.length * AI_PREF[g.type];
+      candidates.push({ i, j, score });
+    }
+  }
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => b.score - a.score);
+  const pool = candidates.slice(0, Math.min(3, candidates.length));
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  return [pick.i, pick.j];
+}
+
+function makeInitialGems(): Gem[] {
+  const gems: Gem[] = [];
+  for (let i = 0; i < 64; i++) {
+    const row = Math.floor(i / 8), col = i % 8;
+    let pool = [...RACES], type: Race = pool[0];
+    while (pool.length) {
+      type = pool[Math.floor(Math.random() * pool.length)];
+      const hm = col >= 2 && gems[i - 1]?.type === type && gems[i - 2]?.type === type;
+      const vm = row >= 2 && gems[i - 8]?.type === type && gems[i - 16]?.type === type;
+      if (!hm && !vm) break;
+      pool = pool.filter(r => r !== type);
+    }
+    gems.push({ id: `g${i}-${Math.random()}`, type, special: 'none' });
+  }
+  return gems;
+}
+
+function spawnGem(): Gem {
+  return { id: `g${Date.now()}-${Math.random()}`, type: RACES[Math.floor(Math.random() * RACES.length)], special: 'none', isFalling: true };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT
+══════════════════════════════════════════════════════════════ */
+const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) => {
+
+  const [gems, setGems] = useState<Gem[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [phase, setPhase] = useState<GamePhase>('playerTurn');
+  const [enemies, setEnemies] = useState<Unit[]>([]);
+  const [heroes, setHeroes] = useState<Unit[]>([]);
+  const [floats, setFloats] = useState<FloatNum[]>([]);
+  const [combo, setCombo] = useState(0);
+  const [comboIsEnemy, setComboIsEnemy] = useState(false);
+  const [shaking, setShaking] = useState(false);
+  const [hovHero, setHovHero] = useState<number | null>(null);
+  const [hovEnemy, setHovEnemy] = useState<number | null>(null);
+  const [enemyHighlight, setEnemyHighlight] = useState<Set<number>>(new Set());
+  // ← tracks which unit is mid-cast for the flash animation
+  const [castingHero, setCastingHero] = useState<number | null>(null);
+  const [castingEnemy, setCastingEnemy] = useState<number | null>(null);
+
+  const busyRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const heroImgs = useMemo(() => {
+    const allUnits = Object.values(buildingsData).flatMap((b: any) => b.unitsProduced);
+    return (savedFormations as any).principal.units.slice(0, 5).map((slot: any) => {
+      if (!slot) return '';
+      const u = allUnits.find((u: any) => u.id === slot.id) as any;
+      return u?.image || '';
+    });
   }, []);
 
-  const checkMatches = (currentGems: Gem[]) => {
-    const matches = new Set<number>();
-    for (let row = 0; row < 8; row++) {
-      for (let col = 0; col < 6; col++) {
-        const idx = row * 8 + col;
-        const type = currentGems[idx]?.type;
-        if (type && currentGems[idx + 1]?.type === type && currentGems[idx + 2]?.type === type) {
-          matches.add(idx); matches.add(idx + 1); matches.add(idx + 2);
-        }
-      }
-    }
-    for (let col = 0; col < 8; col++) {
-      for (let row = 0; row < 6; row++) {
-        const idx = row * 8 + col;
-        const type = currentGems[idx]?.type;
-        if (type && currentGems[idx + 8]?.type === type && currentGems[idx + 16]?.type === type) {
-          matches.add(idx); matches.add(idx + 8); matches.add(idx + 16);
-        }
-      }
-    }
-    return Array.from(matches);
-  };
+  /* ── init ── */
+  useEffect(() => {
+    setGems(makeInitialGems());
+    setEnemies(ENEMY_DEFS.map(d => ({
+      name: d.name, img: d.img,
+      hp: d.maxHp, maxHp: d.maxHp, mana: 0, maxMana: d.maxMana,
+      attack: d.atk, defense: d.def,
+      isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
+      skillName: d.skillName, skillDesc: d.skillDesc,
+    })));
+    setHeroes(HERO_DEFS.map((d, i) => ({
+      name: `Héroe ${i + 1}`, img: heroImgs[i] || '',
+      hp: d.maxHp, maxHp: d.maxHp, mana: 0, maxMana: 100,
+      attack: d.atk, defense: d.def,
+      isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
+      ...HERO_SKILLS[i],
+    })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleGemClick = async (index: number) => {
-    if (isProcessing) return;
-    if (selectedIndex === null) {
-      setSelectedIndex(index);
-    } else {
-      const isAdjacent = Math.abs(Math.floor(index / 8) - Math.floor(selectedIndex / 8)) + Math.abs((index % 8) - (selectedIndex % 8)) === 1;
-      if (isAdjacent) {
-        setIsProcessing(true);
-        const newGems = [...gems];
-        [newGems[index], newGems[selectedIndex]] = [newGems[selectedIndex], newGems[index]];
-        setGems(newGems);
-        setSelectedIndex(null);
-        await new Promise(r => setTimeout(r, 300));
+  /* ── position helpers ── */
+  const ePos = useCallback((idx: number) => {
+    const r = containerRef.current?.getBoundingClientRect();
+    return r ? { x: r.width * (.12 + idx * .175), y: r.height * .11 } : { x: 250, y: 70 };
+  }, []);
+  const hPos = useCallback((idx: number) => {
+    const r = containerRef.current?.getBoundingClientRect();
+    return r ? { x: r.width * (.12 + idx * .175), y: r.height * .80 } : { x: 250, y: 560 };
+  }, []);
+  const cPos = useCallback(() => {
+    const r = containerRef.current?.getBoundingClientRect();
+    return r ? { x: r.width / 2, y: r.height * .44 } : { x: 250, y: 290 };
+  }, []);
 
-        const matches = checkMatches(newGems);
-        if (matches.length > 0) {
-          processMatches(newGems);
-        } else {
-          const revertedGems = [...gems];
-          setGems(revertedGems);
-          setIsProcessing(false);
+  const doShake = useCallback(() => { setShaking(true); setTimeout(() => setShaking(false), 530); }, []);
+
+  const addFloat = useCallback((text: string, kind: FloatKind, x: number, y: number) => {
+    const id = `f${Date.now()}-${Math.random()}`;
+    setFloats(p => [...p, { id, text, kind, x, y }]);
+    setTimeout(() => setFloats(p => p.filter(f => f.id !== id)), 1450);
+  }, []);
+
+  /* ══════════════════════════════════════════════════════════
+     CORE CASCADE
+     side='player' → dmg→enemies,  heal→heroes,  mana→heroes
+                     rage mana builds on HIT enemies
+     side='enemy'  → dmg→heroes,   heal→enemies (sylvaran!),
+                     mana gain for all alive enemies
+  ══════════════════════════════════════════════════════════ */
+  const runCascade = useCallback(async (
+    G0: Gem[], E0: Unit[], H0: Unit[], side: Side
+  ): Promise<CascadeResult> => {
+    let G = G0.map(g => ({ ...g }));
+    let E = E0.map(u => ({ ...u }));
+    let H = H0.map(u => ({ ...u }));
+    let comboLvl = 0;
+
+    while (true) {
+      const groups = findMatchGroups(G);
+      if (!groups.length) break;
+
+      let totalAtk = 0, totalHeal = 0, totalMana = 0;
+      const matchedSet = new Set<number>();
+      const specials: { idx: number; special: 'power' | 'lightning' }[] = [];
+
+      for (const g of groups) {
+        const fx = GEM_FX[g.type], n = g.length;
+        totalAtk += fx.dmg * n * (n >= 5 ? 2.2 : n >= 4 ? 1.5 : 1);
+        totalHeal += fx.heal * n;
+        totalMana += fx.manaGain * n * (n >= 4 ? 1.6 : 1);
+        if (n === 4) specials.push({ idx: g.centerIdx, special: 'power' });
+        if (n >= 5) specials.push({ idx: g.centerIdx, special: 'lightning' });
+        expandForSpecials(g.indices, G).forEach(i => matchedSet.add(i));
+      }
+      const mult = 1 + comboLvl * .32;
+      totalAtk = Math.round(totalAtk * mult);
+      totalHeal = Math.round(totalHeal * mult);
+      totalMana = Math.min(40, Math.round(totalMana));
+
+      G = G.map((g, i) => matchedSet.has(i) ? { ...g, isMatched: true } : g);
+      setGems([...G]);
+      await SLEEP(380);
+
+      if (side === 'player') {
+        /* ── damage → first alive enemy ── */
+        if (totalAtk > 0) {
+          const ti = E.findIndex(e => !e.isDead);
+          if (ti >= 0) {
+            const actual = Math.max(1, totalAtk - E[ti].defense);
+            E[ti] = { ...E[ti], hp: Math.max(0, E[ti].hp - actual), isDead: E[ti].hp - actual <= 0, isHit: true };
+            const isCrit = mult >= 1.62 || actual > 80;
+            addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', ePos(ti).x, ePos(ti).y);
+            if (isCrit || actual > 80) doShake();
+          }
+          /* ← rage mana: enemies build fury when attacked */
+          const rage = Math.min(18, Math.floor(totalAtk / 7));
+          E = E.map((e, i) => {
+            if (e.isDead) return e;
+            const newMana = Math.min(e.maxMana, e.mana + rage);
+            const wasReady = e.isSkillReady;
+            const isReady = newMana >= e.maxMana;
+            if (isReady && !wasReady)
+              addFloat(`⚡ ${e.skillName}!`, 'skill', ePos(i).x, ePos(i).y - 26);
+            return { ...e, mana: newMana, isSkillReady: isReady };
+          });
+          setEnemies([...E]);
+          setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 430);
         }
+        /* ── heal → all alive heroes ── */
+        if (totalHeal > 0) {
+          H = H.map((h, i) => {
+            if (h.isDead) return h;
+            addFloat(`+${totalHeal}`, 'heal', hPos(i).x, hPos(i).y);
+            return { ...h, hp: Math.min(h.maxHp, h.hp + totalHeal) };
+          });
+        }
+        /* ── mana → heroes ── */
+        if (totalMana > 0) {
+          H = H.map((h, i) => {
+            if (h.isDead) return h;
+            const newMana = Math.min(h.maxMana, h.mana + totalMana);
+            const skillReady = newMana >= h.maxMana;
+            if (skillReady && !h.isSkillReady)
+              addFloat('✨ SKILL!', 'skill', hPos(i).x, hPos(i).y - 24);
+            return { ...h, mana: newMana, isSkillReady: skillReady };
+          });
+        }
+        setHeroes([...H]);
+
       } else {
-        setSelectedIndex(index);
+        /* ── ENEMY SIDE ── */
+        /* damage → first alive hero */
+        if (totalAtk > 0) {
+          const ti = H.findIndex(h => !h.isDead);
+          if (ti >= 0) {
+            const actual = Math.max(1, totalAtk - H[ti].defense);
+            H[ti] = { ...H[ti], hp: Math.max(0, H[ti].hp - actual), isDead: H[ti].hp - actual <= 0, isHit: true };
+            const isCrit = mult >= 1.62 || actual > 80;
+            addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', hPos(ti).x, hPos(ti).y);
+            if (isCrit || actual > 80) doShake();
+            setHeroes([...H]);
+            setTimeout(() => setHeroes(prev => prev.map((u, i) => i === ti ? { ...u, isHit: false } : u)), 430);
+          }
+        }
+        /* sylvaran gems → heal all alive ENEMIES */
+        if (totalHeal > 0) {
+          E = E.map((e, i) => {
+            if (e.isDead) return e;
+            addFloat(`+${totalHeal}`, 'heal', ePos(i).x, ePos(i).y);
+            return { ...e, hp: Math.min(e.maxHp, e.hp + totalHeal) };
+          });
+        }
+        /* ← enemies gain mana from their own matches */
+        if (totalMana > 0) {
+          const share = Math.floor(totalMana * .65);
+          E = E.map((e, i) => {
+            if (e.isDead) return e;
+            const newMana = Math.min(e.maxMana, e.mana + share);
+            const wasReady = e.isSkillReady;
+            const isReady = newMana >= e.maxMana;
+            if (isReady && !wasReady)
+              addFloat(`⚡ ${e.skillName}!`, 'skill', ePos(i).x, ePos(i).y - 26);
+            return { ...e, mana: newMana, isSkillReady: isReady };
+          });
+        }
+        setEnemies([...E]);
+        setHeroes([...H]);
       }
-    }
-  };
 
-  const processMatches = async (currentGems: Gem[]) => {
-    let workingGems = [...currentGems];
-    let hasMatches = true;
-
-    while (hasMatches) {
-      const matches = checkMatches(workingGems);
-      if (matches.length === 0) {
-        hasMatches = false;
-        break;
+      /* combo banner */
+      comboLvl++;
+      setCombo(comboLvl); setComboIsEnemy(side === 'enemy');
+      if (comboLvl >= 2) {
+        const cp = cPos();
+        addFloat(`${side === 'enemy' ? '☠️' : '🔥'} COMBO ×${comboLvl}`, 'combo', cp.x, cp.y);
       }
-      workingGems = workingGems.map((g, i) => matches.includes(i) ? { ...g, isMatched: true } : g);
-      setGems(workingGems);
-      await new Promise(r => setTimeout(r, 400));
 
+      if (E.every(e => e.isDead)) { setPhase('victory'); return { gems: G, enemies: E, heroes: H, ended: true }; }
+      if (H.every(h => h.isDead)) { setPhase('defeat'); return { gems: G, enemies: E, heroes: H, ended: true }; }
+
+      /* drop gems */
+      const NG = [...G];
       for (let col = 0; col < 8; col++) {
-        let emptySpots = 0;
+        let empty = 0;
         for (let row = 7; row >= 0; row--) {
           const idx = row * 8 + col;
-          if (workingGems[idx].isMatched) {
-            emptySpots++;
-          } else if (emptySpots > 0) {
-            workingGems[(row + emptySpots) * 8 + col] = { ...workingGems[idx], isFalling: true };
-            workingGems[idx] = { id: '', type: 'valdari', isMatched: true };
-          }
+          if (NG[idx].isMatched) { empty++; }
+          else if (empty > 0) { NG[(row + empty) * 8 + col] = { ...NG[idx], isFalling: true }; NG[idx] = { id: '', type: 'valdari', special: 'none', isMatched: true }; }
         }
-        for (let row = 0; row < emptySpots; row++) {
-          workingGems[row * 8 + col] = {
-            id: `gem-${Date.now()}-${row}-${col}`,
-            type: gemRaces[Math.floor(Math.random() * gemRaces.length)],
-            isFalling: true
-          };
+        for (let row = 0; row < empty; row++)NG[row * 8 + col] = spawnGem();
+      }
+      for (const sc of specials) if (!matchedSet.has(sc.idx)) NG[sc.idx] = { ...NG[sc.idx], special: sc.special };
+
+      G = NG.map(g => ({ ...g, isMatched: false }));
+      setGems([...G]); await SLEEP(430);
+      G = G.map(g => ({ ...g, isFalling: false }));
+      setGems([...G]); await SLEEP(90);
+    }
+
+    setCombo(0);
+    return { gems: G, enemies: E, heroes: H, ended: false };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addFloat, doShake, ePos, hPos, cPos]);
+
+  /* ══════════════════════════════════════════════════════════
+     FIRE ENEMY SKILLS
+     Called at the start of the enemy phase (before board move).
+     Each enemy with full mana casts their skill in sequence.
+  ══════════════════════════════════════════════════════════ */
+  const fireEnemySkills = useCallback(async (
+    E: Unit[], H: Unit[]
+  ): Promise<SkillResult> => {
+    for (let i = 0; i < E.length; i++) {
+      if (E[i].isDead || !E[i].isSkillReady) continue;
+
+      // ── cast flash + attack animation ──
+      setCastingEnemy(i);
+      E[i] = { ...E[i], isAttacking: true };
+      setEnemies([...E]);
+      addFloat(`☠️ ${E[i].skillName}!`, 'skill', ePos(i).x, ePos(i).y - 32);
+      await SLEEP(550);
+
+      switch (i) {
+        case 0: { /* Berserker: 2 random heroes × 1.5× atk */
+          const targets = H.map((_, hi) => hi).filter(hi => !H[hi].isDead)
+            .sort(() => Math.random() - .5).slice(0, 2);
+          for (const ti of targets) {
+            const dmg = Math.max(1, Math.round(E[i].attack * 1.5) - H[ti].defense);
+            H[ti] = { ...H[ti], hp: Math.max(0, H[ti].hp - dmg), isDead: H[ti].hp - dmg <= 0, isHit: true };
+            addFloat(`💥 ${dmg}`, 'crit', hPos(ti).x, hPos(ti).y);
+          }
+          doShake();
+          setHeroes([...H]);
+          setTimeout(() => setHeroes(prev => prev.map(u => ({ ...u, isHit: false }))), 430);
+          break;
+        }
+        case 1: { /* Machacador: 90 dmg to hero with most HP */
+          const ti = H.reduce((mi, h, hi, arr) =>
+            !h.isDead && h.hp > (arr[mi]?.hp ?? -1) ? hi : mi, H.findIndex(h => !h.isDead));
+          if (ti >= 0) {
+            const dmg = Math.max(1, 90 - H[ti].defense);
+            H[ti] = { ...H[ti], hp: Math.max(0, H[ti].hp - dmg), isDead: H[ti].hp - dmg <= 0, isHit: true };
+            addFloat(`💥 ${dmg}`, 'crit', hPos(ti).x, hPos(ti).y);
+            doShake();
+            setHeroes([...H]);
+            setTimeout(() => setHeroes(prev => prev.map((u, j) => j === ti ? { ...u, isHit: false } : u)), 430);
+          }
+          break;
+        }
+        case 2: { /* JEFE: 40 dmg to ALL heroes */
+          H = H.map((h, hi) => {
+            if (h.isDead) return h;
+            const dmg = Math.max(1, 40 - h.defense);
+            addFloat(`${dmg}`, 'dmg', hPos(hi).x, hPos(hi).y);
+            const hp = Math.max(0, h.hp - dmg);
+            return { ...h, hp, isDead: hp <= 0, isHit: true };
+          });
+          doShake();
+          setHeroes([...H]);
+          setTimeout(() => setHeroes(prev => prev.map(u => ({ ...u, isHit: false }))), 430);
+          break;
+        }
+        case 3: { /* Chamán: heal all alive enemies +60 HP */
+          E = E.map((e, ei) => {
+            if (e.isDead) return e;
+            addFloat('+60', 'heal', ePos(ei).x, ePos(ei).y);
+            return { ...e, hp: Math.min(e.maxHp, e.hp + 60) };
+          });
+          setEnemies([...E]);
+          break;
+        }
+        case 4: { /* Raider: 3 rapid hits of 25 to random heroes */
+          for (let hit = 0; hit < 3; hit++) {
+            const alive = H.map((_, hi) => hi).filter(hi => !H[hi].isDead);
+            if (!alive.length) break;
+            const ti = alive[Math.floor(Math.random() * alive.length)];
+            const dmg = Math.max(1, 25 - H[ti].defense);
+            H[ti] = { ...H[ti], hp: Math.max(0, H[ti].hp - dmg), isDead: H[ti].hp - dmg <= 0, isHit: true };
+            addFloat(`${dmg}`, 'dmg', hPos(ti).x, hPos(ti).y);
+            setHeroes([...H]);
+            await SLEEP(210);
+            H[ti] = { ...H[ti], isHit: false };
+            setHeroes([...H]);
+            await SLEEP(110);
+          }
+          break;
         }
       }
 
-      workingGems = workingGems.map(g => ({ ...g, isMatched: false }));
-      setGems(workingGems);
-      await new Promise(r => setTimeout(r, 400));
-      workingGems = workingGems.map(g => ({ ...g, isFalling: false }));
-      setGems(workingGems);
+      /* reset skill */
+      E[i] = { ...E[i], mana: 0, isSkillReady: false, isAttacking: false };
+      setCastingEnemy(null);
+      setEnemies([...E]);
+      setHeroes([...H]);
+      await SLEEP(320);
+
+      if (H.every(h => h.isDead)) { setPhase('defeat'); return { E, H, ended: true }; }
     }
-    setIsProcessing(false);
-  };
+    return { E, H, ended: false };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addFloat, doShake, ePos, hPos]);
 
-  const enemyUnits = [
-    { name: 'Berserker', img: '/images/GorKar/units/Berserker.png' },
-    { name: 'Machacador', img: '/images/GorKar/units/Machacador.png' },
-    { name: 'Jinete', img: '/images/GorKar/units/Jinete.png' },
-    { name: 'Chaman', img: '/images/GorKar/units/Chaman.png' },
-    { name: 'Raider', img: '/images/GorKar/units/Raider.png' }
-  ];
+  /* ══════════════════════════════════════════════════════════
+     FULL TURN FLOW
+  ══════════════════════════════════════════════════════════ */
+  const runFullTurn = useCallback(async (G: Gem[], E: Unit[], H: Unit[]) => {
+    setPhase('processing');
+    const pr = await runCascade(G, E, H, 'player');
+    if (pr.ended) { busyRef.current = false; return; }
 
-  const heroUnits = useMemo(() => {
-    const allUnits = Object.values(buildingsData).flatMap(b => b.unitsProduced);
-    const units = savedFormations.principal.units.slice(0, 5).map(slot => {
-      if (!slot) return null;
-      const unit = allUnits.find(u => u.id === slot.id);
-      return unit ? { name: unit.name, img: unit.image } : null;
-    });
-    while (units.length < 5) units.push(null);
-    return units;
-  }, []);
+    /* enemy phase start */
+    setPhase('enemyThinking');
+    await SLEEP(550);
+
+    /* 1 — fire enemy skills BEFORE board move */
+    const sr = await fireEnemySkills(pr.enemies, pr.heroes);
+    if (sr.ended) { busyRef.current = false; return; }
+
+    /* 2 — board move */
+    const swap = findBestEnemySwap(pr.gems);
+    if (swap) {
+      const [ei, ej] = swap;
+      setEnemyHighlight(new Set([ei, ej]));
+      await SLEEP(900);
+      setEnemyHighlight(new Set());
+      await SLEEP(80);
+
+      const swapped = pr.gems.map(g => ({ ...g }));
+      [swapped[ei], swapped[ej]] = [swapped[ej], swapped[ei]];
+      setGems([...swapped]);
+      await SLEEP(280);
+
+      setPhase('enemyTurn');
+      const er = await runCascade(swapped, sr.E, sr.H, 'enemy');
+      if (er.ended) { busyRef.current = false; return; }
+    } else {
+      const cp = cPos();
+      addFloat('☠️ SIN MOVIMIENTO', 'combo', cp.x, cp.y);
+      await SLEEP(700);
+    }
+
+    setPhase('playerTurn');
+    busyRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runCascade, fireEnemySkills, addFloat, cPos]);
+
+  /* ── gem click ── */
+  const onGemClick = useCallback(async (index: number) => {
+    if (busyRef.current || phase !== 'playerTurn') return;
+    if (selected === null) { setSelected(index); return; }
+    const r1 = Math.floor(index / 8), c1 = index % 8;
+    const r2 = Math.floor(selected / 8), c2 = selected % 8;
+    if (Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) { setSelected(index); return; }
+    setSelected(null);
+    busyRef.current = true;
+    const swapped = [...gems];
+    [swapped[index], swapped[selected]] = [swapped[selected], swapped[index]];
+    setGems(swapped);
+    await SLEEP(220);
+    if (!findMatchGroups(swapped).length) {
+      setGems([...gems]); await SLEEP(190); busyRef.current = false; return;
+    }
+    await runFullTurn(swapped, enemies, heroes);
+  }, [phase, selected, gems, enemies, heroes, runFullTurn]);
+
+  /* ══════════════════════════════════════════════════════════
+     HERO SKILL — does NOT end the player's turn!
+     Player fires skill → effects apply → back to playerTurn
+     so they can still make a board move.
+  ══════════════════════════════════════════════════════════ */
+  const onHeroClick = useCallback(async (hi: number) => {
+    if (busyRef.current || phase !== 'playerTurn') return;
+    const hero = heroes[hi];
+    if (!hero || hero.isDead || !hero.isSkillReady) return;
+    busyRef.current = true;
+    setPhase('processing');
+
+    let E = enemies.map(u => ({ ...u }));
+    let H = heroes.map(u => ({ ...u }));
+
+    /* cast animation */
+    setCastingHero(hi);
+    H[hi] = { ...H[hi], mana: 0, isSkillReady: false, isAttacking: true };
+    setHeroes([...H]);
+    addFloat(`✨ ${hero.skillName}!`, 'skill', hPos(hi).x, hPos(hi).y - 32);
+    await SLEEP(320);
+
+    switch (hi) {
+      case 0: { /* Golpe Crítico — 3× dmg to enemy with least HP */
+        const wi = E.reduce((mi, e, i, arr) =>
+          !e.isDead && e.hp < (arr[mi]?.hp ?? Infinity) ? i : mi, E.findIndex(e => !e.isDead));
+        if (wi >= 0) {
+          const d = hero.attack * 3;
+          const actual = Math.max(1, d - E[wi].defense);
+          E[wi] = { ...E[wi], hp: Math.max(0, E[wi].hp - actual), isDead: E[wi].hp - actual <= 0, isHit: true };
+          addFloat(`💥 ${actual}`, 'crit', ePos(wi).x, ePos(wi).y);
+          doShake();
+          setTimeout(() => setEnemies(prev => prev.map((u, i) => i === wi ? { ...u, isHit: false } : u)), 430);
+        }
+        break;
+      }
+      case 1: { /* Escudo Divino — heal all heroes 80 HP */
+        H = H.map((h, i) => {
+          if (h.isDead) return h;
+          addFloat('+80', 'heal', hPos(i).x, hPos(i).y);
+          return { ...h, hp: Math.min(h.maxHp, h.hp + 80) };
+        });
+        break;
+      }
+      case 2: { /* Devastación — 60 dmg to ALL enemies */
+        E = E.map((e, i) => {
+          if (e.isDead) return e;
+          const actual = Math.max(1, 60 - e.defense);
+          addFloat(`💥 ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+          const hp = Math.max(0, e.hp - actual);
+          return { ...e, hp, isDead: hp <= 0, isHit: true };
+        });
+        doShake();
+        setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+        break;
+      }
+      case 3: { /* Lluvia de Flechas — 45 dmg to 3 random enemies */
+        const targets = E.map((_, i) => i).filter(i => !E[i].isDead)
+          .sort(() => Math.random() - .5).slice(0, 3);
+        for (const i of targets) {
+          const actual = Math.max(1, 45 - E[i].defense);
+          E[i] = { ...E[i], hp: Math.max(0, E[i].hp - actual), isDead: E[i].hp - actual <= 0, isHit: true };
+          addFloat(`🏹 ${actual}`, 'dmg', ePos(i).x, ePos(i).y);
+        }
+        setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+        break;
+      }
+      case 4: { /* Sanación Mayor — +120 HP to most injured hero */
+        const mi = H.reduce((minI, h, i) =>
+          !h.isDead && (h.hp / h.maxHp) < ((H[minI]?.hp ?? 1) / (H[minI]?.maxHp || 1)) ? i : minI,
+          H.findIndex(h => !h.isDead));
+        if (mi >= 0) {
+          H[mi] = { ...H[mi], hp: Math.min(H[mi].maxHp, H[mi].hp + 120) };
+          addFloat('+120 💚', 'heal', hPos(mi).x, hPos(mi).y);
+        }
+        break;
+      }
+    }
+
+    H[hi] = { ...H[hi], isAttacking: false };
+    setCastingHero(null);
+    setEnemies([...E]);
+    setHeroes([...H]);
+
+    if (E.every(e => e.isDead)) { setPhase('victory'); busyRef.current = false; return; }
+    if (H.every(h => h.isDead)) { setPhase('defeat'); busyRef.current = false; return; }
+
+    // ← KEY: skill is a FREE ACTION — player keeps their turn!
+    setPhase('playerTurn');
+    busyRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, heroes, enemies, addFloat, doShake, ePos, hPos]);
+
+  /* ══════════════════════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════════════════════ */
+  const isEnemyActive = phase === 'enemyTurn' || phase === 'enemyThinking';
 
   return (
     <>
       <GlobalStyle />
-      <BattlefieldContainer $race={race}>
-        <ExitButton onClick={onExit}>SALIR</ExitButton>
-        {/* <BattleHUD>TURNO VALDARI</BattleHUD> */}
+      <BattlefieldWrap ref={containerRef} $race={race} $shaking={shaking}>
+        <ExitBtn onClick={onExit}>SALIR</ExitBtn>
+
+        {/* HUD */}
+        <HUDBar>
+          {phase === 'enemyThinking'
+            ? <ThinkingTag>☠️ ENEMIGO PIENSA…</ThinkingTag>
+            : <TurnTag $enemy={isEnemyActive}>
+              {phase === 'enemyTurn' ? '☠️ TURNO ENEMIGO' :
+                phase === 'processing' ? '⚙️ PROCESANDO…' :
+                  '🎮 TU TURNO — Mueve o usa skill'}
+            </TurnTag>
+          }
+          {combo >= 2 && (
+            <ComboTag $enemy={comboIsEnemy}>
+              {comboIsEnemy ? '☠️' : '🔥'} COMBO ×{combo}!
+            </ComboTag>
+          )}
+        </HUDBar>
+
+        {/* Floating damage / heal / skill numbers */}
+        {floats.map(f => (
+          <FloatEl key={f.id} $kind={f.kind} $x={f.x} $y={f.y}>{f.text}</FloatEl>
+        ))}
 
         <BattleContent>
-          {/* ENEMIGOS (Arriba) */}
+
+          {/* ── ENEMIES (top) ── */}
           <UnitRow $side="top">
-            {enemyUnits.map((unit, i) => {
-              const isHero = i === 2;
-              return (
-                <UnitCard key={`enemy-${i}`} $race="gorkar" $isEnemy={true} $isHero={isHero}>
-                  {isHero && <HeroLabel>BOSS</HeroLabel>}
-                  <StatusBar $position="top" $color="#ff3333" $width={100} /> {/* Vida Rojoy */}
-                  <UnitImageContainer>
-                    <img src={unit.img} alt={unit.name} />
-                  </UnitImageContainer>
-                  <StatusBar $position="bottom" $color="#aa00ff" $width={100} /> {/* Rage/Mana */}
-                </UnitCard>
-              );
-            })}
+            {enemies.map((unit, i) => (
+              <UnitCard key={`e${i}`}
+                $race="gorkar" $isHero={i === 2} $isDead={unit.isDead}
+                $attacking={unit.isAttacking} $hit={unit.isHit}
+                $skillReady={unit.isSkillReady}
+                $isEnemyUnit={true}
+                $casting={castingEnemy === i}
+                onMouseEnter={() => setHovEnemy(i)}
+                onMouseLeave={() => setHovEnemy(null)}
+              >
+                {i === 2 && <BossLabel>BOSS</BossLabel>}
+                {/* ← red "HABILIDAD" badge when enemy skill is ready */}
+                {unit.isSkillReady && !unit.isDead && <EnemySkillBadge>☠️ HABILIDAD</EnemySkillBadge>}
+                {/* ← red tooltip on hover */}
+                {hovEnemy === i && unit.isSkillReady && !unit.isDead && (
+                  <EnemyTip>
+                    <strong>{unit.skillName}</strong><br />{unit.skillDesc}
+                  </EnemyTip>
+                )}
+                <HPBar $pct={(unit.hp / unit.maxHp) * 100} $clr="#ff3333" $pos="top" />
+                <UnitImgWrap><img src={unit.img} alt={unit.name} /></UnitImgWrap>
+                {/* purple mana bar — now functional! */}
+                <HPBar $pct={(unit.mana / unit.maxMana) * 100} $clr="#aa00ff" $pos="bot" />
+                {unit.isDead && <DeadMask>💀</DeadMask>}
+              </UnitCard>
+            ))}
           </UnitRow>
 
-          {/* TABLERO (Centro) */}
-          <BoardSection>
-            <BoardOuterFrame>
+          {/* ── BOARD (center) ── */}
+          <BoardWrap>
+            <BoardFrame>
               <GemGrid>
-                {gems.map((gem, index) => (
-                  <GemItem
-                    key={gem.id}
-                    $race={gem.type}
-                    $isSelected={selectedIndex === index}
-                    $isMatched={gem.isMatched}
-                    $isFalling={gem.isFalling}
-                    onClick={() => handleGemClick(index)}
+                {gems.map((gem, idx) => (
+                  <GemEl
+                    key={gem.id || `k${idx}`}
+                    $race={gem.type} $special={gem.special}
+                    $sel={selected === idx}
+                    $matched={!!gem.isMatched}
+                    $falling={!!gem.isFalling}
+                    $enemyTarget={enemyHighlight.has(idx)}
+                    onClick={() => onGemClick(idx)}
                   />
                 ))}
               </GemGrid>
-            </BoardOuterFrame>
-          </BoardSection>
+            </BoardFrame>
+          </BoardWrap>
 
-          {/* TUS HÉROES (Abajo) */}
+          {/* ── HEROES (bottom) ── */}
           <UnitRow $side="bottom">
-            {heroUnits.map((unit, i) => {
-              const isHero = i === 2;
-              return (
-                <UnitCard key={`hero-${i}`} $race={race} $isEnemy={false} $isHero={isHero}>
-                  {/* {isHero && <HeroLabel>HEROE</HeroLabel>} */}
-                  {unit ? (
-                    <>
-                      <StatusBar $position="top" $color="#33ff33" $width={100} /> {/* Vida Verde */}
-                      <UnitImageContainer>
-                        <img src={unit.img} alt={unit.name} />
-                      </UnitImageContainer>
-                      <StatusBar $position="bottom" $color="#3399ff" $width={100} /> {/* Mana Azul */}
-                    </>
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.2 }}>
-                      Vacío
-                    </div>
-                  )}
-                </UnitCard>
-              );
-            })}
+            {heroes.map((unit, i) => (
+              <UnitCard key={`h${i}`}
+                $race={race} $isHero={i === 2} $isDead={unit.isDead}
+                $attacking={unit.isAttacking} $hit={unit.isHit}
+                $skillReady={unit.isSkillReady}
+                $isEnemyUnit={false}
+                $casting={castingHero === i}
+                onClick={() => onHeroClick(i)}
+                onMouseEnter={() => setHovHero(i)}
+                onMouseLeave={() => setHovHero(null)}
+              >
+                {unit.isSkillReady && !unit.isDead && <HeroSkillBadge>✨ SKILL</HeroSkillBadge>}
+                {hovHero === i && unit.isSkillReady && !unit.isDead && (
+                  <HeroTip>
+                    <strong>{unit.skillName}</strong><br />{unit.skillDesc}
+                  </HeroTip>
+                )}
+                <HPBar $pct={(unit.hp / unit.maxHp) * 100} $clr="#33ff66" $pos="top" />
+                {unit.img
+                  ? <UnitImgWrap><img src={unit.img} alt={unit.name} /></UnitImgWrap>
+                  : <div style={{
+                    width: '100%', height: '100%', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', opacity: .2, color: '#fff',
+                    fontSize: '.7rem', fontFamily: 'sans-serif'
+                  }}>Vacío</div>
+                }
+                <HPBar $pct={(unit.mana / unit.maxMana) * 100} $clr="#3399ff" $pos="bot" />
+                {unit.isDead && <DeadMask>💀</DeadMask>}
+              </UnitCard>
+            ))}
           </UnitRow>
+
         </BattleContent>
-      </BattlefieldContainer>
+
+        {/* GAME OVER */}
+        {(phase === 'victory' || phase === 'defeat') && (
+          <OverlayWrap $win={phase === 'victory'}>
+            <OverlayTitle $win={phase === 'victory'}>
+              {phase === 'victory' ? '¡VICTORIA!' : '¡DERROTA!'}
+            </OverlayTitle>
+            <p style={{
+              color: '#777', fontSize: '.88rem', letterSpacing: '2px', margin: 0,
+              fontFamily: 'sans-serif', textTransform: 'uppercase'
+            }}>
+              {phase === 'victory' ? 'Los enemigos han sido derrotados' : 'Tus héroes han caído en batalla'}
+            </p>
+            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+              {phase === 'victory' && (
+                <OverlayBtn $primary onClick={() => {/* TODO: next level */ }}>Siguiente Nivel</OverlayBtn>
+              )}
+              <OverlayBtn onClick={onExit}>Salir</OverlayBtn>
+            </div>
+          </OverlayWrap>
+        )}
+
+      </BattlefieldWrap>
     </>
   );
 };
