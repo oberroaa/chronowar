@@ -276,7 +276,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
               ) : (
                 <>
                   <Subtitle $race={race}>Unidades Disponibles</Subtitle>
-                  {[...raceData.unit, ...raceData.poblation].map(unit => {
+                  {raceData.unit.map(unit => {
                     const available = getAvailableCount(unit.id);
                     const total = unit.available || 0;
 
