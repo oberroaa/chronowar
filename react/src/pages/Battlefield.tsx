@@ -1,5 +1,5 @@
 import React, {
-  useState, useEffect, useMemo,
+  useState, useEffect,
   useCallback, useRef
 } from 'react';
 import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
@@ -36,6 +36,8 @@ interface Unit {
   isSkillReady: boolean;
   skillName: string;
   skillDesc: string;
+  poison?: number;
+  shield?: number;
 }
 interface FloatNum { id: string; text: string; x: number; y: number; kind: FloatKind; }
 interface MatchGroup { indices: number[]; type: Race; centerIdx: number; length: number; }
@@ -49,11 +51,11 @@ interface BattlefieldProps { race: Race; onExit: () => void; }
 const SLEEP = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const RACES: Race[] = ['valdari', 'gorkar', 'sylvaran', 'mortharim'];
 
-const GEM_FX: Record<Race, { dmg: number; manaGain: number; heal: number }> = {
-  valdari: { dmg: 20, manaGain: 10, heal: 0 },
-  gorkar: { dmg: 35, manaGain: 5, heal: 0 },
-  sylvaran: { dmg: 0, manaGain: 15, heal: 25 },
-  mortharim: { dmg: 25, manaGain: 20, heal: 0 },
+const GEM_FX: Record<Race, { dmg: number; valdariDmg: number; manaGain: number; heal: number; poison: number; shield: number }> = {
+  valdari: { dmg: 0, valdariDmg: 1, manaGain: 1, heal: 0, poison: 0, shield: 0 },
+  gorkar: { dmg: 5, valdariDmg: 0, manaGain: 0, heal: 0, poison: 0, shield: 1 },
+  sylvaran: { dmg: 0, valdariDmg: 0, manaGain: 1, heal: 1, poison: 0, shield: 0 },
+  mortharim: { dmg: 2, valdariDmg: 0, manaGain: 0, heal: 0, poison: 1, shield: 0 },
 };
 
 const AI_PREF: Record<Race, number> = {
@@ -343,23 +345,43 @@ const EnemySkillBadge = styled.div`
   box-shadow:0 0 12px rgba(255,68,68,.95);white-space:nowrap;
   animation:${popIn} .35s ease-out;
 `;
+const PoisonBadge = styled.div`
+  position:absolute;top:10px;left:6px;
+  background:linear-gradient(to bottom,#11ff11,#008800);
+  border:1px solid #5f5;color:#fff;
+  padding:2px 6px;border-radius:8px;
+  font-size:.56rem;font-weight:900;z-index:20;
+  box-shadow:0 0 8px rgba(0,255,0,.7);white-space:nowrap;
+  pointer-events:none;
+  animation:${popIn} .3s ease-out;
+`;
+const ShieldBadge = styled.div`
+  position:absolute;top:10px;right:6px;
+  background:linear-gradient(to bottom,#00ccff,#0044cc);
+  border:1px solid #5cf;color:#fff;
+  padding:2px 6px;border-radius:8px;
+  font-size:.56rem;font-weight:900;z-index:20;
+  box-shadow:0 0 8px rgba(0,200,255,.7);white-space:nowrap;
+  pointer-events:none;
+  animation:${popIn} .3s ease-out;
+`;
 // Tooltip for hero skills (gold)
 const HeroTip = styled.div`
   position:absolute;bottom:calc(100% + 14px);left:50%;transform:translateX(-50%);
-  background:rgba(5,5,18,.97);border:1px solid #ffd700;border-radius:7px;
-  padding:7px 12px;font-size:.6rem;color:#ffd700;white-space:nowrap;
-  z-index:400;box-shadow:0 6px 18px rgba(0,0,0,.9);line-height:1.6;
+  background:rgba(12,12,30,.98);border:1px solid #ffd700;border-radius:8px;
+  padding:10px 14px;font-size:.6rem;color:#fff;width:190px;text-align:left;
+  z-index:400;box-shadow:0 8px 24px rgba(0,0,0,.95);line-height:1.6;
   &::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
     border:6px solid transparent;border-top-color:#ffd700;}
 `;
 // Tooltip for enemy skills (red)
 const EnemyTip = styled.div`
-  position:absolute;bottom:calc(100% + 14px);left:50%;transform:translateX(-50%);
-  background:rgba(18,4,4,.97);border:1px solid #f44;border-radius:7px;
-  padding:7px 12px;font-size:.6rem;color:#f99;white-space:nowrap;
-  z-index:400;box-shadow:0 6px 18px rgba(0,0,0,.9);line-height:1.6;
-  &::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
-    border:6px solid transparent;border-top-color:#f44;}
+  position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%);
+  background:rgba(25,10,10,.98);border:1px solid #f44;border-radius:8px;
+  padding:10px 14px;font-size:.6rem;color:#fff;width:190px;text-align:left;
+  z-index:400;box-shadow:0 8px 24px rgba(0,0,0,.95);line-height:1.6;
+  &::after{content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+    border:6px solid transparent;border-bottom-color:#f44;}
 `;
 
 /* ══════════════════════════════════════════════════════════════
@@ -558,15 +580,6 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
   const busyRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const heroImgs = useMemo(() => {
-    const allUnits = Object.values(buildingsData).flatMap((b: any) => b.unitsProduced);
-    return (savedFormations as any).principal.units.slice(0, 5).map((slot: any) => {
-      if (!slot) return '';
-      const u = allUnits.find((u: any) => u.id === slot.id) as any;
-      return u?.image || '';
-    });
-  }, []);
-
   /* ── init ── */
   useEffect(() => {
     setGems(makeInitialGems());
@@ -576,14 +589,45 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       attack: d.atk, defense: d.def,
       isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
       skillName: d.skillName, skillDesc: d.skillDesc,
+      poison: 0,
     })));
-    setHeroes(HERO_DEFS.map((d, i) => ({
-      name: `Héroe ${i + 1}`, img: heroImgs[i] || '',
-      hp: d.maxHp, maxHp: d.maxHp, mana: 0, maxMana: 100,
-      attack: d.atk, defense: d.def,
-      isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
-      ...HERO_SKILLS[i],
-    })));
+
+    // Load active heroes dynamically from selected formation units in barracks/altar
+    const allUnits = Object.values(buildingsData).flatMap((b: any) => b.unitsProduced);
+    const loadedHeroes = HERO_DEFS.map((fallback, i) => {
+      const slot = (savedFormations as any).principal.units[i];
+      if (!slot) {
+        // Empty slot starts as dead
+        return {
+          name: `Slot Vacío ${i + 1}`, img: '',
+          hp: fallback.maxHp, maxHp: fallback.maxHp, mana: 0, maxMana: 100,
+          attack: fallback.atk, defense: fallback.def,
+          isDead: true, isAttacking: false, isHit: false, isSkillReady: false,
+          ...HERO_SKILLS[i],
+          poison: 0,
+        };
+      }
+      const u = allUnits.find((u: any) => u.id === slot.id) as any;
+      if (!u) {
+        return {
+          name: `Desconocido ${i + 1}`, img: '',
+          hp: fallback.maxHp, maxHp: fallback.maxHp, mana: 0, maxMana: 100,
+          attack: fallback.atk, defense: fallback.def,
+          isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
+          ...HERO_SKILLS[i],
+          poison: 0,
+        };
+      }
+      return {
+        name: u.name, img: u.image || '',
+        hp: u.hp || fallback.maxHp, maxHp: u.hp || fallback.maxHp, mana: 0, maxMana: 100,
+        attack: Math.round(u.attack) || fallback.atk, defense: u.armor || fallback.def,
+        isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
+        ...HERO_SKILLS[i],
+        poison: 0,
+      };
+    });
+    setHeroes(loadedHeroes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -605,7 +649,40 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
 
   const addFloat = useCallback((text: string, kind: FloatKind, x: number, y: number) => {
     const id = `f${Date.now()}-${Math.random()}`;
-    setFloats(p => [...p, { id, text, kind, x, y }]);
+
+    // Determine targeted card lane based on initial x position
+    const r = containerRef.current?.getBoundingClientRect();
+    const width = r ? r.width : 500;
+    const laneIdx = Math.round(((x / width) - 0.12) / 0.175);
+
+    let adjustedX = x;
+    if (laneIdx >= 0 && laneIdx <= 4) {
+      if (laneIdx === 0) {
+        adjustedX = x - 65; // Far left margin space
+      } else if (laneIdx === 1) {
+        adjustedX = x - 55; // Left margin space
+      } else if (laneIdx === 3) {
+        adjustedX = x + 55; // Right margin space
+      } else if (laneIdx === 4) {
+        adjustedX = x + 65; // Far right margin space
+      } else {
+        adjustedX = x - 45; // Center margin space (between lane 1 and 2)
+      }
+    }
+
+    setFloats(p => {
+      // Find how many floats are already near this target position
+      const nearCount = p.filter(f => Math.abs(f.x - adjustedX) < 40 && Math.abs(f.y - y) < 45).length;
+
+      // Stack vertically upward to prevent overlapping
+      const adjustedY = y - nearCount * 26;
+
+      // Slight horizontal jitter to alternate stacked elements
+      const jitteredX = adjustedX + (nearCount % 2 === 0 ? 8 : -8) * Math.min(nearCount, 2);
+
+      return [...p, { id, text, kind, x: jitteredX, y: adjustedY }];
+    });
+
     setTimeout(() => setFloats(p => p.filter(f => f.id !== id)), 1450);
   }, []);
 
@@ -624,45 +701,98 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     let H = H0.map(u => ({ ...u }));
     let comboLvl = 0;
 
+    const findOutsideInTarget = (units: Unit[]): number => {
+      const tier1 = [0, 4].filter(idx => units[idx] && !units[idx].isDead);
+      if (tier1.length > 0) return tier1[Math.floor(Math.random() * tier1.length)];
+      const tier2 = [1, 3].filter(idx => units[idx] && !units[idx].isDead);
+      if (tier2.length > 0) return tier2[Math.floor(Math.random() * tier2.length)];
+      if (units[2] && !units[2].isDead) return 2;
+      return -1;
+    };
+
+    const getLaneAttacker = (units: Unit[]): Unit | null => {
+      // Find all alive units
+      const aliveUnits = units.filter(u => u && !u.isDead);
+      if (aliveUnits.length === 0) return null;
+      // Randomly select one alive unit to attack
+      const randIdx = Math.floor(Math.random() * aliveUnits.length);
+      return aliveUnits[randIdx];
+    };
+
     while (true) {
       const groups = findMatchGroups(G);
       if (!groups.length) break;
 
-      let totalAtk = 0, totalHeal = 0, totalMana = 0;
+      let totalAtk = 0, totalValdariDmg = 0, totalHeal = 0, totalMana = 0, totalPoison = 0, totalShield = 0;
       const matchedSet = new Set<number>();
+      const originalMatchedIndices = new Set<number>();
       const specials: { idx: number; special: 'power' | 'lightning' }[] = [];
 
       for (const g of groups) {
         const fx = GEM_FX[g.type], n = g.length;
-        totalAtk += fx.dmg * n * (n >= 5 ? 2.2 : n >= 4 ? 1.5 : 1);
+        const multSize = n >= 5 ? 2.2 : n >= 4 ? 1.5 : 1;
+        totalAtk += fx.dmg * n * multSize;
+        totalValdariDmg += fx.valdariDmg * n * multSize;
         totalHeal += fx.heal * n;
         totalMana += fx.manaGain * n * (n >= 4 ? 1.6 : 1);
+        totalPoison += fx.poison * n;
+        totalShield += fx.shield * n;
         if (n === 4) specials.push({ idx: g.centerIdx, special: 'power' });
         if (n >= 5) specials.push({ idx: g.centerIdx, special: 'lightning' });
+        
+        g.indices.forEach(i => originalMatchedIndices.add(i));
         expandForSpecials(g.indices, G).forEach(i => matchedSet.add(i));
+      }
+
+      // Add extra damage, heal, and mana from gems exploded by special gems
+      for (const i of matchedSet) {
+        if (!originalMatchedIndices.has(i)) {
+          const extraGem = G[i];
+          if (extraGem) {
+            const fx = GEM_FX[extraGem.type];
+            totalAtk += fx.dmg;
+            totalValdariDmg += fx.valdariDmg;
+            totalHeal += fx.heal;
+            totalMana += fx.manaGain;
+            totalPoison += fx.poison;
+            totalShield += fx.shield;
+          }
+        }
       }
       const mult = 1 + comboLvl * .32;
       totalAtk = Math.round(totalAtk * mult);
+      totalValdariDmg = Math.round(totalValdariDmg * mult);
       totalHeal = Math.round(totalHeal * mult);
       totalMana = Math.min(40, Math.round(totalMana));
+      totalPoison = Math.round(totalPoison * mult);
+      totalShield = Math.round(totalShield * mult);
 
       G = G.map((g, i) => matchedSet.has(i) ? { ...g, isMatched: true } : g);
       setGems([...G]);
       await SLEEP(380);
 
       if (side === 'player') {
-        /* ── damage → first alive enemy ── */
-        if (totalAtk > 0) {
-          const ti = E.findIndex(e => !e.isDead);
-          if (ti >= 0) {
-            const actual = Math.max(1, totalAtk - E[ti].defense);
-            E[ti] = { ...E[ti], hp: Math.max(0, E[ti].hp - actual), isDead: E[ti].hp - actual <= 0, isHit: true };
-            const isCrit = mult >= 1.62 || actual > 80;
-            addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', ePos(ti).x, ePos(ti).y);
-            if (isCrit || actual > 80) doShake();
+        /* ── damage → outside-to-inside target ── */
+        let appliedDmg = totalAtk;
+        const ti = findOutsideInTarget(E);
+        if (ti >= 0) {
+          // Add player troop base attack starting from the targeted side if the lane hero is dead
+          const laneAttacker = getLaneAttacker(H);
+          const extraAtk = laneAttacker ? laneAttacker.attack : 0;
+          appliedDmg = totalAtk + extraAtk;
+
+          const actual = Math.max(1, appliedDmg - (E[ti].defense + (E[ti].shield || 0)));
+          E[ti] = { ...E[ti], hp: Math.max(0, E[ti].hp - actual), isDead: E[ti].hp - actual <= 0, isHit: true };
+          const isCrit = mult >= 1.62 || actual > 80;
+          addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', ePos(ti).x, ePos(ti).y);
+          if (extraAtk > 0 && laneAttacker) {
+            addFloat(`⚔️ +${extraAtk} ${laneAttacker.name}`, 'combo', ePos(ti).x, ePos(ti).y - 25);
           }
-          /* ← rage mana: enemies build fury when attacked */
-          const rage = Math.min(18, Math.floor(totalAtk / 7));
+          if (isCrit || actual > 80) doShake();
+        }
+        /* ← rage mana: enemies build fury when attacked */
+        const rage = Math.min(18, Math.floor(appliedDmg / 7));
+        if (rage > 0) {
           E = E.map((e, i) => {
             if (e.isDead) return e;
             const newMana = Math.min(e.maxMana, e.mana + rage);
@@ -672,8 +802,38 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
               addFloat(`⚡ ${e.skillName}!`, 'skill', ePos(i).x, ePos(i).y - 26);
             return { ...e, mana: newMana, isSkillReady: isReady };
           });
+        }
+        setEnemies([...E]);
+        setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 430);
+        /* ── valdari magic damage → all alive enemies ── */
+        if (totalValdariDmg > 0) {
+          E = E.map((e, i) => {
+            if (e.isDead) return e;
+            const actual = Math.max(1, totalValdariDmg - (e.defense + (e.shield || 0)));
+            const isCrit = mult >= 1.62 || actual > 80;
+            addFloat(isCrit ? `⚡ ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', ePos(i).x, ePos(i).y);
+            return { ...e, hp: Math.max(0, e.hp - actual), isDead: e.hp - actual <= 0, isHit: true };
+          });
           setEnemies([...E]);
+          if (mult >= 1.62 || totalValdariDmg > 80) doShake();
           setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 430);
+        }
+        /* ── poison → all alive enemies ── */
+        if (totalPoison > 0) {
+          E = E.map((e, i) => {
+            if (e.isDead) return e;
+            addFloat(`🤢 Veneno +${totalPoison}`, 'skill', ePos(i).x, ePos(i).y - 28);
+            return { ...e, poison: (e.poison || 0) + totalPoison };
+          });
+          setEnemies([...E]);
+        }
+        /* ── shield/defense → all alive heroes ── */
+        if (totalShield > 0) {
+          H = H.map((h, i) => {
+            if (h.isDead) return h;
+            addFloat(`🛡️ Escudo +${totalShield}`, 'combo', hPos(i).x, hPos(i).y - 28);
+            return { ...h, shield: (h.shield || 0) + totalShield };
+          });
         }
         /* ── heal → all alive heroes ── */
         if (totalHeal > 0) {
@@ -698,18 +858,54 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
 
       } else {
         /* ── ENEMY SIDE ── */
-        /* damage → first alive hero */
-        if (totalAtk > 0) {
-          const ti = H.findIndex(h => !h.isDead);
-          if (ti >= 0) {
-            const actual = Math.max(1, totalAtk - H[ti].defense);
-            H[ti] = { ...H[ti], hp: Math.max(0, H[ti].hp - actual), isDead: H[ti].hp - actual <= 0, isHit: true };
-            const isCrit = mult >= 1.62 || actual > 80;
-            addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', hPos(ti).x, hPos(ti).y);
-            if (isCrit || actual > 80) doShake();
-            setHeroes([...H]);
-            setTimeout(() => setHeroes(prev => prev.map((u, i) => i === ti ? { ...u, isHit: false } : u)), 430);
+        /* damage → outside-to-inside target */
+        const ti = findOutsideInTarget(H);
+        if (ti >= 0) {
+          // Add enemy troop base attack starting from the targeted side if the lane unit is dead
+          const laneAttacker = getLaneAttacker(E);
+          const extraAtk = laneAttacker ? laneAttacker.attack : 0;
+          const finalDmg = totalAtk + extraAtk;
+
+          const actual = Math.max(1, finalDmg - (H[ti].defense + (H[ti].shield || 0)));
+          H[ti] = { ...H[ti], hp: Math.max(0, H[ti].hp - actual), isDead: H[ti].hp - actual <= 0, isHit: true };
+          const isCrit = mult >= 1.62 || actual > 80;
+          addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', hPos(ti).x, hPos(ti).y);
+          if (extraAtk > 0 && laneAttacker) {
+            addFloat(`⚔️ +${extraAtk} ${laneAttacker.name}`, 'combo', hPos(ti).x, hPos(ti).y - 25);
           }
+          if (isCrit || actual > 80) doShake();
+          setHeroes([...H]);
+          setTimeout(() => setHeroes(prev => prev.map((u, i) => i === ti ? { ...u, isHit: false } : u)), 430);
+        }
+        /* valdari damage → all alive heroes ── */
+        if (totalValdariDmg > 0) {
+          H = H.map((h, i) => {
+            if (h.isDead) return h;
+            const actual = Math.max(1, totalValdariDmg - (h.defense + (h.shield || 0)));
+            const isCrit = mult >= 1.62 || actual > 80;
+            addFloat(isCrit ? `⚡ ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', hPos(i).x, hPos(i).y);
+            return { ...h, hp: Math.max(0, h.hp - actual), isDead: h.hp - actual <= 0, isHit: true };
+          });
+          setHeroes([...H]);
+          if (mult >= 1.62 || totalValdariDmg > 80) doShake();
+          setTimeout(() => setHeroes(prev => prev.map(u => ({ ...u, isHit: false }))), 430);
+        }
+        /* poison → all alive heroes ── */
+        if (totalPoison > 0) {
+          H = H.map((h, i) => {
+            if (h.isDead) return h;
+            addFloat(`🤢 Veneno +${totalPoison}`, 'skill', hPos(i).x, hPos(i).y - 28);
+            return { ...h, poison: (h.poison || 0) + totalPoison };
+          });
+          setHeroes([...H]);
+        }
+        /* shield/defense → all alive enemies ── */
+        if (totalShield > 0) {
+          E = E.map((e, i) => {
+            if (e.isDead) return e;
+            addFloat(`🛡️ Escudo +${totalShield}`, 'combo', ePos(i).x, ePos(i).y - 28);
+            return { ...e, shield: (e.shield || 0) + totalShield };
+          });
         }
         /* sylvaran gems → heal all alive ENEMIES */
         if (totalHeal > 0) {
@@ -758,7 +954,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         }
         for (let row = 0; row < empty; row++)NG[row * 8 + col] = spawnGem();
       }
-      for (const sc of specials) if (!matchedSet.has(sc.idx)) NG[sc.idx] = { ...NG[sc.idx], special: sc.special };
+      for (const sc of specials) NG[sc.idx] = { ...NG[sc.idx], special: sc.special };
 
       G = NG.map(g => ({ ...g, isMatched: false }));
       setGems([...G]); await SLEEP(430);
@@ -877,13 +1073,43 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     const pr = await runCascade(G, E, H, 'player');
     if (pr.ended) { busyRef.current = false; return; }
 
+    let currentEnemies = pr.enemies;
+    let currentHeroes = pr.heroes;
+
+    /* Tick enemy poison */
+    let tickPoisonEnemies = false;
+    let nextEnemies = currentEnemies.map((e, ei) => {
+      let nextE = { ...e, shield: 0 };
+      if (!nextE.isDead && nextE.poison && nextE.poison > 0) {
+        tickPoisonEnemies = true;
+        const dmg = nextE.poison;
+        const newHp = Math.max(0, nextE.hp - dmg);
+        addFloat(`🤢 ${dmg}`, 'dmg', ePos(ei).x, ePos(ei).y);
+        return { ...nextE, hp: newHp, isDead: newHp <= 0, poison: 0, isHit: true };
+      }
+      return nextE;
+    });
+    if (tickPoisonEnemies) {
+      setEnemies([...nextEnemies]);
+      doShake();
+      await SLEEP(430);
+      nextEnemies = nextEnemies.map(u => ({ ...u, isHit: false }));
+      setEnemies([...nextEnemies]);
+      await SLEEP(200);
+      currentEnemies = nextEnemies;
+      if (currentEnemies.every(e => e.isDead)) { setPhase('victory'); busyRef.current = false; return; }
+    }
+
     /* enemy phase start */
     setPhase('enemyThinking');
     await SLEEP(550);
 
     /* 1 — fire enemy skills BEFORE board move */
-    const sr = await fireEnemySkills(pr.enemies, pr.heroes);
+    const sr = await fireEnemySkills(currentEnemies, currentHeroes);
     if (sr.ended) { busyRef.current = false; return; }
+
+    let nextHeroes = sr.H;
+    let nextEnemiesAfterSkills = sr.E;
 
     /* 2 — board move */
     const swap = findBestEnemySwap(pr.gems);
@@ -900,18 +1126,43 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       await SLEEP(280);
 
       setPhase('enemyTurn');
-      const er = await runCascade(swapped, sr.E, sr.H, 'enemy');
+      const er = await runCascade(swapped, nextEnemiesAfterSkills, nextHeroes, 'enemy');
       if (er.ended) { busyRef.current = false; return; }
+      nextHeroes = er.heroes;
+      nextEnemiesAfterSkills = er.enemies;
     } else {
       const cp = cPos();
       addFloat('☠️ SIN MOVIMIENTO', 'combo', cp.x, cp.y);
       await SLEEP(700);
     }
 
+    /* Tick hero poison */
+    let tickPoisonHeroes = false;
+    let finalHeroes = nextHeroes.map((h, hi) => {
+      let nextH = { ...h, shield: 0 };
+      if (!nextH.isDead && nextH.poison && nextH.poison > 0) {
+        tickPoisonHeroes = true;
+        const dmg = nextH.poison;
+        const newHp = Math.max(0, nextH.hp - dmg);
+        addFloat(`🤢 ${dmg}`, 'dmg', hPos(hi).x, hPos(hi).y);
+        return { ...nextH, hp: newHp, isDead: newHp <= 0, poison: 0, isHit: true };
+      }
+      return nextH;
+    });
+    if (tickPoisonHeroes) {
+      setHeroes([...finalHeroes]);
+      doShake();
+      await SLEEP(430);
+      finalHeroes = finalHeroes.map(u => ({ ...u, isHit: false }));
+      setHeroes([...finalHeroes]);
+      await SLEEP(200);
+      if (finalHeroes.every(h => h.isDead)) { setPhase('defeat'); busyRef.current = false; return; }
+    }
+
     setPhase('playerTurn');
     busyRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runCascade, fireEnemySkills, addFloat, cPos]);
+  }, [runCascade, fireEnemySkills, addFloat, cPos, ePos, hPos, doShake]);
 
   /* ── gem click ── */
   const onGemClick = useCallback(async (index: number) => {
@@ -1073,12 +1324,29 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                 onMouseLeave={() => setHovEnemy(null)}
               >
                 {i === 2 && <BossLabel>BOSS</BossLabel>}
+                {unit.poison !== undefined && unit.poison > 0 && !unit.isDead && (
+                  <PoisonBadge>🤢 Veneno: {unit.poison}</PoisonBadge>
+                )}
+                {unit.shield !== undefined && unit.shield > 0 && !unit.isDead && (
+                  <ShieldBadge>🛡️ Escudo: +{unit.shield}</ShieldBadge>
+                )}
                 {/* ← red "HABILIDAD" badge when enemy skill is ready */}
                 {unit.isSkillReady && !unit.isDead && <EnemySkillBadge>☠️ HABILIDAD</EnemySkillBadge>}
                 {/* ← red tooltip on hover */}
-                {hovEnemy === i && unit.isSkillReady && !unit.isDead && (
+                {hovEnemy === i && !unit.isDead && (
                   <EnemyTip>
-                    <strong>{unit.skillName}</strong><br />{unit.skillDesc}
+                    <div style={{ fontWeight: 900, fontSize: '.72rem', color: '#ff4444', marginBottom: '3px', textTransform: 'uppercase' }}>
+                      {unit.name}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '.58rem', color: '#ddd', marginBottom: '6px' }}>
+                      <span>❤️ HP: <strong style={{ color: '#fff' }}>{unit.hp}/{unit.maxHp}</strong></span>
+                      <span>⚡ MANA: <strong style={{ color: '#fff' }}>{unit.mana}/{unit.maxMana}</strong></span>
+                      <span>⚔️ ATK: <strong style={{ color: '#fff' }}>{unit.attack}</strong></span>
+                      <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong></span>
+                    </div>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '4px', whiteSpace: 'normal', color: '#fdd' }}>
+                      <strong style={{ color: '#ffaa00' }}>Skill:</strong> {unit.skillDesc}
+                    </div>
                   </EnemyTip>
                 )}
                 <HPBar $pct={(unit.hp / unit.maxHp) * 100} $clr="#ff3333" $pos="top" />
@@ -1122,12 +1390,29 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                 onMouseEnter={() => setHovHero(i)}
                 onMouseLeave={() => setHovHero(null)}
               >
-                {unit.isSkillReady && !unit.isDead && <HeroSkillBadge>✨ SKILL</HeroSkillBadge>}
-                {hovHero === i && unit.isSkillReady && !unit.isDead && (
-                  <HeroTip>
-                    <strong>{unit.skillName}</strong><br />{unit.skillDesc}
-                  </HeroTip>
+                {unit.poison !== undefined && unit.poison > 0 && !unit.isDead && (
+                  <PoisonBadge>🤢 Veneno: {unit.poison}</PoisonBadge>
                 )}
+                {unit.shield !== undefined && unit.shield > 0 && !unit.isDead && (
+                  <ShieldBadge>🛡️ Escudo: +{unit.shield}</ShieldBadge>
+                )}
+                {unit.isSkillReady && !unit.isDead && <HeroSkillBadge>✨ SKILL</HeroSkillBadge>}
+                 {hovHero === i && !unit.isDead && (
+                   <HeroTip>
+                     <div style={{ fontWeight: 900, fontSize: '.72rem', color: '#ffd700', marginBottom: '3px', textTransform: 'uppercase' }}>
+                       {unit.name}
+                     </div>
+                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '.58rem', color: '#ddd', marginBottom: '6px' }}>
+                       <span>❤️ HP: <strong style={{ color: '#fff' }}>{unit.hp}/{unit.maxHp}</strong></span>
+                       <span>⚡ MANA: <strong style={{ color: '#fff' }}>{unit.mana}/{unit.maxMana}</strong></span>
+                       <span>⚔️ ATK: <strong style={{ color: '#fff' }}>{unit.attack}</strong></span>
+                       <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong></span>
+                     </div>
+                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '4px', whiteSpace: 'normal', color: '#dfd' }}>
+                       <strong style={{ color: '#00ffcc' }}>{unit.skillName || 'Skill'}:</strong> {unit.skillDesc}
+                     </div>
+                   </HeroTip>
+                 )}
                 <HPBar $pct={(unit.hp / unit.maxHp) * 100} $clr="#33ff66" $pos="top" />
                 {unit.img
                   ? <UnitImgWrap><img src={unit.img} alt={unit.name} /></UnitImgWrap>

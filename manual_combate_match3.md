@@ -8,12 +8,22 @@ Este manual documenta en profundidad el funcionamiento del motor de combate basa
 
 El tablero de combate consiste en una cuadrícula de **8x8** que genera aleatoriamente gemas asociadas a las 4 razas del juego. Emparejar 3 o más gemas del mismo tipo desata efectos específicos para tu equipo (en tu turno) o para el enemigo (en su turno):
 
-| Raza / Gema | Icono | Daño Base por Gema | Maná Ganado por Gema | Curación por Gema | Descripción del Rol de Combate |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **Gorkar (Furia)** | 🔥 | **35** | 5 | 0 | **Ofensiva pura.** Ideal para infligir gran cantidad de daño directo rápidamente. |
-| **Mortharim (Muerte)** | 💀 | **25** | **20** | 0 | **Generador de Maná.** Ofrece buen daño y es clave para cargar las habilidades rápido. |
-| **Valdari (Luz)** | ⚡ | **20** | 10 | 0 | **Balanceada.** Ofrece daño moderado y recarga de maná estándar. |
-| **Sylvaran (Bosque)** | 🌿 | **0** | 15 | **25** | **Defensiva/Sustento.** No daña, pero cura la vida del equipo y aporta buen maná. |
+| Raza / Gema | Icono | Daño Base por Gema | Maná Ganado por Gema | Curación por Gema | Veneno por Gema | Escudo por Gema | Descripción del Rol de Combate |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Gorkar (Furia)** | 🔥 | **5** (Objetivo Único) | 0 | 0 | 0 | **1** | **Ofensiva / Vanguardia:** Daño destructivo concentrado en un solo objetivo y otorga escudo defensivo al equipo. |
+| **Mortharim (Muerte)** | 💀 | **2** (Objetivo Único) | 0 | 0 | **1** | 0 | **Degenerativa:** Daño directo y aplica veneno en área que explota al inicio del turno rival. |
+| **Valdari (Luz)** | ⚡ | **1** (Daño en Área) | **1** | 0 | 0 | 0 | **Magia en Área:** Golpea a todos los rivales a la vez con magia y carga maná. |
+| **Sylvaran (Bosque)** | 🌿 | 0 | **1** | **1** | 0 | 0 | **Sustento:** Curación en área para todo el equipo y carga maná constante. |
+
+### 🤢 Mecánica de Veneno (Mortharim)
+* **Acumulación de Área:** Cada gema Mortharim emparejada añade **1 de Veneno** a **todos los enemigos vivos** (o a todos los héroes vivos si es el turno enemigo).
+* **Efecto de Turno:** Al comienzo de la siguiente fase de la unidad afectada (antes de que actúe en el tablero o lance habilidades), sufre **daño bruto de veneno igual al nivel de veneno acumulado** (el daño de veneno ignora la defensa).
+* **Duración:** Una vez que el veneno inflige su daño al inicio del turno, el contador de veneno de la unidad se **limpia por completo** (dura exactamente 1 turno).
+
+### 🛡️ Mecánica de Escudo Temporal (Gorkar)
+* **Otorgamiento de Área:** Cada gema Gorkar emparejada añade **1 de Defensa (Escudo)** a **todos los aliados vivos**.
+* **Mitigación Activa:** Este escudo se suma temporalmente a la defensa base de cada unidad, ayudando a mitigar ataques físicos de objetivo único o el daño mágico en área.
+* **Duración:** Al igual que el veneno, es un efecto de **exactamente 1 turno**. Al comienzo de la siguiente fase del equipo que lo posee, el escudo de todo el equipo se **limpia a 0**.
 
 ---
 
@@ -66,8 +76,14 @@ Cada héroe y enemigo posee tres atributos principales que interactúan directam
 * **Ataque (ATK):** Determina la potencia de las habilidades especiales basadas en daño.
 * **Defensa (DEF):** Es un escudo plano que **resta de forma directa** cualquier impacto recibido (sea de matches o habilidades especiales).
 
-### 🧮 Fórmula del Daño Mitigado por Defensa
-$$\text{Daño Realizado} = \max(1, \text{Daño Bruto Acumulado} - \text{Defensa del Objetivo})$$
+### 🧮 Fórmula del Daño Físico y Asistencia de Carril
+El daño físico infligido por los matches de gemas en el tablero recibe un bonus directo de tu tropa en el carril correspondiente:
+$$\text{Daño Total Bruto} = \text{Daño de Gema Acumulado} + \text{ATK de la Tropa en el Carril}$$
+
+*(Si la tropa en el mismo carril del objetivo está muerta, el sistema reclutará de forma inteligente a la siguiente tropa viva más cercana desde ese mismo bando: si es carril izquierdo, busca de izquierda a derecha; si es carril derecho, busca de derecha a izquierda; si es el centro, busca de adentro hacia afuera).*
+
+Luego, la mitigación por defensa aplica su descuento habitual:
+$$\text{Daño Final Realizado} = \max(1, \text{Daño Total Bruto} - \text{Defensa del Objetivo})$$
 
 > La mitigación por defensa nunca puede reducir el daño a 0; cualquier golpe exitoso infligirá como mínimo **1 de daño**.
 
@@ -77,8 +93,12 @@ $$\text{Daño Realizado} = \max(1, \text{Daño Bruto Acumulado} - \text{Defensa 
 
 Durante tu turno, el combate se rige por las siguientes reglas operativas:
 
-### A. Dirección del Daño
-Todo el daño de ataque acumulado en tu cascada de gemas se inflige al **primer enemigo vivo de izquierda a derecha** (el tanque enemigo). Una vez derrotado, el exceso de daño de futuros turnos pasará al siguiente enemigo vivo.
+### A. Dirección del Daño (De afuera hacia adentro simétrico y aleatorio)
+Todo el daño de ataque y veneno acumulado se inflige al **primer enemigo vivo de afuera hacia adentro** evaluando por capas (Tiers):
+* **Capa 1 (Extremos):** Índices **0 y 4**. Si ambos están vivos, el objetivo se elige al **azar (50/50)** entre ellos. Si solo uno está vivo, se le ataca directamente.
+* **Capa 2 (Intermedios):** Índices **1 y 3**. Si ambos están vivos (y la Capa 1 ha sido derrotada), el objetivo se elige al **azar (50/50)** entre ellos.
+* **Capa 3 (Centro):** Índice **2** (el Jefe enemigo / Héroe central). Es atacado solo cuando todas las capas exteriores han sido eliminadas.
+*Esto incrementa enormemente la interactividad del combate, evitando que el extremo izquierdo reciba todo el daño siempre.*
 
 ### B. Carga de Furia Enemiga (Rage)
 Los enemigos no se quedan quietos al recibir tus golpes. Cada vez que atacas a un enemigo con gemas, este acumula maná de furia en su barra morada:
@@ -123,7 +143,7 @@ $$\text{Prioridad de Raza (Peso)} = \begin{cases}
 $$\text{Puntaje del Movimiento} = \text{Longitud del Match}^2 \times \text{Prioridad de Raza}$$
 
 La IA ejecuta el intercambio que ofrezca el **Puntaje de Movimiento más alto**.
-* **Daño al Jugador:** Las gemas de ataque emparejadas por el enemigo dañan al **primer héroe vivo** de tu formación.
+* **Daño al Jugador:** Las gemas de ataque emparejadas por el enemigo dañan a tus héroes **de afuera hacia adentro** (priorizando el orden `[0, 4, 1, 3, 2]`). Esto garantiza que tu héroe principal situado en la posición central (carril 2) sea el último en ser atacado.
 * **Curación Enemiga:** Si la IA empareja gemas Sylvaran (Bosque), **cura a todos los enemigos vivos** en lugar de a tus héroes.
 * **Maná Enemigo:** Si empareja gemas de maná, **todos los enemigos vivos ganan el 65% del maná total acumulado**.
 

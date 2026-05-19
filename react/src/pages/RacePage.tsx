@@ -430,9 +430,13 @@ const MapStage = styled.div`
   max-width: 100vw;
   max-height: 100vh;
   
-  /* MÁSCARA MEJORADA: Degradado radial mucho más agresivo para difuminar las esquinas y bordes rectos */
-  mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0) 85%);
-  -webkit-mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0) 85%);
+  /* MÁSCARA CUADRADA: Degradados lineales cruzados para difuminar en línea recta los 4 bordes */
+  mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%), 
+              linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%), 
+                      linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
 
   &::after {
     content: '';
