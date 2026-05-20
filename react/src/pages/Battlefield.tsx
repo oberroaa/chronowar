@@ -447,7 +447,7 @@ const GemEl = styled.div<{
       inset 0 -4px 7px rgba(0,0,0,.5),inset 0 4px 9px rgba(255,255,255,.65);
   }
   &::before{
-    content:'${p => p.$special === 'power' ? '✨' : p.$special === 'lightning' ? '⚡' : (raceColors as any)[p.$race]?.icon || '?'}';
+    content:'${p => p.$special === 'power' ? '💥' : p.$special === 'lightning' ? '🌀' : (raceColors as any)[p.$race]?.icon || '?'}';
     filter:drop-shadow(0 2px 3px rgba(0,0,0,.9));
   }
 `;
@@ -515,15 +515,26 @@ function findMatchGroups(gems: Gem[]): MatchGroup[] {
   return groups;
 }
 
-function expandForSpecials(allIdx: number[], gems: Gem[]): number[] {
+function expandForSpecials(allIdx: number[], gems: Gem[], attackingRace: Race): number[] {
   const set = new Set(allIdx);
   for (const idx of allIdx) {
     const g = gems[idx]; if (!g) continue;
     const row = Math.floor(idx / 8), col = idx % 8;
-    if (g.special === 'power')
-      for (let dr = -1; dr <= 1; dr++)for (let dc = -1; dc <= 1; dc++) { const nr = row + dr, nc = col + dc; if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) set.add(nr * 8 + nc); }
-    if (g.special === 'lightning')
-      for (let i = 0; i < 8; i++) { set.add(row * 8 + i); set.add(i * 8 + col); }
+    if (g.special === 'power') {
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = row + dr, nc = col + dc;
+          if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) set.add(nr * 8 + nc);
+        }
+      }
+    }
+    if (g.special === 'lightning') {
+      for (let i = 0; i < 64; i++) {
+        if (gems[i] && gems[i].type === attackingRace) {
+          set.add(i);
+        }
+      }
+    }
   }
   return Array.from(set);
 }
@@ -718,12 +729,13 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                      mana gain for all alive enemies
   ══════════════════════════════════════════════════════════ */
   const runCascade = useCallback(async (
-    G0: Gem[], E0: Unit[], H0: Unit[], side: Side
+    G0: Gem[], E0: Unit[], H0: Unit[], side: Side, initialExplosionIdx?: number
   ): Promise<CascadeResult> => {
     let G = G0.map(g => ({ ...g }));
     let E = E0.map(u => ({ ...u }));
     let H = H0.map(u => ({ ...u }));
     let comboLvl = 0;
+    let isInitialExplosion = initialExplosionIdx !== undefined;
 
     const findOutsideInTarget = (units: Unit[]): number => {
       const tier1 = [0, 4].filter(idx => units[idx] && !units[idx].isDead);
@@ -744,7 +756,22 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     };
 
     while (true) {
-      const groups = findMatchGroups(G);
+      let groups: MatchGroup[] = [];
+      if (isInitialExplosion && initialExplosionIdx !== undefined) {
+        const g = G[initialExplosionIdx];
+        if (g) {
+          groups = [{
+            indices: [initialExplosionIdx],
+            type: g.type,
+            centerIdx: initialExplosionIdx,
+            length: 1
+          }];
+        }
+        isInitialExplosion = false;
+      } else {
+        groups = findMatchGroups(G);
+      }
+      
       if (!groups.length) break;
 
       let totalAtk = 0, totalValdariDmg = 0, totalHeal = 0, totalMana = 0, totalPoison = 0, totalShield = 0;
@@ -765,7 +792,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         if (n >= 5) specials.push({ idx: g.centerIdx, special: 'lightning' });
 
         g.indices.forEach(i => originalMatchedIndices.add(i));
-        expandForSpecials(g.indices, G).forEach(i => matchedSet.add(i));
+        expandForSpecials(g.indices, G, side === 'player' ? race : 'gorkar').forEach(i => matchedSet.add(i));
       }
 
       // Add extra damage, heal, and mana from gems exploded by special gems
@@ -1092,9 +1119,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
   /* ══════════════════════════════════════════════════════════
      FULL TURN FLOW
   ══════════════════════════════════════════════════════════ */
-  const runFullTurn = useCallback(async (G: Gem[], E: Unit[], H: Unit[]) => {
+  const runFullTurn = useCallback(async (G: Gem[], E: Unit[], H: Unit[], initialExplosionIdx?: number) => {
     setPhase('processing');
-    const pr = await runCascade(G, E, H, 'player');
+    const pr = await runCascade(G, E, H, 'player', initialExplosionIdx);
     if (pr.ended) { busyRef.current = false; return; }
 
     let currentEnemies = pr.enemies;
@@ -1191,6 +1218,13 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
   /* ── gem click ── */
   const onGemClick = useCallback(async (index: number) => {
     if (busyRef.current || phase !== 'playerTurn') return;
+    const clickedGem = gems[index];
+    if (clickedGem && (clickedGem.special === 'power' || clickedGem.special === 'lightning')) {
+      setSelected(null);
+      busyRef.current = true;
+      await runFullTurn(gems, enemies, heroes, index);
+      return;
+    }
     if (selected === null) { setSelected(index); return; }
     const r1 = Math.floor(index / 8), c1 = index % 8;
     const r2 = Math.floor(selected / 8), c2 = selected % 8;
