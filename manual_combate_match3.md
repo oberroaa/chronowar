@@ -12,8 +12,8 @@ El tablero de combate consiste en una cuadrícula de **8x8** que genera aleatori
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | **Gorkar (Furia)** | 🔥 | **5** (Objetivo Único) | 0 | 0 | 0 | **1** | **Ofensiva / Vanguardia:** Daño destructivo concentrado en un solo objetivo y otorga escudo defensivo al equipo. |
 | **Mortharim (Muerte)** | 💀 | **2** (Objetivo Único) | 0 | 0 | **1** | 0 | **Degenerativa:** Daño directo y aplica veneno en área que explota al inicio del turno rival. |
-| **Valdari (Luz)** | ⚡ | **1** (Daño en Área) | **1** | 0 | 0 | 0 | **Magia en Área:** Golpea a todos los rivales a la vez con magia y carga maná. |
-| **Sylvaran (Bosque)** | 🌿 | 0 | **1** | **1** | 0 | 0 | **Sustento:** Curación en área para todo el equipo y carga maná constante. |
+| **Valdari (Luz)** | ⚡ | **1** (Daño en Área) | **3** | 0 | 0 | 0 | **Magia en Área:** Golpea a todos los rivales a la vez con magia y carga maná. |
+| **Sylvaran (Bosque)** | 🌿 | 0 | **1** | **3** | 0 | 0 | **Sustento:** Curación en área para todo el equipo y carga maná constante. |
 
 ### 🤢 Mecánica de Veneno (Mortharim)
 * **Acumulación de Área:** Cada gema Mortharim emparejada añade **1 de Veneno** a **todos los enemigos vivos** (o a todos los héroes vivos si es el turno enemigo).

@@ -5,6 +5,8 @@ import React, {
 import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
 import { raceColors } from '../types/raceColors';
 import { savedFormations, buildingsData } from '../types/jsonResponse';
+import { executeHeroSkill } from '../utils/combatSkills';
+
 
 /* ══════════════════════════════════════════════════════════════
    TYPES
@@ -21,7 +23,7 @@ interface Gem {
   isMatched?: boolean;
   isFalling?: boolean;
 }
-interface Unit {
+export interface Unit {
   name: string;
   img: string;
   hp: number;
@@ -36,6 +38,7 @@ interface Unit {
   isSkillReady: boolean;
   skillName: string;
   skillDesc: string;
+  skillAction?: string;
   poison?: number;
   shield?: number;
 }
@@ -52,9 +55,9 @@ const SLEEP = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const RACES: Race[] = ['valdari', 'gorkar', 'sylvaran', 'mortharim'];
 
 const GEM_FX: Record<Race, { dmg: number; valdariDmg: number; manaGain: number; heal: number; poison: number; shield: number }> = {
-  valdari: { dmg: 0, valdariDmg: 1, manaGain: 1, heal: 0, poison: 0, shield: 0 },
+  valdari: { dmg: 0, valdariDmg: 1, manaGain: 3, heal: 0, poison: 0, shield: 0 },
   gorkar: { dmg: 5, valdariDmg: 0, manaGain: 0, heal: 0, poison: 0, shield: 1 },
-  sylvaran: { dmg: 0, valdariDmg: 0, manaGain: 1, heal: 1, poison: 0, shield: 0 },
+  sylvaran: { dmg: 0, valdariDmg: 0, manaGain: 1, heal: 3, poison: 0, shield: 0 },
   mortharim: { dmg: 2, valdariDmg: 0, manaGain: 0, heal: 0, poison: 1, shield: 0 },
 };
 
@@ -100,11 +103,11 @@ const ENEMY_DEFS = [
 ];
 
 const HERO_SKILLS = [
-  { skillName: 'Golpe Crítico', skillDesc: '3× daño al enemigo con menos HP' },
-  { skillName: 'Escudo Divino', skillDesc: 'Cura 80 HP a todos los aliados' },
-  { skillName: 'Devastación', skillDesc: '60 daño a TODOS los enemigos' },
-  { skillName: 'Lluvia de Flechas', skillDesc: '45 daño a 3 enemigos aleatorios' },
-  { skillName: 'Sanación Mayor', skillDesc: 'Restaura 120 HP al aliado más herido' },
+  { skillName: 'Golpe Crítico', skillDesc: '3× daño al enemigo con menos HP', skillAction: 'single_heavy' },
+  { skillName: 'Escudo Divino', skillDesc: 'Cura 80 HP a todos los aliados', skillAction: 'heal_all_mid' },
+  { skillName: 'Devastación', skillDesc: '60 daño a TODOS los enemigos', skillAction: 'aoe_mid' },
+  { skillName: 'Lluvia de Flechas', skillDesc: '45 daño a 3 enemigos aleatorios', skillAction: 'random_3_mid' },
+  { skillName: 'Sanación Mayor', skillDesc: 'Restaura 120 HP al aliado más herido', skillAction: 'heal_single_heavy' },
 ];
 const HERO_DEFS = [
   { maxHp: 280, atk: 22, def: 8 },
@@ -345,25 +348,35 @@ const EnemySkillBadge = styled.div`
   box-shadow:0 0 12px rgba(255,68,68,.95);white-space:nowrap;
   animation:${popIn} .35s ease-out;
 `;
+const badgePopIn = keyframes`
+  0% { opacity: 0; transform: scale(0.4); }
+  70% { transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+`;
+const BadgesRow = styled.div`
+  position:absolute;bottom:10px;left:6px;right:6px;
+  display:flex;align-items:center;
+  pointer-events:none;z-index:20;
+  gap:4px;
+`;
 const PoisonBadge = styled.div`
-  position:absolute;top:10px;left:6px;
   background:linear-gradient(to bottom,#11ff11,#008800);
   border:1px solid #5f5;color:#fff;
   padding:2px 6px;border-radius:8px;
-  font-size:.56rem;font-weight:900;z-index:20;
+  font-size:.56rem;font-weight:900;
   box-shadow:0 0 8px rgba(0,255,0,.7);white-space:nowrap;
   pointer-events:none;
-  animation:${popIn} .3s ease-out;
+  animation:${badgePopIn} .3s ease-out;
 `;
 const ShieldBadge = styled.div`
-  position:absolute;top:10px;right:6px;
   background:linear-gradient(to bottom,#00ccff,#0044cc);
   border:1px solid #5cf;color:#fff;
   padding:2px 6px;border-radius:8px;
-  font-size:.56rem;font-weight:900;z-index:20;
+  font-size:.56rem;font-weight:900;
   box-shadow:0 0 8px rgba(0,200,255,.7);white-space:nowrap;
   pointer-events:none;
-  animation:${popIn} .3s ease-out;
+  animation:${badgePopIn} .3s ease-out;
+  margin-left:auto;
 `;
 // Tooltip for hero skills (gold)
 const HeroTip = styled.div`
@@ -596,6 +609,11 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     const allUnits = Object.values(buildingsData).flatMap((b: any) => b.unitsProduced);
     const loadedHeroes = HERO_DEFS.map((fallback, i) => {
       const slot = (savedFormations as any).principal.units[i];
+      const fallbackSkill = HERO_SKILLS[i] || {
+        skillName: 'Golpe Crítico',
+        skillDesc: '3× daño al enemigo con menos HP',
+        skillAction: 'single_heavy'
+      };
       if (!slot) {
         // Empty slot starts as dead
         return {
@@ -603,7 +621,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           hp: fallback.maxHp, maxHp: fallback.maxHp, mana: 0, maxMana: 100,
           attack: fallback.atk, defense: fallback.def,
           isDead: true, isAttacking: false, isHit: false, isSkillReady: false,
-          ...HERO_SKILLS[i],
+          skillName: fallbackSkill.skillName,
+          skillDesc: fallbackSkill.skillDesc,
+          skillAction: fallbackSkill.skillAction,
           poison: 0,
         };
       }
@@ -614,7 +634,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           hp: fallback.maxHp, maxHp: fallback.maxHp, mana: 0, maxMana: 100,
           attack: fallback.atk, defense: fallback.def,
           isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
-          ...HERO_SKILLS[i],
+          skillName: fallbackSkill.skillName,
+          skillDesc: fallbackSkill.skillDesc,
+          skillAction: fallbackSkill.skillAction,
           poison: 0,
         };
       }
@@ -623,7 +645,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         hp: u.hp || fallback.maxHp, maxHp: u.hp || fallback.maxHp, mana: 0, maxMana: 100,
         attack: Math.round(u.attack) || fallback.atk, defense: u.armor || fallback.def,
         isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
-        ...HERO_SKILLS[i],
+        skillName: u.skillName || fallbackSkill.skillName,
+        skillDesc: u.skillDesc || fallbackSkill.skillDesc,
+        skillAction: u.skillAction || fallbackSkill.skillAction,
         poison: 0,
       };
     });
@@ -739,7 +763,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         totalShield += fx.shield * n;
         if (n === 4) specials.push({ idx: g.centerIdx, special: 'power' });
         if (n >= 5) specials.push({ idx: g.centerIdx, special: 'lightning' });
-        
+
         g.indices.forEach(i => originalMatchedIndices.add(i));
         expandForSpecials(g.indices, G).forEach(i => matchedSet.add(i));
       }
@@ -1205,62 +1229,19 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     addFloat(`✨ ${hero.skillName}!`, 'skill', hPos(hi).x, hPos(hi).y - 32);
     await SLEEP(320);
 
-    switch (hi) {
-      case 0: { /* Golpe Crítico — 3× dmg to enemy with least HP */
-        const wi = E.reduce((mi, e, i, arr) =>
-          !e.isDead && e.hp < (arr[mi]?.hp ?? Infinity) ? i : mi, E.findIndex(e => !e.isDead));
-        if (wi >= 0) {
-          const d = hero.attack * 3;
-          const actual = Math.max(1, d - E[wi].defense);
-          E[wi] = { ...E[wi], hp: Math.max(0, E[wi].hp - actual), isDead: E[wi].hp - actual <= 0, isHit: true };
-          addFloat(`💥 ${actual}`, 'crit', ePos(wi).x, ePos(wi).y);
-          doShake();
-          setTimeout(() => setEnemies(prev => prev.map((u, i) => i === wi ? { ...u, isHit: false } : u)), 430);
-        }
-        break;
-      }
-      case 1: { /* Escudo Divino — heal all heroes 80 HP */
-        H = H.map((h, i) => {
-          if (h.isDead) return h;
-          addFloat('+80', 'heal', hPos(i).x, hPos(i).y);
-          return { ...h, hp: Math.min(h.maxHp, h.hp + 80) };
-        });
-        break;
-      }
-      case 2: { /* Devastación — 60 dmg to ALL enemies */
-        E = E.map((e, i) => {
-          if (e.isDead) return e;
-          const actual = Math.max(1, 60 - e.defense);
-          addFloat(`💥 ${actual}`, 'crit', ePos(i).x, ePos(i).y);
-          const hp = Math.max(0, e.hp - actual);
-          return { ...e, hp, isDead: hp <= 0, isHit: true };
-        });
-        doShake();
-        setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
-        break;
-      }
-      case 3: { /* Lluvia de Flechas — 45 dmg to 3 random enemies */
-        const targets = E.map((_, i) => i).filter(i => !E[i].isDead)
-          .sort(() => Math.random() - .5).slice(0, 3);
-        for (const i of targets) {
-          const actual = Math.max(1, 45 - E[i].defense);
-          E[i] = { ...E[i], hp: Math.max(0, E[i].hp - actual), isDead: E[i].hp - actual <= 0, isHit: true };
-          addFloat(`🏹 ${actual}`, 'dmg', ePos(i).x, ePos(i).y);
-        }
-        setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
-        break;
-      }
-      case 4: { /* Sanación Mayor — +120 HP to most injured hero */
-        const mi = H.reduce((minI, h, i) =>
-          !h.isDead && (h.hp / h.maxHp) < ((H[minI]?.hp ?? 1) / (H[minI]?.maxHp || 1)) ? i : minI,
-          H.findIndex(h => !h.isDead));
-        if (mi >= 0) {
-          H[mi] = { ...H[mi], hp: Math.min(H[mi].maxHp, H[mi].hp + 120) };
-          addFloat('+120 💚', 'heal', hPos(mi).x, hPos(mi).y);
-        }
-        break;
-      }
-    }
+    const { E: nextE, H: nextH } = executeHeroSkill({
+      action: hero.skillAction || 'single_heavy',
+      hero,
+      E,
+      H,
+      addFloat,
+      doShake,
+      ePos,
+      hPos,
+      setEnemies,
+    });
+    E = nextE;
+    H = nextH;
 
     H[hi] = { ...H[hi], isAttacking: false };
     setCastingHero(null);
@@ -1324,11 +1305,15 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                 onMouseLeave={() => setHovEnemy(null)}
               >
                 {i === 2 && <BossLabel>BOSS</BossLabel>}
-                {unit.poison !== undefined && unit.poison > 0 && !unit.isDead && (
-                  <PoisonBadge>🤢 Veneno: {unit.poison}</PoisonBadge>
-                )}
-                {unit.shield !== undefined && unit.shield > 0 && !unit.isDead && (
-                  <ShieldBadge>🛡️ Escudo: +{unit.shield}</ShieldBadge>
+                {((unit.poison !== undefined && unit.poison > 0) || (unit.shield !== undefined && unit.shield > 0)) && !unit.isDead && (
+                  <BadgesRow>
+                    {unit.poison !== undefined && unit.poison > 0 && (
+                      <PoisonBadge>🤢 {unit.poison}</PoisonBadge>
+                    )}
+                    {unit.shield !== undefined && unit.shield > 0 && (
+                      <ShieldBadge>🛡️ {unit.shield}</ShieldBadge>
+                    )}
+                  </BadgesRow>
                 )}
                 {/* ← red "HABILIDAD" badge when enemy skill is ready */}
                 {unit.isSkillReady && !unit.isDead && <EnemySkillBadge>☠️ HABILIDAD</EnemySkillBadge>}
@@ -1390,29 +1375,33 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                 onMouseEnter={() => setHovHero(i)}
                 onMouseLeave={() => setHovHero(null)}
               >
-                {unit.poison !== undefined && unit.poison > 0 && !unit.isDead && (
-                  <PoisonBadge>🤢 Veneno: {unit.poison}</PoisonBadge>
-                )}
-                {unit.shield !== undefined && unit.shield > 0 && !unit.isDead && (
-                  <ShieldBadge>🛡️ Escudo: +{unit.shield}</ShieldBadge>
+                {((unit.poison !== undefined && unit.poison > 0) || (unit.shield !== undefined && unit.shield > 0)) && !unit.isDead && (
+                  <BadgesRow>
+                    {unit.poison !== undefined && unit.poison > 0 && (
+                      <PoisonBadge>🤢 {unit.poison}</PoisonBadge>
+                    )}
+                    {unit.shield !== undefined && unit.shield > 0 && (
+                      <ShieldBadge>🛡️ {unit.shield}</ShieldBadge>
+                    )}
+                  </BadgesRow>
                 )}
                 {unit.isSkillReady && !unit.isDead && <HeroSkillBadge>✨ SKILL</HeroSkillBadge>}
-                 {hovHero === i && !unit.isDead && (
-                   <HeroTip>
-                     <div style={{ fontWeight: 900, fontSize: '.72rem', color: '#ffd700', marginBottom: '3px', textTransform: 'uppercase' }}>
-                       {unit.name}
-                     </div>
-                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '.58rem', color: '#ddd', marginBottom: '6px' }}>
-                       <span>❤️ HP: <strong style={{ color: '#fff' }}>{unit.hp}/{unit.maxHp}</strong></span>
-                       <span>⚡ MANA: <strong style={{ color: '#fff' }}>{unit.mana}/{unit.maxMana}</strong></span>
-                       <span>⚔️ ATK: <strong style={{ color: '#fff' }}>{unit.attack}</strong></span>
-                       <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong></span>
-                     </div>
-                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '4px', whiteSpace: 'normal', color: '#dfd' }}>
-                       <strong style={{ color: '#00ffcc' }}>{unit.skillName || 'Skill'}:</strong> {unit.skillDesc}
-                     </div>
-                   </HeroTip>
-                 )}
+                {hovHero === i && !unit.isDead && (
+                  <HeroTip>
+                    <div style={{ fontWeight: 900, fontSize: '.72rem', color: '#ffd700', marginBottom: '3px', textTransform: 'uppercase' }}>
+                      {unit.name}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '.58rem', color: '#ddd', marginBottom: '6px' }}>
+                      <span>❤️ HP: <strong style={{ color: '#fff' }}>{unit.hp}/{unit.maxHp}</strong></span>
+                      <span>⚡ MANA: <strong style={{ color: '#fff' }}>{unit.mana}/{unit.maxMana}</strong></span>
+                      <span>⚔️ ATK: <strong style={{ color: '#fff' }}>{unit.attack}</strong></span>
+                      <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong></span>
+                    </div>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '4px', whiteSpace: 'normal', color: '#dfd' }}>
+                      <strong style={{ color: '#00ffcc' }}>{unit.skillName || 'Skill'}:</strong> {unit.skillDesc}
+                    </div>
+                  </HeroTip>
+                )}
                 <HPBar $pct={(unit.hp / unit.maxHp) * 100} $clr="#33ff66" $pos="top" />
                 {unit.img
                   ? <UnitImgWrap><img src={unit.img} alt={unit.name} /></UnitImgWrap>

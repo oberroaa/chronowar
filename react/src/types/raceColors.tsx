@@ -4,7 +4,7 @@ export const raceColors = {
     color: '#FFD700', // Gold
     primaryColor: '#4169E1',   
     secondaryColor: '#FFD700', // Dark golden
-    icon: '☀️',
+    icon: '⚡',
     primary: '#f8e090',
     secondary: '#8a6d3b',
     background: 'rgba(30, 25, 15, 0.95)',

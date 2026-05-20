@@ -104,7 +104,10 @@ export type UnitProduction = {
   manaRegen: number,        // float
   transportSize: number,
   carryCapacity: number,  // Cantidad de recursos que puede cargar al saquear/recolectar
-  available: number
+  available: number,
+  skillName?: string;
+  skillDesc?: string;
+  skillAction?: string;
 };
 
 export const SquaresValdari = [

@@ -1,0 +1,275 @@
+import React from 'react';
+import type { Unit } from '../pages/Battlefield';
+
+interface SkillExecutionParams {
+  action: string;
+  hero: Unit;
+  E: Unit[];
+  H: Unit[];
+  addFloat: (text: string, kind: 'dmg' | 'heal' | 'crit' | 'combo' | 'skill', x: number, y: number) => void;
+  doShake: () => void;
+  ePos: (idx: number) => { x: number; y: number };
+  hPos: (idx: number) => { x: number; y: number };
+  setEnemies: React.Dispatch<React.SetStateAction<Unit[]>>;
+}
+
+/**
+ * Ejecuta los efectos lógicos y visuales de la habilidad de un héroe.
+ * Devuelve el estado actualizado de héroes y enemigos.
+ */
+export const executeHeroSkill = ({
+  action,
+  hero,
+  E,
+  H,
+  addFloat,
+  doShake,
+  ePos,
+  hPos,
+  setEnemies,
+}: SkillExecutionParams): { E: Unit[]; H: Unit[] } => {
+  const updatedEnemies = E.map(u => ({ ...u }));
+  let updatedHeroes = H.map(u => ({ ...u }));
+
+  switch (action) {
+    case 'single_light': { /* 40 dmg a un enemigo aleatorio */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        const actual = Math.max(1, 40 - updatedEnemies[target].defense);
+        updatedEnemies[target] = {
+          ...updatedEnemies[target],
+          hp: Math.max(0, updatedEnemies[target].hp - actual),
+          isDead: updatedEnemies[target].hp - actual <= 0,
+          isHit: true,
+        };
+        addFloat(`💥 ${actual}`, 'dmg', ePos(target).x, ePos(target).y);
+        doShake();
+        setTimeout(
+          () => setEnemies(prev => prev.map((u, i) => (i === target ? { ...u, isHit: false } : u))),
+          430
+        );
+      }
+      break;
+    }
+
+    case 'heal_all_light': { /* Cura 60 HP a todos los aliados */
+      updatedHeroes = updatedHeroes.map((h, i) => {
+        if (h.isDead) return h;
+        addFloat('+60', 'heal', hPos(i).x, hPos(i).y);
+        return { ...h, hp: Math.min(h.maxHp, h.hp + 60) };
+      });
+      break;
+    }
+
+    case 'heal_all_mid': { /* Cura 80 HP a todos los aliados */
+      updatedHeroes = updatedHeroes.map((h, i) => {
+        if (h.isDead) return h;
+        addFloat('+80', 'heal', hPos(i).x, hPos(i).y);
+        return { ...h, hp: Math.min(h.maxHp, h.hp + 80) };
+      });
+      break;
+    }
+
+    case 'single_heavy': { /* Golpe Critico: 3x dmg al enemigo con menos HP */
+      const wi = updatedEnemies.reduce(
+        (mi, e, i, arr) => (!e.isDead && e.hp < (arr[mi]?.hp ?? Infinity) ? i : mi),
+        updatedEnemies.findIndex(e => !e.isDead)
+      );
+      if (wi >= 0) {
+        const d = hero.attack * 3;
+        const actual = Math.max(1, d - updatedEnemies[wi].defense);
+        updatedEnemies[wi] = {
+          ...updatedEnemies[wi],
+          hp: Math.max(0, updatedEnemies[wi].hp - actual),
+          isDead: updatedEnemies[wi].hp - actual <= 0,
+          isHit: true,
+        };
+        addFloat(`💥 ${actual}`, 'crit', ePos(wi).x, ePos(wi).y);
+        doShake();
+        setTimeout(
+          () => setEnemies(prev => prev.map((u, i) => (i === wi ? { ...u, isHit: false } : u))),
+          430
+        );
+      }
+      break;
+    }
+
+    case 'aoe_mid': { /* Devastacion: 60 dmg a TODOS los enemigos */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const actual = Math.max(1, 60 - e.defense);
+        addFloat(`💥 ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+        const hp = Math.max(0, e.hp - actual);
+        updatedEnemies[i] = { ...e, hp, isDead: hp <= 0, isHit: true };
+      }
+      doShake();
+      setTimeout(
+        () => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))),
+        440
+      );
+      break;
+    }
+
+    case 'heal_single_heavy': { /* Sanacion Mayor: +120 HP al heroe mas herido */
+      const mi = updatedHeroes.reduce(
+        (minI, h, i) =>
+          !h.isDead && h.hp / h.maxHp < (updatedHeroes[minI]?.hp ?? 1) / (updatedHeroes[minI]?.maxHp || 1) ? i : minI,
+        updatedHeroes.findIndex(h => !h.isDead)
+      );
+      if (mi >= 0) {
+        updatedHeroes[mi] = { ...updatedHeroes[mi], hp: Math.min(updatedHeroes[mi].maxHp, updatedHeroes[mi].hp + 120) };
+        addFloat('+120 💚', 'heal', hPos(mi).x, hPos(mi).y);
+      }
+      break;
+    }
+
+    case 'random_3_mid': { /* Lluvia de Flechas: 45 dmg a 3 enemigos aleatorios */
+      const targets = updatedEnemies
+        .map((_, i) => i)
+        .filter(i => !updatedEnemies[i].isDead)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      for (const i of targets) {
+        const actual = Math.max(1, 45 - updatedEnemies[i].defense);
+        updatedEnemies[i] = {
+          ...updatedEnemies[i],
+          hp: Math.max(0, updatedEnemies[i].hp - actual),
+          isDead: updatedEnemies[i].hp - actual <= 0,
+          isHit: true,
+        };
+        addFloat(`🏹 ${actual}`, 'dmg', ePos(i).x, ePos(i).y);
+      }
+      doShake();
+      setTimeout(
+        () => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))),
+        440
+      );
+      break;
+    }
+
+    case 'mana_drain': { /* Drenar 40 de mana a todos los enemigos */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const drained = Math.min(e.mana, 40);
+        addFloat(`⚡ -${drained} Mana`, 'skill', ePos(i).x, ePos(i).y);
+        updatedEnemies[i] = { ...e, mana: Math.max(0, e.mana - 40) };
+      }
+      break;
+    }
+
+    case 'random_2_mid': { /* 40 dmg a 2 enemigos aleatorios */
+      const tgts2 = updatedEnemies
+        .map((_, i) => i)
+        .filter(i => !updatedEnemies[i].isDead)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2);
+      for (const i of tgts2) {
+        const actual = Math.max(1, 40 - updatedEnemies[i].defense);
+        updatedEnemies[i] = {
+          ...updatedEnemies[i],
+          hp: Math.max(0, updatedEnemies[i].hp - actual),
+          isDead: updatedEnemies[i].hp - actual <= 0,
+          isHit: true,
+        };
+        addFloat(`🏹 ${actual}`, 'dmg', ePos(i).x, ePos(i).y);
+      }
+      doShake();
+      setTimeout(
+        () => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))),
+        440
+      );
+      break;
+    }
+
+    case 'random_3_heavy': { /* 50 dmg a 3 enemigos aleatorios */
+      const tgts3 = updatedEnemies
+        .map((_, i) => i)
+        .filter(i => !updatedEnemies[i].isDead)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      for (const i of tgts3) {
+        const actual = Math.max(1, 50 - updatedEnemies[i].defense);
+        updatedEnemies[i] = {
+          ...updatedEnemies[i],
+          hp: Math.max(0, updatedEnemies[i].hp - actual),
+          isDead: updatedEnemies[i].hp - actual <= 0,
+          isHit: true,
+        };
+        addFloat(`💥 ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+      }
+      doShake();
+      setTimeout(
+        () => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))),
+        440
+      );
+      break;
+    }
+
+    case 'single_divine': { /* Golpe Divino: 4x dmg al enemigo con menos HP */
+      const wid = updatedEnemies.reduce(
+        (mi, e, i, arr) => (!e.isDead && e.hp < (arr[mi]?.hp ?? Infinity) ? i : mi),
+        updatedEnemies.findIndex(e => !e.isDead)
+      );
+      if (wid >= 0) {
+        const d = hero.attack * 4;
+        const actual = Math.max(1, d - updatedEnemies[wid].defense);
+        updatedEnemies[wid] = {
+          ...updatedEnemies[wid],
+          hp: Math.max(0, updatedEnemies[wid].hp - actual),
+          isDead: updatedEnemies[wid].hp - actual <= 0,
+          isHit: true,
+        };
+        addFloat(`💥 ${actual}`, 'crit', ePos(wid).x, ePos(wid).y);
+        doShake();
+        setTimeout(
+          () => setEnemies(prev => prev.map((u, i) => (i === wid ? { ...u, isHit: false } : u))),
+          430
+        );
+      }
+      break;
+    }
+
+    case 'aoe_heavy': { /* Maestria Arcana: 80 dmg a TODOS los enemigos */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const actual = Math.max(1, 80 - e.defense);
+        addFloat(`💥 ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+        const hp = Math.max(0, e.hp - actual);
+        updatedEnemies[i] = { ...e, hp, isDead: hp <= 0, isHit: true };
+      }
+      doShake();
+      setTimeout(
+        () => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))),
+        440
+      );
+      break;
+    }
+
+    default: { /* fallback: golpe simple */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const target = alive[0];
+        const actual = Math.max(1, hero.attack * 2 - updatedEnemies[target].defense);
+        updatedEnemies[target] = {
+          ...updatedEnemies[target],
+          hp: Math.max(0, updatedEnemies[target].hp - actual),
+          isDead: updatedEnemies[target].hp - actual <= 0,
+          isHit: true,
+        };
+        addFloat(`💥 ${actual}`, 'dmg', ePos(target).x, ePos(target).y);
+        doShake();
+        setTimeout(
+          () => setEnemies(prev => prev.map((u, i) => (i === target ? { ...u, isHit: false } : u))),
+          430
+        );
+      }
+      break;
+    }
+  }
+
+  return { E: updatedEnemies, H: updatedHeroes };
+};
