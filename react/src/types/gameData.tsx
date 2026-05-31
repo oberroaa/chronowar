@@ -108,6 +108,8 @@ export type UnitProduction = {
   skillName?: string;
   skillDesc?: string;
   skillAction?: string;
+  attackBonus?: number;
+  armorBonus?: number;
 };
 
 export const SquaresValdari = [

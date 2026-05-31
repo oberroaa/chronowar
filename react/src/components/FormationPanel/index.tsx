@@ -263,8 +263,8 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                           <UnitName $race={race}>{hero.name}</UnitName>
                           <UnitStats>
                             <Stat $race={race}>❤️ {hero.hp}</Stat>
-                            <Stat $race={race}>⚔️ {hero.attack}</Stat>
-                            <Stat $race={race}>🛡️ {hero.armor}</Stat>
+                            <Stat $race={race}>⚔️ {hero.attack}{hero.attackBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{hero.attackBonus})</span> : null}</Stat>
+                            <Stat $race={race}>🛡️ {hero.armor}{hero.armorBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{hero.armorBonus})</span> : null}</Stat>
                             {inUse && <Stat $race={race} style={{ color: 'red', fontWeight: 'bold' }}>EN USO</Stat>}
                             {!inUse && available <= 0 && <Stat $race={race} style={{ color: '#ff4444', fontWeight: 'bold' }}>AGOTADO</Stat>}
                           </UnitStats>
@@ -292,8 +292,8 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                           <UnitName $race={race}>{unit.name}</UnitName>
                           <UnitStats>
                             <Stat $race={race}>❤️ {unit.hp}</Stat>
-                            <Stat $race={race}>⚔️ {unit.attack} </Stat>
-                            <Stat $race={race}>🛡️ {unit.armor}</Stat>
+                            <Stat $race={race}>⚔️ {unit.attack}{unit.attackBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{unit.attackBonus})</span> : null}</Stat>
+                            <Stat $race={race}>🛡️ {unit.armor}{unit.armorBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{unit.armorBonus})</span> : null}</Stat>
                             <Stat $race={race} style={{ 
                               color: available > 0 ? '#aaa' : '#ff4444',
                               fontWeight: available > 0 ? 'normal' : 'bold',
@@ -331,11 +331,11 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                 </StatItem>
                 <StatItem $race={race}>
                   <StatLabel $race={race}>⚔️ ATAQUE</StatLabel>
-                  <StatValue $race={race}>{showUnitInfo.attack}</StatValue>
+                  <StatValue $race={race}>{showUnitInfo.attack}{showUnitInfo.attackBonus ? <span style={{color:'#ffd700',marginLeft:'4px'}}>(+{showUnitInfo.attackBonus})</span> : null}</StatValue>
                 </StatItem>
                 <StatItem $race={race}>
                   <StatLabel $race={race}>🛡️ ARMADURA</StatLabel>
-                  <StatValue $race={race}>{showUnitInfo.armor}</StatValue>
+                  <StatValue $race={race}>{showUnitInfo.armor}{showUnitInfo.armorBonus ? <span style={{color:'#ffd700',marginLeft:'4px'}}>(+{showUnitInfo.armorBonus})</span> : null}</StatValue>
                 </StatItem>
                 <StatItem $race={race}>
                   <StatLabel $race={race}>🏹 ARMA</StatLabel>

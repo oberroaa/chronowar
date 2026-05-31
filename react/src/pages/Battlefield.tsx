@@ -6,6 +6,8 @@ import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
 import { raceColors } from '../types/raceColors';
 import { savedFormations, buildingsData } from '../types/jsonResponse';
 import { executeHeroSkill } from '../utils/combatSkills';
+import { useGameStore } from '../store/useGameStore';
+import { getUpgradedUnits } from '../utils/unitStats';
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -41,6 +43,8 @@ export interface Unit {
   skillAction?: string;
   poison?: number;
   shield?: number;
+  attackBonus?: number;
+  armorBonus?: number;
 }
 interface FloatNum { id: string; text: string; x: number; y: number; kind: FloatKind; }
 interface MatchGroup { indices: number[]; type: Race; centerIdx: number; length: number; }
@@ -584,7 +588,7 @@ function spawnGem(): Gem {
    COMPONENT
 ══════════════════════════════════════════════════════════════ */
 const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) => {
-
+  const { buildingLevels } = useGameStore();
   const [gems, setGems] = useState<Gem[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [phase, setPhase] = useState<GamePhase>('playerTurn');
@@ -617,7 +621,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     })));
 
     // Load active heroes dynamically from selected formation units in barracks/altar
-    const allUnits = Object.values(buildingsData).flatMap((b: any) => b.unitsProduced);
+    const allUnits = getUpgradedUnits(buildingLevels);
     const loadedHeroes = HERO_DEFS.map((fallback, i) => {
       const slot = (savedFormations as any).principal.units[i];
       const fallbackSkill = HERO_SKILLS[i] || {
@@ -660,6 +664,8 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         skillDesc: u.skillDesc || fallbackSkill.skillDesc,
         skillAction: u.skillAction || fallbackSkill.skillAction,
         poison: 0,
+        attackBonus: u.attackBonus,
+        armorBonus: u.armorBonus,
       };
     });
     setHeroes(loadedHeroes);
@@ -1428,8 +1434,8 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '.58rem', color: '#ddd', marginBottom: '6px' }}>
                       <span>❤️ HP: <strong style={{ color: '#fff' }}>{unit.hp}/{unit.maxHp}</strong></span>
                       <span>⚡ MANA: <strong style={{ color: '#fff' }}>{unit.mana}/{unit.maxMana}</strong></span>
-                      <span>⚔️ ATK: <strong style={{ color: '#fff' }}>{unit.attack}</strong></span>
-                      <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong></span>
+                      <span>⚔️ ATK: <strong style={{ color: '#fff' }}>{unit.attack}</strong>{unit.attackBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{unit.attackBonus})</span> : null}</span>
+                      <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong>{unit.armorBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{unit.armorBonus})</span> : null}</span>
                     </div>
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '4px', whiteSpace: 'normal', color: '#dfd' }}>
                       <strong style={{ color: '#00ffcc' }}>{unit.skillName || 'Skill'}:</strong> {unit.skillDesc}

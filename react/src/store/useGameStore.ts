@@ -8,6 +8,7 @@ interface GameState {
   view: 'home' | 'city' | 'battle';
   race: RaceType;
   resources: Record<ResourceType, number>;
+  buildingLevels: Record<string, number>;
 
   // Actions
   setView: (view: 'home' | 'city' | 'battle') => void;
@@ -16,6 +17,8 @@ interface GameState {
   updateResource: (type: ResourceType, amount: number) => void;
   addResources: (newResources: Partial<Record<ResourceType, number>>) => void;
   startGame: (selectedRace: RaceType) => void;
+  setBuildingLevel: (buildingId: string, level: number) => void;
+  initBuildingLevels: (initialLevels: Record<string, number>) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -25,6 +28,7 @@ export const useGameStore = create<GameState>()(
       view: 'home',
       race: 'valdari',
       resources: recursosPlayer,
+      buildingLevels: {},
 
       // Actions
       setView: (view) => set({ view }),
@@ -51,6 +55,20 @@ export const useGameStore = create<GameState>()(
       startGame: (selectedRace) => set({
         race: selectedRace,
         view: 'city'
+      }),
+
+      setBuildingLevel: (buildingId, level) => set((state) => ({
+        buildingLevels: {
+          ...state.buildingLevels,
+          [buildingId.toLowerCase()]: level
+        }
+      })),
+
+      initBuildingLevels: (initialLevels) => set((state) => {
+        if (Object.keys(state.buildingLevels).length === 0) {
+          return { buildingLevels: initialLevels };
+        }
+        return { buildingLevels: state.buildingLevels };
       }),
     }),
     {

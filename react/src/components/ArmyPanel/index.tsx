@@ -173,7 +173,9 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                   <ModalStatItem>
                     <ModalStatLabel $race={race}>Attack:</ModalStatLabel>
                     <ModalStatValue>
-                      {unit.attack} <SmallText>({unit.weaponType})</SmallText>
+                      {unit.attack} 
+                      {unit.attackBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.attackBonus})</span> : null}
+                      <SmallText>({unit.weaponType})</SmallText>
                     </ModalStatValue>
                   </ModalStatItem>
                 </ModalStatsColumn>
@@ -192,7 +194,9 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                   <ModalStatItem>
                     <ModalStatLabel $race={race}>Armor:</ModalStatLabel>
                     <ModalStatValue>
-                      {unit.armor} <SmallText>({unit.armorType})</SmallText>
+                      {unit.armor} 
+                      {unit.armorBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.armorBonus})</span> : null}
+                      <SmallText>({unit.armorType})</SmallText>
                     </ModalStatValue>
                   </ModalStatItem>
 
@@ -390,11 +394,17 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
                   </StatItem>
                   <StatItem title="Attack Damage">
                     <StatLabel $race={race}>⚔️</StatLabel>
-                    <StatValue>{unit.attack}</StatValue>
+                    <StatValue>
+                      {unit.attack}
+                      {unit.attackBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.attackBonus})</span> : null}
+                    </StatValue>
                   </StatItem>
                   <StatItem title="Armor / Defense">
                     <StatLabel $race={race}>🛡️</StatLabel>
-                    <StatValue>{unit.armor}</StatValue>
+                    <StatValue>
+                      {unit.armor}
+                      {unit.armorBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.armorBonus})</span> : null}
+                    </StatValue>
                   </StatItem>
                   <StatItem title="Mana / Special Points">
                     <StatLabel $race={race}>✨</StatLabel>

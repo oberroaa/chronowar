@@ -14,6 +14,7 @@ import ArmyPanel from '../components/ArmyPanel/index';
 import PortalPanel from '../components/PortalPanel/index';
 import BuildingInfoPanel from '../components/BuildingInfoPanel/index';
 import FormationPanel from '../components/FormationPanel/index';
+import { getUpgradedUnits, applyBuildingLevelBonuses } from '../utils/unitStats';
 import {
   buildingsData,
 } from '../types/jsonResponse';
@@ -56,16 +57,13 @@ type BattleResultType = {
 };
 
 // Función para obtener los edificios iniciales de cada raza
-const getInitialBuildings = (race: RaceType): Record<string, BuildingData> => {
-  const buildings: Record<string, BuildingData> = {};
+const getInitialBuildings = (race: RaceType): Record<string, number> => {
+  const buildings: Record<string, number> = {};
 
   Object.values(buildingsData)
     .filter(building => building.race === race)
     .forEach(building => {
-      buildings[building.name.toLowerCase()] = {
-        image: building.image,
-        level: building.level
-      };
+      buildings[building.name.toLowerCase()] = building.level;
     });
 
   return buildings;
@@ -100,37 +98,6 @@ const raceData = {
   }
 };
 
-const getUnitsFromBuildings = (): UnitProduction[] => {
-  const allUnits: UnitProduction[] = [];
-
-  Object.values(buildingsData).forEach(building => {
-    building.unitsProduced.forEach(unit => {
-      allUnits.push({
-        id: unit.id,
-        name: unit.name,
-        unitType: unit.unitType,
-        cost: unit.cost,
-        buildTime: unit.buildTime,
-        image: unit.image,
-        gif: unit.gif || '',
-        special: unit.special,
-        attack: unit.attack,
-        weaponType: unit.weaponType,
-        armorType: unit.armorType,
-        armor: unit.armor,
-        hp: unit.hp,
-        hpRegen: unit.hpRegen,
-        mana: unit.mana,
-        manaRegen: unit.manaRegen,
-        transportSize: unit.transportSize,
-        carryCapacity: unit.carryCapacity,
-        available: unit.available
-      });
-    });
-  });
-
-  return allUnits;
-};
 
 const simulateBattle = (action: 'attack' | 'gather', targetLevel: number): BattleResultType => {
   const successRate = 0.7 - (targetLevel * 0.05);
@@ -163,14 +130,19 @@ const simulateBattle = (action: 'attack' | 'gather', targetLevel: number): Battl
 
 const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   const currentRaceData = raceData[race];
-  const [constructions, setConstructions] = useState<Record<string, BuildingData>>(getInitialBuildings(race));
-  const { resources, setResources } = useGameStore();
+  const { resources, setResources, buildingLevels, setBuildingLevel, initBuildingLevels } = useGameStore();
 
   const [showTroops, setShowTroops] = useState(false);
   const [showPortal, setShowPortal] = useState(false);
   const [showUnits, setShowUnits] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
-  const [gameUnits, setGameUnits] = useState<UnitProduction[]>(getUnitsFromBuildings());
+  
+  // Inicializar gameUnits con los bonos aplicados
+  const [gameUnits, setGameUnits] = useState<UnitProduction[]>(() => {
+    // Si buildingLevels está vacío, calculamos los iniciales temporalmente
+    const initialLevels = Object.keys(buildingLevels).length > 0 ? buildingLevels : getInitialBuildings(race);
+    return getUpgradedUnits(initialLevels);
+  });
 
   const [portalCountdown, setPortalCountdown] = useState<number | null>(null);
   const [portalCurrentTarget, setPortalCurrentTarget] = useState<number | null>(null);
@@ -212,20 +184,26 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
     return () => clearTimeout(timer);
   }, [portalCountdown, portalCurrentTarget, portalActiveTab]);
 
+  useEffect(() => {
+    // Inicializar buildingLevels en el store la primera vez
+    if (Object.keys(buildingLevels).length === 0) {
+      initBuildingLevels(getInitialBuildings(race));
+    }
+  }, [race, buildingLevels, initBuildingLevels]);
+
+  // Actualizar estadísticas de gameUnits cuando cambien los niveles de edificios
+  useEffect(() => {
+    setGameUnits(prev => applyBuildingLevelBonuses(prev, buildingLevels));
+  }, [buildingLevels]);
+
   const handleAddConstruction = (name: string) => {
-    if (constructions[name.toLowerCase()]) {
+    if (buildingLevels[name.toLowerCase()]) {
       setSelectedBuilding(name);
     }
   };
 
   const handleBuildingUpgraded = (buildingName: string, newLevel: number) => {
-    setConstructions(prev => ({
-      ...prev,
-      [buildingName.toLowerCase()]: {
-        ...prev[buildingName.toLowerCase()],
-        level: newLevel
-      }
-    }));
+    setBuildingLevel(buildingName.toLowerCase(), newLevel);
   };
 
   const toggleTroopsPanel = () => {
@@ -314,31 +292,37 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         <MapStage>
           <BackgroundImage src={currentRaceData.backgroundImage} alt={`${race} city`} />
           <SquaresOverlay>
-            {currentRaceData.squares.map((square) => (
-              <ConstructionSquare
-                key={square.name}
-                style={{ top: square.top, left: square.left }}
-                onClick={() => handleAddConstruction(square.name)}
-                $race={race}
-              >
-                <SquareInner>
-                  {constructions[square.name.toLowerCase()] ? (
-                    <BuildingImage
-                      src={constructions[square.name.toLowerCase()].image}
-                      alt={`${square.name} building`}
-                      $race={race}
-                    />
-                  ) : (
-                    <ArcaneSymbol $race={race}>
-                      {race === 'valdari' && '⚡'}
-                      {race === 'gorkar' && '🔥'}
-                      {race === 'sylvaran' && '🌿'}
-                      {race === 'mortharim' && '💀'}
-                    </ArcaneSymbol>
-                  )}
-                </SquareInner>
-              </ConstructionSquare>
-            ))}
+            {currentRaceData.squares.map((square) => {
+              const bName = square.name.toLowerCase();
+              const isBuilt = !!buildingLevels[bName];
+              const bData = Object.values(buildingsData).find(b => b.name.toLowerCase() === bName);
+
+              return (
+                <ConstructionSquare
+                  key={square.name}
+                  style={{ top: square.top, left: square.left }}
+                  onClick={() => handleAddConstruction(square.name)}
+                  $race={race}
+                >
+                  <SquareInner>
+                    {isBuilt && bData ? (
+                      <BuildingImage
+                        src={bData.image}
+                        alt={`${square.name} building`}
+                        $race={race}
+                      />
+                    ) : (
+                      <ArcaneSymbol $race={race}>
+                        {race === 'valdari' && '⚡'}
+                        {race === 'gorkar' && '🔥'}
+                        {race === 'sylvaran' && '🌿'}
+                        {race === 'mortharim' && '💀'}
+                      </ArcaneSymbol>
+                    )}
+                  </SquareInner>
+                </ConstructionSquare>
+              );
+            })}
           </SquaresOverlay>
         </MapStage>
       </MapWrapper>
@@ -349,12 +333,12 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         resources={resources}
         setResources={setResources}
         race={race}
-        buildings={Object.entries(constructions).map(([name, data]) => ({
+        buildings={Object.entries(buildingLevels).map(([name, level]) => ({
           id: name,
-          level: data.level
+          level: level
         }))}
         onBuildingUpgraded={handleBuildingUpgraded}
-        currentLevel={selectedBuilding ? constructions[selectedBuilding.toLowerCase()]?.level || 1 : 1}
+        currentLevel={selectedBuilding ? buildingLevels[selectedBuilding.toLowerCase()] || 1 : 1}
         gameUnits={gameUnits}
         setGameUnits={setGameUnits}
       />
