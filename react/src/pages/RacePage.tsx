@@ -185,11 +185,9 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   }, [portalCountdown, portalCurrentTarget, portalActiveTab]);
 
   useEffect(() => {
-    // Inicializar buildingLevels en el store la primera vez
-    if (Object.keys(buildingLevels).length === 0) {
-      initBuildingLevels(getInitialBuildings(race));
-    }
-  }, [race, buildingLevels, initBuildingLevels]);
+    initBuildingLevels(getInitialBuildings(race));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [race]);
 
   // Actualizar estadísticas de gameUnits cuando cambien los niveles de edificios
   useEffect(() => {

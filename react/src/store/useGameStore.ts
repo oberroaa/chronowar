@@ -64,12 +64,12 @@ export const useGameStore = create<GameState>()(
         }
       })),
 
-      initBuildingLevels: (initialLevels) => set((state) => {
-        if (Object.keys(state.buildingLevels).length === 0) {
-          return { buildingLevels: initialLevels };
-        }
-        return { buildingLevels: state.buildingLevels };
-      }),
+      initBuildingLevels: (initialLevels) => set((state) => ({
+        // initialLevels = all buildings at level 1 (defaults)
+        // state.buildingLevels = saved upgrades from persist
+        // Saved levels always win over defaults
+        buildingLevels: { ...initialLevels, ...state.buildingLevels }
+      })),
     }),
     {
       name: 'chronowar-game-storage', // Nombre de la clave en LocalStorage
