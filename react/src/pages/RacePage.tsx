@@ -39,11 +39,6 @@ interface RacePageProps {
   onExit: () => void;
 }
 
-// Tipo para los datos de edificios (imagen y nivel)
-type BuildingData = {
-  image: string;
-  level: number;
-};
 
 // Tipo para los resultados de batalla/recolección
 type BattleResultType = {
@@ -136,7 +131,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   const [showPortal, setShowPortal] = useState(false);
   const [showUnits, setShowUnits] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
-  
+
   // Inicializar gameUnits con los bonos aplicados
   const [gameUnits, setGameUnits] = useState<UnitProduction[]>(() => {
     // Si buildingLevels está vacío, calculamos los iniciales temporalmente
@@ -186,7 +181,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
 
   useEffect(() => {
     initBuildingLevels(getInitialBuildings(race));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [race]);
 
   // Actualizar estadísticas de gameUnits cuando cambien los niveles de edificios
