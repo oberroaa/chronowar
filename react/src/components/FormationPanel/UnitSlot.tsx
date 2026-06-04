@@ -4,9 +4,9 @@ import { StyledUnitSlot, UnitImage, UnitName, EmptySlot } from './FormationPanel
 
 interface UnitSlotComponentProps {
   unit: UnitProduction | null;
-  formationIndex: number;
+  formationIndex: string;
   positionIndex: number;
-  onUnitClick: (formationIndex: number, positionIndex: number) => void;
+  onUnitClick: (formationIndex: string, positionIndex: number) => void;
   isSelected: boolean;
   isHero?: boolean;
   isEmpty: boolean;

@@ -9,11 +9,13 @@ import { HeroModule } from './hero/hero.module';
 import { BuildingModule } from './building/building.module';
 import { UnitModule } from './unit/unit.module';
 import { TradingModule } from './trading/trading.module';
+import { PlayerModule } from './player/player.module';
 
 import { Race } from './race/race.entity';
 import { Hero } from './hero/hero.entity';
 import { Building } from './building/building.entity';
 import { Unit } from './unit/unit.entity';
+import { Player } from './player/player.entity';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { Unit } from './unit/unit.entity';
     BuildingModule, 
     UnitModule,
     TradingModule,
+    PlayerModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -35,7 +38,7 @@ import { Unit } from './unit/unit.entity';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        entities: [Race, Hero, Building, Unit],
+        entities: [Race, Hero, Building, Unit, Player],
         synchronize: true, // Solo en desarrollo
         ssl: {
           rejectUnauthorized: false, // Requerido para Supabase en algunos entornos

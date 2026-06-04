@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import {
   SquaresValdari,
   SquaresGorkar,
   SquaresSylvaran,
   SquaresMortharim,
-  type UnitProduction,
   type RaceType,
+  type BuildingInfo,
+  type UnitProduction,
   raceOptions
 } from '../types/gameData';
 import ResourcePanel from '../components/ResourcePanel/index';
@@ -14,12 +15,11 @@ import ArmyPanel from '../components/ArmyPanel/index';
 import PortalPanel from '../components/PortalPanel/index';
 import BuildingInfoPanel from '../components/BuildingInfoPanel/index';
 import FormationPanel from '../components/FormationPanel/index';
-import { getUpgradedUnits, applyBuildingLevelBonuses } from '../utils/unitStats';
-import {
-  buildingsData,
-} from '../types/jsonResponse';
+import { getUpgradedUnits } from '../utils/unitStats';
+// import {
+//   buildingsData as fallbackBuildingsData,
+// } from '../types/jsonResponse';
 import { raceColors } from '../types/raceColors';
-import { jsonPlayersData, jsonSystemPlayersData } from '../types/jsonResponse';
 import { useGameStore } from '../store/useGameStore';
 
 // Props para los cuadros de construcción (con la raza)
@@ -55,9 +55,10 @@ type BattleResultType = {
 const getInitialBuildings = (race: RaceType): Record<string, number> => {
   const buildings: Record<string, number> = {};
 
-  Object.values(buildingsData)
-    .filter(building => building.race === race)
-    .forEach(building => {
+  const activeBuildingsData: Record<string, BuildingInfo> = useGameStore.getState().gameData || {};
+  Object.values(activeBuildingsData)
+    .filter((building: BuildingInfo) => building.race === race)
+    .forEach((building: BuildingInfo) => {
       buildings[building.name.toLowerCase()] = building.level;
     });
 
@@ -125,19 +126,76 @@ const simulateBattle = (action: 'attack' | 'gather', targetLevel: number): Battl
 
 const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   const currentRaceData = raceData[race];
-  const { resources, setResources, buildingLevels, setBuildingLevel, initBuildingLevels } = useGameStore();
+  const { resources, setResources, buildingLevels, setBuildingLevel, initBuildingLevels, gameData, loadGameData, playersList, playerData } = useGameStore();
+  const activeBuildingsData: Record<string, BuildingInfo> = gameData || {};
+
+  const jsonPlayersData = playersList?.filter(p => !p.isSystem) || [];
+  const jsonSystemPlayersData = playersList?.filter(p => p.isSystem) || [];
 
   const [showTroops, setShowTroops] = useState(false);
   const [showPortal, setShowPortal] = useState(false);
   const [showUnits, setShowUnits] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
 
-  // Inicializar gameUnits con los bonos aplicados
   const [gameUnits, setGameUnits] = useState<UnitProduction[]>(() => {
-    // Si buildingLevels está vacío, calculamos los iniciales temporalmente
     const initialLevels = Object.keys(buildingLevels).length > 0 ? buildingLevels : getInitialBuildings(race);
-    return getUpgradedUnits(initialLevels);
+    const baseUnits = getUpgradedUnits(initialLevels, activeBuildingsData);
+    const savedUnits = playerData?.gameUnits || [];
+    
+    return baseUnits.map(unit => {
+      const saved = savedUnits.find((u: any) => u.name === unit.name);
+      if (saved && saved.available !== undefined) {
+        return { ...unit, available: saved.available };
+      }
+      return { ...unit, available: 0 };
+    });
   });
+
+  // Load gameUnits from backend when playerData becomes available
+  useEffect(() => {
+    if (playerData?.gameUnits) {
+      setGameUnits(prevUnits => {
+        let changed = false;
+        const newUnits = prevUnits.map(unit => {
+          const saved = playerData.gameUnits.find((u: any) => u.name === unit.name);
+          if (saved && saved.available !== undefined && saved.available !== unit.available) {
+            changed = true;
+            return { ...unit, available: saved.available };
+          }
+          return unit;
+        });
+        return changed ? newUnits : prevUnits;
+      });
+    }
+  }, [playerData?.gameUnits]);
+
+  const isFirstRender = useRef(true);
+
+  // Sync gameUnits to store when they change
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    const storeState = useGameStore.getState();
+    if (storeState.playerData) {
+      const unitsToSave = gameUnits.map(u => ({ name: u.name, available: u.available || 0 }));
+      
+      const currentSavedStr = JSON.stringify(storeState.playerData.gameUnits || []);
+      const newSavedStr = JSON.stringify(unitsToSave);
+      
+      if (currentSavedStr !== newSavedStr) {
+        useGameStore.setState({
+          playerData: {
+            ...storeState.playerData,
+            gameUnits: unitsToSave
+          }
+        });
+        storeState.syncPlayerState();
+      }
+    }
+  }, [gameUnits]);
 
   const [portalCountdown, setPortalCountdown] = useState<number | null>(null);
   const [portalCurrentTarget, setPortalCurrentTarget] = useState<number | null>(null);
@@ -181,13 +239,11 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
 
   useEffect(() => {
     initBuildingLevels(getInitialBuildings(race));
+    loadGameData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [race]);
 
-  // Actualizar estadísticas de gameUnits cuando cambien los niveles de edificios
-  useEffect(() => {
-    setGameUnits(prev => applyBuildingLevelBonuses(prev, buildingLevels));
-  }, [buildingLevels]);
+
 
   const handleAddConstruction = (name: string) => {
     if (buildingLevels[name.toLowerCase()]) {
@@ -262,6 +318,8 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         isOpen={showPortal}
         onClose={togglePortalPanel}
         race={race}
+        playersData={jsonPlayersData}
+        systemPlayersData={jsonSystemPlayersData}
         countdown={portalCountdown}
         currentTarget={portalCurrentTarget}
         battleResult={portalBattleResult}
@@ -272,6 +330,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         travelCount={travelCount}
         maxTravels={maxTravels}
         onTravelUsed={handleTravelUsed}
+        formations={playerData?.formations}
       />
 
       <FormationPanel
@@ -288,7 +347,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
             {currentRaceData.squares.map((square) => {
               const bName = square.name.toLowerCase();
               const isBuilt = !!buildingLevels[bName];
-              const bData = Object.values(buildingsData).find(b => b.name.toLowerCase() === bName);
+              const bData = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.name.toLowerCase() === bName);
 
               return (
                 <ConstructionSquare

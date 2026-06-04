@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { raceColors } from '../../types/raceColors';
-import { jsonPlayersData, jsonSystemPlayersData } from '../../types/jsonResponse';
+
 
 // Importar tipos
 import type { PortalPanelProps } from './types';
@@ -12,8 +12,8 @@ import * as ModalStyles from './Modal.styles';
 // Componente principal del panel del portal
 const PortalPanel: React.FC<PortalPanelProps> = ({
   isOpen,
-  playersData = jsonPlayersData,
-  systemPlayersData = jsonSystemPlayersData,
+  playersData,
+  systemPlayersData,
   race,
   countdown,
   currentTarget,
@@ -25,6 +25,7 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
   travelCount,
   maxTravels,
   onTravelUsed,
+  formations,
 }) => {
   // Obtener datos de la raza actual
   const currentRace = raceColors[race];
@@ -37,8 +38,10 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
   }, [isOpen, onTabChange]);
 
   // Manejar la acción (ataque o recolección)
-  const handleAction = (targetId: number) => {
+  const handleAction = (targetId: number, tab: 'players' | 'system') => {
     if (travelCount > 0) {
+      if (tab === 'players' && !hasAttackFormation) return;
+      if (tab === 'system' && !hasCollectFormation) return;
       onActionStart(targetId);
       onTravelUsed();
     }
@@ -48,6 +51,13 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
 
   // Verificar si hay viajes disponibles
   const hasTravelsAvailable = travelCount > 0;
+
+  // Verificar si las formaciones tienen 5 tropas
+  const filledSlots = (units: (any | null)[] = []) =>
+    units.filter(u => u !== null && u !== undefined).length;
+
+  const hasAttackFormation = filledSlots(formations?.principal?.units) >= 5;
+  const hasCollectFormation = filledSlots(formations?.reserve?.units) >= 5;
 
   return (
     <>
@@ -155,6 +165,18 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
             </PanelStyles.NoTravelsWarning>
           )}
 
+          {travelCount > 0 && activeTab === 'players' && !hasAttackFormation && (
+            <PanelStyles.NoTravelsWarning $race={race}>
+              ⚔️ Necesitas 5 tropas en <strong>Ataque Principal</strong> para atacar
+            </PanelStyles.NoTravelsWarning>
+          )}
+
+          {travelCount > 0 && activeTab === 'system' && !hasCollectFormation && (
+            <PanelStyles.NoTravelsWarning $race={race}>
+              ⛏️ Necesitas 5 tropas en <strong>Escuadra Recolectora</strong> para recolectar
+            </PanelStyles.NoTravelsWarning>
+          )}
+
           {/* Tabs para cambiar entre Players y Locations */}
           <PanelStyles.Tabs $race={race}>
             <PanelStyles.TabButton
@@ -176,30 +198,35 @@ const PortalPanel: React.FC<PortalPanelProps> = ({
           </PanelStyles.Tabs>
 
           <PanelStyles.TargetGrid>
-            {(activeTab === 'players' ? playersData : systemPlayersData).map((target) => {
+            {(activeTab === 'players' ? playersData || [] : systemPlayersData || []).map((target, idx) => {
               const targetRace = (target as any).race ? raceColors[(target as any).race as keyof typeof raceColors] : currentRace;
-              const isCurrent = currentTarget === target.id && countdown !== null;
-              const isDisabled = (countdown !== null && !isCurrent) || !hasTravelsAvailable;
+              const isCurrent = currentTarget === (target?.id ?? null) && countdown !== null;
+              const formationOk = activeTab === 'players' ? hasAttackFormation : hasCollectFormation;
+              const formationMsg = activeTab === 'players'
+                ? 'Necesitas 5 tropas en Ataque Principal'
+                : 'Necesitas 5 tropas en Escuadra Recolectora';
+
+              const isDisabled = (countdown !== null && !isCurrent) || !hasTravelsAvailable || !formationOk;
               const progress = isCurrent && countdown ? ((20 - countdown) / 20) * 100 : 0;
 
               return (
-                <PanelStyles.TargetCard key={target.id} $race={race}>
+                <PanelStyles.TargetCard key={target?.id ?? idx} $race={race}>
                   <PanelStyles.CardMainRow>
                     <PanelStyles.TargetAvatar $race={(target as any).race || race}>
                       {targetRace.icon}
                     </PanelStyles.TargetAvatar>
 
                     <PanelStyles.TargetInfo>
-                      <PanelStyles.TargetName>{target.name}</PanelStyles.TargetName>
+                      <PanelStyles.TargetName>{target?.name ?? ''}</PanelStyles.TargetName>
                     </PanelStyles.TargetInfo>
 
                     <PanelStyles.IconButton
                       $action={activeTab === 'players' ? 'attack' : 'gather'}
                       $race={race}
-                      onClick={() => handleAction(target.id)}
+                      onClick={() => handleAction(target?.id ?? 0, activeTab)}
                       disabled={isDisabled}
                       $isDisabled={isDisabled}
-                      title={activeTab === 'players' ? 'Atacar' : 'Recolectar'}
+                      title={!formationOk ? formationMsg : activeTab === 'players' ? 'Atacar' : 'Recolectar'}
                     >
                       {isCurrent
                         ? '⏳'

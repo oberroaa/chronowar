@@ -112,6 +112,34 @@ export type UnitProduction = {
   armorBonus?: number;
 };
 
+export type CostInfo = {
+  gold: number;
+  wood: number;
+  stone: number;
+};
+
+export type UpgradeInfo = {
+  name: string;
+  cost: Partial<Record<ResourceType, number>>;
+  time: number;
+  description: string;
+};
+
+export type BuildingInfo = {
+  id: number;
+  race: string;
+  name: string;
+  main: boolean;
+  description: string;
+  level: number;
+  image: string;
+  unitsProduced: UnitProduction[];
+  upgradesAvailable: UpgradeInfo[];
+  buildCost: CostInfo;
+  buildTime: number;
+};
+
+
 export const SquaresValdari = [
   { name: 'Palace', top: '48%', left: '47%' },
   { name: 'Farm', top: '74%', left: '77%' },

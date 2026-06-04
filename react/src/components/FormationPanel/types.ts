@@ -4,7 +4,7 @@ import type { RaceType, UnitProduction } from '../../types/gameData';
 export type { RaceType };
 
 export type SelectedUnit = UnitProduction & {
-  formationIndex: number;
+  formationIndex: string;
   positionIndex: number;
 };
 
@@ -21,7 +21,7 @@ export type FormationType = {
 };
 
 export type SlotPosition = {
-  formationIndex: number;
+  formationIndex: string;
   positionIndex: number;
 };
 

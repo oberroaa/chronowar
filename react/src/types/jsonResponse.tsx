@@ -1,12 +1,5 @@
 import type { RaceType, UnitProduction, ResourceType } from '../types/gameData';
 
-export const recursosPlayer = {
-  gold: 150000,
-  wood: 50000,
-  stone: 30000,
-  food: 20000,
-  chrono: 5000,
-};
 
 
 type UpgradeInfo = {
@@ -43,14 +36,14 @@ export const buildingsData: Record<string, BuildingInfo> = {
     name: "Palace",
     main: true,
     description: "The Palace is the heart of your kingdom.",
-    level: 1,
+    level: 0,
     buildCost: { gold: 1000, wood: 500, stone: 300 },
     buildTime: 120,
     image: '/images/Valdari/construcciones/palacio.png',
     unitsProduced: [
       {
         id: 1,
-        available: 1,
+        available: 0,
         name: "Men",
         unitType: "poblation",
         cost: { gold: 50, food: 1 },
@@ -74,7 +67,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 2,
-        available: 1,
+        available: 0,
         name: "Woman",
         unitType: "poblation",
         cost: { gold: 50, food: 1 },
@@ -98,7 +91,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 16,
-        available: 1,
+        available: 0,
         name: "Emisario",
         unitType: "poblation",
         cost: { gold: 50, food: 1 },
@@ -142,14 +135,14 @@ export const buildingsData: Record<string, BuildingInfo> = {
     name: "Farm",
     main: false,
     description: "Produces food for your population.",
-    level: 1,
+    level: 0,
     buildCost: { gold: 300, wood: 150, stone: 50 },
     buildTime: 45,
     image: '/images/Valdari/construcciones/granja.png',
     unitsProduced: [
       {
         id: 3,
-        available: 10,
+        available: 0,
         name: "Obrero",
         unitType: "unit",
         cost: { gold: 30, food: 1 },
@@ -187,14 +180,14 @@ export const buildingsData: Record<string, BuildingInfo> = {
     name: "Barracks",
     main: false,
     description: "Train Footmen, Riflemen, and Knights here.",
-    level: 1,
+    level: 0,
     buildCost: { gold: 600, wood: 300, stone: 150 },
     buildTime: 90,
     image: '/images/Valdari/construcciones/cuartel.png',
     unitsProduced: [
       {
         id: 4,
-        available: 1,
+        available: 0,
         name: "Centinela",
         unitType: "unit",
         cost: { gold: 50, food: 1 },
@@ -218,7 +211,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 5,
-        available: 1,
+        available: 0,
         name: "Francotirador",
         unitType: "unit",
         cost: { gold: 75, food: 1 },
@@ -242,7 +235,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 6,
-        available: 1,
+        available: 0,
         name: "Caballero",
         unitType: "unit",
         cost: { gold: 120, food: 2 },
@@ -286,14 +279,14 @@ export const buildingsData: Record<string, BuildingInfo> = {
     name: "Temple",
     main: false,
     description: "Train Priests and Sorceresses here.",
-    level: 1,
+    level: 0,
     buildCost: { gold: 500, wood: 200, stone: 100 },
     buildTime: 80,
     image: '/images/Valdari/construcciones/templo.png',
     unitsProduced: [
       {
         id: 7,
-        available: 1,
+        available: 0,
         name: "Cirujano",
         unitType: "unit",
         cost: { gold: 80, food: 1 },
@@ -317,7 +310,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 8,
-        available: 1,
+        available: 0,
         name: "Arcanista",
         unitType: "unit",
         cost: { gold: 100, food: 1 },
@@ -341,7 +334,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 9,
-        available: 1,
+        available: 0,
         name: "Disruptor",
         unitType: "unit",
         cost: { gold: 100, food: 1 },
@@ -385,14 +378,14 @@ export const buildingsData: Record<string, BuildingInfo> = {
     name: "Aviary",
     main: false,
     description: "Train Flying Machines and Dragonhawk Riders here.",
-    level: 1,
+    level: 0,
     buildCost: { gold: 700, wood: 400, stone: 100 },
     buildTime: 100,
     image: '/images/Valdari/construcciones/aviary.png',
     unitsProduced: [
       {
         id: 10,
-        available: 1,
+        available: 0,
         name: "Falange",
         unitType: "unit",
         cost: { gold: 90, food: 1 },
@@ -416,7 +409,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 11,
-        available: 1,
+        available: 0,
         name: "Jinetes",
         unitType: "unit",
         cost: { gold: 150, food: 2 },
@@ -460,14 +453,14 @@ export const buildingsData: Record<string, BuildingInfo> = {
     name: "Altar",
     main: false,
     description: "Revive your fallen heroes here.",
-    level: 1,
+    level: 0,
     buildCost: { gold: 800, wood: 300, stone: 200 },
     buildTime: 110,
     image: '/images/Valdari/construcciones/altar.png',
     unitsProduced: [
       {
         id: 12,
-        available: 1,
+        available: 0,
         name: "Dawnforged",
         unitType: "heroe",
         cost: { gold: 150, food: 2 },
@@ -491,7 +484,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 13,
-        available: 1,
+        available: 0,
         name: "Arconte",
         unitType: "heroe",
         cost: { gold: 150, food: 2 },
@@ -515,7 +508,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 14,
-        available: 1,
+        available: 0,
         name: "Thane",
         unitType: "heroe",
         cost: { gold: 150, food: 2 },
@@ -539,7 +532,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         id: 15,
-        available: 1,
+        available: 0,
         name: "Vastago",
         unitType: "heroe",
         cost: { gold: 150, food: 2 },
@@ -583,7 +576,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     name: "Market",
     main: false,
     description: "Trade resources and buy items here.",
-    level: 1,
+    level: 0,
     buildCost: { gold: 400, wood: 200, stone: 100 },
     buildTime: 60,
     image: '/images/Valdari/construcciones/mercado.png',
@@ -612,57 +605,5 @@ export type PlayerType = {
   race: RaceType;
 };
 
-export const jsonPlayersData: PlayerType[] = [
-  { id: 1, name: 'Player1', level: 5, race: 'valdari' },
-  { id: 2, name: 'Player2', level: 3, race: 'gorkar' },
-  { id: 3, name: 'Player3', level: 7, race: 'sylvaran' },
-  { id: 4, name: 'Player4', level: 4, race: 'mortharim' },
-  { id: 5, name: 'Player5', level: 6, race: 'valdari' },
-];
 
-export const jsonSystemPlayersData: PlayerType[] = [
-  { id: 101, name: 'Abandoned Village', level: 1, race: 'valdari' },
-  { id: 102, name: 'Ruined Castle', level: 3, race: 'gorkar' },
-  { id: 103, name: 'Lost Mine', level: 2, race: 'mortharim' },
-];
 
-export const savedFormations = {
-  principal: {
-    name: "Ataque Principal",
-    units: [
-      {
-        id: 4,
-      },
-      {
-        id: 3,
-      },
-      {
-        id: 6,
-      },
-      {
-        id: 5,
-      },
-      {
-        id: 8,
-      },
-      {
-        id: 7,
-      },
-      {
-        id: 9,
-      },
-      null,
-      null,
-      null
-    ]
-  },
-  secondary: {
-    name: "Defensa Ciudad",
-    units: Array(10).fill(null)
-  },
-  reserve: {
-    name: "Reserva Estratégica",
-    units: Array(10).fill(null)
-  },
-  lastUpdated: "2025-07-13T19:00:00Z"
-};

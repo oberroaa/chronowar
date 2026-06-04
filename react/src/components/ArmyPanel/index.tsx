@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import type { UnitProduction } from '../../types/gameData';
+import type { UnitProduction, BuildingInfo } from '../../types/gameData';
 import { raceColors } from '../../types/raceColors';
-import { buildingsData } from '../../types/jsonResponse';
+import { useGameStore } from '../../store/useGameStore';
 import type { ArmyPanelProps, UnitImageDisplayProps, ArmyModalProps } from './types';
 import {
   LeftPanelContainer,
@@ -289,7 +289,8 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
   // Función para obtener todas las unidades de los edificios
   const getAllUnits = () => {
     const allUnits: UnitProduction[] = [];
-    Object.values(buildingsData).forEach(building => {
+    const activeBuildingsData: Record<string, BuildingInfo> = useGameStore.getState().gameData || {};
+    Object.values(activeBuildingsData).forEach((building: BuildingInfo) => {
       if (building.race === race && building.unitsProduced) {
         building.unitsProduced.forEach(unit => {
           const unitWithMana = {

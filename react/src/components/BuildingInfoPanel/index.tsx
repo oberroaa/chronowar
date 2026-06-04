@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { buildingsData } from '../../types/jsonResponse';
-import { type ResourceType, type UnitProduction, getResourceIcon } from '../../types/gameData';
+import { useGameStore } from '../../store/useGameStore';
+import { type ResourceType, type UnitProduction, type BuildingInfo, getResourceIcon } from '../../types/gameData';
 // Importaciones de tipos
 import {
     type BuildingInfoModalProps,
@@ -20,7 +20,6 @@ import {
 
 import {
     BuildingTitle,
-    BuildingDescription,
     QueueStatus,
     QueueItem,
     BuildingSection,
@@ -88,46 +87,39 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
-    // Efecto para la producción de unidades (se ejecuta cada segundo)
     useEffect(() => {
         const timer = setInterval(() => {
             setProductionQueue(prevQueue => {
-                const newQueue: typeof prevQueue = [];
-                const unitsToAdd: string[] = [];
+                const newQueue = prevQueue.map(item => ({ ...item, timeLeft: item.timeLeft - 1 }));
+                const finishedUnits = newQueue.filter(item => item.timeLeft <= 0);
 
-                prevQueue.forEach(item => {
-                    if (item.timeLeft <= 1) {
-                        const unitKey = `${item.unit}-${item.startedAt}`;
-                        if (!completedUnitsRef.current.has(unitKey)) {
-                            unitsToAdd.push(item.unit);
-                            completedUnitsRef.current.add(unitKey);
-                        }
-                    } else {
-                        newQueue.push({
-                            ...item,
-                            timeLeft: item.timeLeft - 1
+                if (finishedUnits.length > 0) {
+                    setTimeout(() => {
+                        setGameUnits(prevUnits => {
+                            let changed = false;
+                            let updatedUnits = [...prevUnits];
+                            finishedUnits.forEach(item => {
+                                const unitKey = `${item.unit}-${item.startedAt}`;
+                                if (!completedUnitsRef.current.has(unitKey)) {
+                                    completedUnitsRef.current.add(unitKey);
+                                    changed = true;
+                                    updatedUnits = updatedUnits.map(unit =>
+                                        unit.name === item.unit
+                                            ? { ...unit, available: (unit.available || 0) + 1 }
+                                            : unit
+                                    );
+                                }
+                            });
+                            return changed ? updatedUnits : prevUnits;
                         });
-                    }
-                });
-
-                // Agrega unidades completadas al juego
-                if (unitsToAdd.length > 0) {
-                    setGameUnits(prevUnits => {
-                        return prevUnits.map(unit => {
-                            const count = unitsToAdd.filter(u => u === unit.name).length;
-                            return count > 0
-                                ? { ...unit, available: (unit.available || 0) + count }
-                                : unit;
-                        });
-                    });
+                    }, 0);
                 }
 
-                return newQueue;
+                return newQueue.filter(item => item.timeLeft > 0);
             });
         }, 1000);
-
         return () => clearInterval(timer);
-    }, [setGameUnits]);
+    }, []);
 
     // Efecto para las mejoras de edificios (se ejecuta cada segundo)
     useEffect(() => {
@@ -155,15 +147,15 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         return () => clearInterval(timer);
     }, [buildingLevels, onBuildingUpgraded]);
 
-    const currentRaceStyle = raceColors[race];
+    const activeBuildingsData: Record<string, BuildingInfo> = useGameStore.getState().gameData || {};
 
     if (!buildingId) return null;
 
-    // Encuentra el edificio actual
-    const building = Object.values(buildingsData).find(b => b.name === buildingId);
+    const building = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.name === buildingId);
     if (!building) return null;
 
-    // Verifica si el jugador puede pagar un costo
+    const currentRaceStyle = raceColors[race];
+
     const canAfford = (costs: Partial<Record<ResourceType, number>>): boolean => {
         return Object.entries(costs).every(([resource, amount]) => {
             return resources[resource as ResourceType] >= (amount || 0);
@@ -276,14 +268,14 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     };
 
     // Encuentra el edificio principal y su nivel
-    const mainBuilding = Object.values(buildingsData).find(b => b.main);
+    const mainBuilding = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.main);
     const mainBuildingName = mainBuilding?.name || null;
-    const mainBuildingLevel = mainBuildingName ? buildingLevels[mainBuildingName] || 1 : 1;
+    const mainBuildingLevel = mainBuildingName ? buildingLevels[mainBuildingName] ?? 0 : 0;
 
     // Maneja la mejora de nivel del edificio
     const handleLevelUp = () => {
         if (!buildingId) return;
-        const currentLevel = buildingLevels[buildingId] || 1;
+        const currentLevel = buildingLevels[buildingId] ?? 0;
 
         // Verifica requisitos de edificio principal
         if (mainBuildingName !== null && buildingId !== mainBuildingName && currentLevel >= buildingLevels[mainBuildingName]) {
@@ -291,14 +283,15 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
             return;
         }
 
-        const buildingData = Object.values(buildingsData).find(b => b.name === buildingId);
+        const buildingData = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.name === buildingId);
         if (!buildingData) return;
 
         // Calcula costo de mejora
+        const costMultiplier = Math.max(1, currentLevel);
         const levelUpCost = {
-            gold: buildingData.buildCost.gold * currentLevel,
-            wood: buildingData.buildCost.wood * currentLevel,
-            stone: buildingData.buildCost.stone * currentLevel
+            gold: buildingData.buildCost.gold * costMultiplier,
+            wood: buildingData.buildCost.wood * costMultiplier,
+            stone: buildingData.buildCost.stone * costMultiplier
         };
 
         if (!canAfford(levelUpCost)) {
@@ -327,11 +320,13 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 
     // Renderiza el costo de recursos
     const renderResourceCost = (cost: Partial<Record<ResourceType, number>>) => {
-        return Object.entries(cost).map(([resource, amount]) => (
-            <ResourceCost key={resource} $type={resource as ResourceType}>
-                {getResourceIcon(resource as ResourceType)} {amount}
-            </ResourceCost>
-        ));
+        return Object.entries(cost)
+            .filter(([_, amount]) => amount && amount > 0)
+            .map(([resource, amount]) => (
+                <ResourceCost key={resource} $type={resource as ResourceType}>
+                    {getResourceIcon(resource as ResourceType)} {amount}
+                </ResourceCost>
+            ));
     };
 
     // Verifica si una unidad está en producción
@@ -375,7 +370,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     const currentUpgrade = upgradeQueue.find(
         (item) => item.buildingId === buildingId
     );
-    const currentBuildingLevel = buildingLevels[buildingId] || 1;
+    const currentBuildingLevel = buildingLevels[buildingId] ?? 0;
 
     return (
         <ModalOverlay onClick={onClose}>
@@ -409,7 +404,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     </PopulationDisplay>
                 )}
 
-                <BuildingDescription>{building.description}</BuildingDescription>
+                {/* Se eliminó la descripción redundante a petición del usuario */}
 
                 {building.name === "Market" && <TradingChart />}
 
@@ -440,7 +435,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                         <SectionTitle $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
                             Train Units
                         </SectionTitle>
-                        {building.unitsProduced.map((unit, index) => {
+                        {building.unitsProduced.map((unit: any, index: number) => {
                             const producing = isProducing(unit.name);
                             const canAffordUnit = canAfford(unit.cost);
                             const unitToTrain = gameUnits.find(u => u.name === unit.name);
@@ -470,7 +465,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                                             </UnitName>
                                         </UnitNameContainer>
                                         <UnitCost>
-                                            {renderResourceCost(unit.cost)}
+                                            {renderResourceCost({ gold: unit.cost.gold, food: unit.cost.food })}
                                             <TimeBadge>⏱️ {unit.buildTime}s</TimeBadge>
                                         </UnitCost>
                                     </UnitInfo>
@@ -495,7 +490,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                                                         : !hasPopulation
                                                             ? 'Población insuficiente'
                                                             : isThisBuildingTraining
-                                                                ? `Entrenando en ${building.name}`
+                                                                ? 'En uso'
                                                                 : 'Entrenar'}
                                     </ProductionButton>
                                 </UnitItem>
@@ -510,7 +505,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                         <SectionTitle $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
                             Building Upgrades
                         </SectionTitle>
-                        {building.upgradesAvailable.map((upgrade, index) => {
+                        {building.upgradesAvailable.map((upgrade: any, index: number) => {
                             const upgrading = isUpgrading(upgrade.name, buildingId);
                             const canAffordUpgrade = canAfford(upgrade.cost);
 
@@ -563,9 +558,9 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 
                     <LevelUpCost>
                         {renderResourceCost({
-                            gold: building.buildCost.gold * currentBuildingLevel,
-                            wood: building.buildCost.wood * currentBuildingLevel,
-                            stone: building.buildCost.stone * currentBuildingLevel
+                            gold: building.buildCost.gold * Math.max(1, currentBuildingLevel),
+                            wood: building.buildCost.wood * Math.max(1, currentBuildingLevel),
+                            stone: building.buildCost.stone * Math.max(1, currentBuildingLevel)
                         })}
                         <TimeBadge>⏱️ 60s</TimeBadge>
                     </LevelUpCost>
@@ -574,9 +569,9 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                         onClick={handleLevelUp}
                         disabled={
                             !canAfford({
-                                gold: building.buildCost.gold * currentBuildingLevel,
-                                wood: building.buildCost.wood * currentBuildingLevel,
-                                stone: building.buildCost.stone * currentBuildingLevel
+                                gold: building.buildCost.gold * Math.max(1, currentBuildingLevel),
+                                wood: building.buildCost.wood * Math.max(1, currentBuildingLevel),
+                                stone: building.buildCost.stone * Math.max(1, currentBuildingLevel)
                             }) ||
                             isAnyUpgradeInProgress ||
                             (mainBuildingName !== null && buildingId !== mainBuildingName && currentBuildingLevel >= mainBuildingLevel)

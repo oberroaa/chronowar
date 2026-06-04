@@ -1,7 +1,8 @@
 // FormationPanel - Componente principal de formaciones
 import React, { useState, useEffect } from 'react';
-import { savedFormations } from '../../types/jsonResponse';
+import { useGameStore } from '../../store/useGameStore';
 import type { FormationPanelProps, SelectedUnit, SlotPosition, FormationType } from './types';
+import type { UnitProduction } from '../../types/gameData';
 import {
   CompactPanel,
   PanelHeader,
@@ -61,66 +62,77 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
     return () => { document.body.style.overflow = ''; };
   }, [selectedSlot, showUnitInfo]);
 
-  const [formations, setFormations] = useState<FormationType[]>([
-    { name: "Ataque Principal", units: Array(5).fill(null) },
-    { name: "Defensa Ciudad", units: Array(5).fill(null) },
-    { name: "Reserva Estratégica", units: Array(5).fill(null) }
-  ]);
+  const [formations, setFormations] = useState<Record<string, FormationType>>({
+    principal: { name: "Ataque Principal", units: Array(5).fill(null) },
+    secondary: { name: "Defensa Ciudad", units: Array(5).fill(null) },
+    reserve: { name: "Escuadra Recolectora", units: Array(5).fill(null) }
+  });
+
+  const { playerData, syncPlayerState } = useGameStore();
 
   useEffect(() => {
-    if (isOpen) {
-      const loadedFormations = [
-        {
-          name: savedFormations.principal.name,
-          units: savedFormations.principal.units.slice(0, 5).map(unit =>
+    if (playerData?.formations) {
+      setFormations({
+        principal: {
+          name: playerData.formations.principal?.name || "Ataque Principal",
+          units: (playerData.formations.principal?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) =>
             unit ? unitsMap.get(unit.id) || null : null
           )
         },
-        {
-          name: savedFormations.secondary.name,
-          units: savedFormations.secondary.units.slice(0, 5).map(unit =>
+        secondary: {
+          name: playerData.formations.secondary?.name || "Defensa Ciudad",
+          units: (playerData.formations.secondary?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) =>
             unit ? unitsMap.get(unit.id) || null : null
           )
         },
-        {
-          name: savedFormations.reserve.name,
-          units: savedFormations.reserve.units.slice(0, 5).map(unit =>
+        reserve: {
+          name: "Escuadra Recolectora",
+          units: (playerData.formations.reserve?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) =>
             unit ? unitsMap.get(unit.id) || null : null
           )
         }
-      ];
-      setFormations(loadedFormations);
+      });
+    } else {
+      setFormations({
+        principal: { name: "Ataque Principal", units: Array(5).fill(null) },
+        secondary: { name: "Defensa Ciudad", units: Array(5).fill(null) },
+        reserve: { name: "Escuadra Recolectora", units: Array(5).fill(null) }
+      });
     }
-  }, [isOpen, unitsMap]);
+  }, [isOpen, unitsMap, playerData]);
+
+  const padUnits = (units: Array<UnitProduction | null>) => {
+    const padded = [...units];
+    while(padded.length < 10) padded.push(null);
+    return padded;
+  };
 
   const saveFormations = () => {
     const formationsToSave = {
-      principal: {
-        name: formations[0].name,
-        units: formations[0].units.slice(0, 5).map(unit => unit ? { id: unit.id } : null)
-      },
-      secondary: {
-        name: formations[1].name,
-        units: formations[1].units.slice(0, 5).map(unit => unit ? { id: unit.id } : null)
-      },
-      reserve: {
-        name: formations[2].name,
-        units: formations[2].units.slice(0, 5).map(unit => unit ? { id: unit.id } : null)
-      },
-      lastUpdated: new Date().toISOString(),
+      principal: { ...formations.principal, units: padUnits(formations.principal.units) },
+      secondary: { ...formations.secondary, units: padUnits(formations.secondary.units) },
+      reserve: { ...formations.reserve, units: padUnits(formations.reserve.units) },
+      lastUpdated: new Date().toISOString()
     };
-
-    savedFormations.principal = formationsToSave.principal;
-    savedFormations.secondary = formationsToSave.secondary;
-    savedFormations.reserve = formationsToSave.reserve;
-    console.log("Formaciones guardadas:", formationsToSave);
+    
+    if (playerData) {
+      useGameStore.setState({
+        playerData: {
+          ...playerData,
+          formations: formationsToSave
+        }
+      });
+      syncPlayerState();
+    }
+    
+    alert('Formations saved successfully!');
     onClose();
   };
 
   const getAvailableUnits = () => {
     const usedCounts: Record<number, number> = {};
-    formations.forEach(formation => {
-      formation.units.forEach(unit => {
+    Object.values(formations).forEach((formation: FormationType) => {
+      formation.units.forEach((unit: UnitProduction | null) => {
         if (unit) {
           usedCounts[unit.id] = (usedCounts[unit.id] || 0) + 1;
         }
@@ -129,31 +141,29 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
 
     return gameUnits.map(unit => ({
       ...unit,
-      available: unit.unitType === 'heroe'
-        ? (usedCounts[unit.id] ? 0 : 1)
-        : Math.max(0, (unit.available || 0) - (usedCounts[unit.id] || 0))
+      available: Math.max(0, (unit.available || 0) - (usedCounts[unit.id] || 0))
     }));
   };
 
   const availableUnits = getAvailableUnits();
 
-  const handleUnitClick = (formationIndex: number, positionIndex: number) => {
-    const clickedUnit = formations[formationIndex].units[positionIndex];
+  const handleUnitClick = (formationKey: string, positionIndex: number) => {
+    const clickedUnit = formations[formationKey].units[positionIndex];
 
     if (clickedUnit) {
       setShowUnitInfo(clickedUnit);
       setSelectedUnit({
         ...clickedUnit,
-        formationIndex,
+        formationIndex: formationKey,
         positionIndex
       });
     } else {
-      setSelectedSlot({ formationIndex, positionIndex });
+      setSelectedSlot({ formationIndex: formationKey, positionIndex });
       setSelectedUnit(null);
     }
   };
 
-  const handleAddUnit = (unit: any) => {
+  const handleAddUnit = (unit: UnitProduction) => {
     if (!selectedSlot) return;
 
     if (unit.unitType === 'heroe' && selectedSlot.positionIndex !== 2) {
@@ -165,7 +175,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
       return;
     }
 
-    const newFormations = [...formations];
+    const newFormations = { ...formations };
     newFormations[selectedSlot.formationIndex].units[selectedSlot.positionIndex] = { ...unit };
     setFormations(newFormations);
 
@@ -176,7 +186,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
     e.preventDefault();
     if (!selectedUnit) return;
 
-    const newFormations = [...formations];
+    const newFormations = { ...formations };
     newFormations[selectedUnit.formationIndex].units[selectedUnit.positionIndex] = null;
     setFormations(newFormations);
 
@@ -195,7 +205,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
   };
 
   const isHeroInUse = (heroId: number) => {
-    return formations.some(formation =>
+    return Object.values(formations).some(formation =>
       formation.units.some(unit => unit?.id === heroId && unit?.unitType === 'heroe'));
   };
 
@@ -208,19 +218,19 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
         </PanelHeader>
 
         <FormationsContainer>
-          {formations.map((formation, formationIndex) => (
-            <FormationGroup key={formationIndex} $race={race}>
+          {Object.entries(formations).map(([formationKey, formation]) => (
+            <FormationGroup key={formationKey} $race={race}>
               <FormationTitle $race={race}>{formation.name}</FormationTitle>
 
               <UnitsRow>
                 {formation.units.slice(0, 5).map((unit, positionIndex) => (
                   <UnitSlot
-                    key={`${formationIndex}-${positionIndex}`}
-                    unit={unit}
-                    formationIndex={formationIndex}
+                    key={`${formationKey}-${positionIndex}`}
+                    unit={unit as any}
+                    formationIndex={formationKey as any}
                     positionIndex={positionIndex}
                     onUnitClick={handleUnitClick}
-                    isSelected={selectedUnit?.formationIndex === formationIndex && selectedUnit?.positionIndex === positionIndex}
+                    isSelected={selectedUnit?.formationIndex === formationKey && selectedUnit?.positionIndex === positionIndex}
                     isHero={unit?.unitType === 'heroe'}
                     isEmpty={!unit}
                     isCenter={positionIndex === 2}
@@ -249,6 +259,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                   <Subtitle $race={race}>Héroes Disponibles</Subtitle>
                   {raceData.heroe.map(hero => {
                     const available = getAvailableCount(hero.id);
+                    const total = hero.available || 0;
                     const inUse = isHeroInUse(hero.id);
 
                     return (
@@ -265,8 +276,13 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                             <Stat $race={race}>❤️ {hero.hp}</Stat>
                             <Stat $race={race}>⚔️ {hero.attack}{hero.attackBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{hero.attackBonus})</span> : null}</Stat>
                             <Stat $race={race}>🛡️ {hero.armor}{hero.armorBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{hero.armorBonus})</span> : null}</Stat>
-                            {inUse && <Stat $race={race} style={{ color: 'red', fontWeight: 'bold' }}>EN USO</Stat>}
-                            {!inUse && available <= 0 && <Stat $race={race} style={{ color: '#ff4444', fontWeight: 'bold' }}>AGOTADO</Stat>}
+                            <Stat $race={race} style={{ 
+                              color: available > 0 ? '#aaa' : '#ff4444',
+                              fontWeight: available > 0 ? 'normal' : 'bold',
+                              marginLeft: 'auto'
+                            }}>
+                              {inUse ? 'EN USO' : available > 0 ? `Stock: ${available} / ${total}` : 'SIN STOCK'}
+                            </Stat>
                           </UnitStats>
                         </UnitDetails>
                       </AvailableUnit>

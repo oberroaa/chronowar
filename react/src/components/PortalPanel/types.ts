@@ -1,5 +1,11 @@
 import type { RaceType } from '../../types/gameData';
 
+export type FormationsData = {
+  principal?: { units: (any | null)[] };
+  secondary?: { units: (any | null)[] };
+  reserve?: { units: (any | null)[] };
+};
+
 // Tipo para los datos de jugador
 export type PlayerType = {
   id: number;
@@ -43,6 +49,7 @@ export type PortalPanelProps = {
   travelCount: number;
   maxTravels: number;
   onTravelUsed: () => void;
+  formations?: FormationsData;
 };
 
 // Props para componentes styled

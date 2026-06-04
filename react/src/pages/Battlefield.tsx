@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import styled, { keyframes, createGlobalStyle, css } from 'styled-components';
 import { raceColors } from '../types/raceColors';
-import { savedFormations, buildingsData } from '../types/jsonResponse';
+// import { buildingsData } from '../types/jsonResponse';
 import { executeHeroSkill } from '../utils/combatSkills';
 import { useGameStore } from '../store/useGameStore';
 import { getUpgradedUnits } from '../utils/unitStats';
@@ -588,7 +588,7 @@ function spawnGem(): Gem {
    COMPONENT
 ══════════════════════════════════════════════════════════════ */
 const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) => {
-  const { buildingLevels } = useGameStore();
+  const { buildingLevels, playerData } = useGameStore();
   const [gems, setGems] = useState<Gem[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [phase, setPhase] = useState<GamePhase>('playerTurn');
@@ -621,9 +621,11 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     })));
 
     // Load active heroes dynamically from selected formation units in barracks/altar
-    const allUnits = getUpgradedUnits(buildingLevels);
+    const activeBuildingsData = useGameStore.getState().gameData || {};
+    const allUnits = getUpgradedUnits(buildingLevels, activeBuildingsData);
+    const currentFormations = playerData?.formations || { principal: { units: Array(10).fill(null) } };
     const loadedHeroes = HERO_DEFS.map((fallback, i) => {
-      const slot = (savedFormations as any).principal.units[i];
+      const slot = currentFormations.principal.units[i];
       const fallbackSkill = HERO_SKILLS[i] || {
         skillName: 'Golpe Crítico',
         skillDesc: '3× daño al enemigo con menos HP',
