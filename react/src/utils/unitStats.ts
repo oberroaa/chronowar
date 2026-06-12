@@ -8,7 +8,7 @@ export const getUpgradedUnits = (buildingLevels: Record<string, number>, buildin
   const allUnits: UnitProduction[] = [];
 
   Object.values(buildingsData).forEach((building: BuildingInfo) => {
-    const currentLevel = buildingLevels[building.name.toLowerCase()] || 1;
+    const currentLevel = buildingLevels[building.name.toLowerCase()] ?? 0;
     const bonus = currentLevel;
 
     building.unitsProduced?.forEach((unit: UnitProduction) => {
@@ -37,14 +37,14 @@ export const applyBuildingLevelBonuses = (
   const unitLevelMap: Record<number, number> = {};
   
   Object.values(buildingsData).forEach((building: BuildingInfo) => {
-    const level = buildingLevels[building.name.toLowerCase()] || 1;
+    const level = buildingLevels[building.name.toLowerCase()] ?? 0;
     building.unitsProduced?.forEach((unit: UnitProduction) => {
       unitLevelMap[unit.id] = level;
     });
   });
 
   return currentUnits.map(unit => {
-    const level = unitLevelMap[unit.id] || 1;
+    const level = unitLevelMap[unit.id] ?? 0;
     let baseAttack = unit.attack;
     let baseArmor = unit.armor;
     

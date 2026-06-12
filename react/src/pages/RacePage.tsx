@@ -15,7 +15,7 @@ import ArmyPanel from '../components/ArmyPanel/index';
 import PortalPanel from '../components/PortalPanel/index';
 import BuildingInfoPanel from '../components/BuildingInfoPanel/index';
 import FormationPanel from '../components/FormationPanel/index';
-import { getUpgradedUnits } from '../utils/unitStats';
+import { getUpgradedUnits, applyBuildingLevelBonuses } from '../utils/unitStats';
 // import {
 //   buildingsData as fallbackBuildingsData,
 // } from '../types/jsonResponse';
@@ -158,9 +158,10 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         let changed = false;
         const newUnits = prevUnits.map(unit => {
           const saved = playerData.gameUnits.find((u: any) => u.name === unit.name);
-          if (saved && saved.available !== undefined && saved.available !== unit.available) {
+          const savedAvail = saved?.available ?? 0;
+          if (savedAvail !== unit.available) {
             changed = true;
-            return { ...unit, available: saved.available };
+            return { ...unit, available: savedAvail };
           }
           return unit;
         });
@@ -170,6 +171,14 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   }, [playerData?.gameUnits]);
 
   const isFirstRender = useRef(true);
+
+  // Recalculate stats when building levels or game data changes
+  useEffect(() => {
+    setGameUnits(prevUnits => {
+      if (prevUnits.length === 0) return prevUnits;
+      return applyBuildingLevelBonuses(prevUnits, buildingLevels, activeBuildingsData);
+    });
+  }, [buildingLevels, activeBuildingsData]);
 
   // Sync gameUnits to store when they change
   useEffect(() => {
@@ -246,9 +255,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
 
 
   const handleAddConstruction = (name: string) => {
-    if (buildingLevels[name.toLowerCase()]) {
-      setSelectedBuilding(name);
-    }
+    setSelectedBuilding(name);
   };
 
   const handleBuildingUpgraded = (buildingName: string, newLevel: number) => {
@@ -346,7 +353,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
           <SquaresOverlay>
             {currentRaceData.squares.map((square) => {
               const bName = square.name.toLowerCase();
-              const isBuilt = !!buildingLevels[bName];
+              const isBuilt = buildingLevels[bName] !== undefined;
               const bData = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.name.toLowerCase() === bName);
 
               return (

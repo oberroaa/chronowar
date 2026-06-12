@@ -1,5 +1,5 @@
 // FormationPanel - Componente principal de formaciones
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import type { FormationPanelProps, SelectedUnit, SlotPosition, FormationType } from './types';
 import type { UnitProduction } from '../../types/gameData';
@@ -43,6 +43,15 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
     gameUnits.forEach(unit => map.set(unit.id, unit));
     return map;
   });
+
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' }>({
+    visible: false, message: '', type: 'success'
+  });
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000);
+  }, []);
 
   const raceData = {
     unit: gameUnits.filter(u => u.unitType === 'unit'),
@@ -125,8 +134,8 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
       syncPlayerState();
     }
     
-    alert('Formations saved successfully!');
-    onClose();
+    showToast('⚔️ ¡Formación guardada!');
+    setTimeout(() => onClose(), 1500);
   };
 
   const getAvailableUnits = () => {
@@ -378,6 +387,42 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
           </ModalContent>
         </ModalOverlay>
       )}
+      {toast.visible && (
+        <div style={{
+          position: 'fixed',
+          bottom: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: toast.type === 'success'
+            ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+            : 'linear-gradient(135deg, #3a0a0a 0%, #5a1010 100%)',
+          border: `1px solid ${toast.type === 'success' ? '#e94560' : '#ff4444'}`,
+          borderRadius: '12px',
+          padding: '1rem 2rem',
+          color: '#fff',
+          fontSize: '1.1rem',
+          fontWeight: '600',
+          letterSpacing: '0.05em',
+          boxShadow: toast.type === 'success'
+            ? '0 0 30px rgba(233,69,96,0.6), 0 4px 20px rgba(0,0,0,0.5)'
+            : '0 0 30px rgba(255,68,68,0.6)',
+          zIndex: 99999,
+          animation: 'toastIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+        }}>
+          <span style={{ fontSize: '1.4rem' }}>⚔️</span>
+          <span>¡Formación guardada exitosamente!</span>
+          <span style={{ fontSize: '1.4rem' }}>🛡️</span>
+        </div>
+      )}
+      <style>{`
+        @keyframes toastIn {
+          0%   { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.9); }
+          100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+      `}</style>
     </>
   );
 };

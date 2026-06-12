@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useGameStore } from '../../store/useGameStore';
+import { useGameStore, type UpgradeQueueItem } from '../../store/useGameStore';
 import { type ResourceType, type UnitProduction, type BuildingInfo, getResourceIcon } from '../../types/gameData';
 // Importaciones de tipos
 import {
     type BuildingInfoModalProps,
     type ProductionQueueItem,
-    type UpgradeQueueItem,
     type UpgradeInfo,
     raceColors
 } from './types';
@@ -55,25 +54,19 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     resources,
     setResources,
     race,
-    buildings,
-    onBuildingUpgraded,
+    onBuildingUpgraded: _onBuildingUpgraded,
     gameUnits,
     setGameUnits,
 }) => {
-    // Estado para los niveles de los edificios
-    const [buildingLevels, setBuildingLevels] = useState<Record<string, number>>(() => {
-        const initialLevels: Record<string, number> = {};
-        buildings.forEach(b => {
-            initialLevels[b.id] = b.level;
-        });
-        return initialLevels;
-    });
 
     // Estado para la cola de producción de unidades
     const [productionQueue, setProductionQueue] = useState<ProductionQueueItem[]>([]);
 
-    // Estado para la cola de mejoras de edificios
-    const [upgradeQueue, setUpgradeQueue] = useState<UpgradeQueueItem[]>([]);
+    // Cola de mejoras de nivel: ahora viene del store global (persiste al ir a batalla)
+    const upgradeQueue: UpgradeQueueItem[] = useGameStore(s => s.upgradeQueue);
+    const addUpgradeToQueue = useGameStore(s => s.addUpgradeToQueue);
+    const storeBuildingLevels = useGameStore(s => s.buildingLevels);
+    const [buildingLevels, setBuildingLevels] = useState<Record<string, number>>(storeBuildingLevels);
 
     // Referencia para unidades completadas (evita duplicados)
     const completedUnitsRef = useRef<Set<string>>(new Set());
@@ -121,31 +114,10 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         return () => clearInterval(timer);
     }, []);
 
-    // Efecto para las mejoras de edificios (se ejecuta cada segundo)
+    // Sincroniza buildingLevels locales con el store global (cuando App.tsx sube el nivel)
     useEffect(() => {
-        const timer = setInterval(() => {
-            setUpgradeQueue(prev => {
-                const updated = prev.map(item => ({
-                    ...item,
-                    timeLeft: item.timeLeft - 1
-                })).filter(item => item.timeLeft > 0);
-
-                // Procesa mejoras completadas
-                const completed = prev.filter(item => item.timeLeft === 1);
-                completed.forEach(item => {
-                    const newLevel = (buildingLevels[item.buildingId] || 1) + 1;
-                    setBuildingLevels(prev => ({
-                        ...prev,
-                        [item.buildingId]: newLevel
-                    }));
-                    onBuildingUpgraded(item.buildingId, newLevel);
-                });
-
-                return updated;
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [buildingLevels, onBuildingUpgraded]);
+        setBuildingLevels(storeBuildingLevels);
+    }, [storeBuildingLevels]);
 
     const activeBuildingsData: Record<string, BuildingInfo> = useGameStore.getState().gameData || {};
 
@@ -256,29 +228,27 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         });
         setResources(newResources);
 
-        // Agrega a la cola de mejoras
-        setUpgradeQueue(prev => [
-            ...prev,
-            {
-                upgrade: upgrade.name,
-                timeLeft: upgrade.time,
-                buildingId: buildingId
-            }
-        ]);
+        // Agrega a la cola de mejoras global
+        addUpgradeToQueue({
+            upgrade: upgrade.name,
+            timeLeft: upgrade.time,
+            buildingId: buildingId,
+            startedAt: Date.now()
+        });
     };
 
     // Encuentra el edificio principal y su nivel
     const mainBuilding = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.main);
     const mainBuildingName = mainBuilding?.name || null;
-    const mainBuildingLevel = mainBuildingName ? buildingLevels[mainBuildingName] ?? 0 : 0;
+    const mainBuildingLevel = mainBuildingName ? buildingLevels[mainBuildingName.toLowerCase()] ?? 0 : 0;
 
     // Maneja la mejora de nivel del edificio
     const handleLevelUp = () => {
         if (!buildingId) return;
-        const currentLevel = buildingLevels[buildingId] ?? 0;
+        const currentLevel = buildingLevels[buildingId.toLowerCase()] ?? 0;
 
         // Verifica requisitos de edificio principal
-        if (mainBuildingName !== null && buildingId !== mainBuildingName && currentLevel >= buildingLevels[mainBuildingName]) {
+        if (mainBuildingName !== null && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && currentLevel >= (buildingLevels[mainBuildingName.toLowerCase()] ?? 0)) {
             alert(`You need to upgrade your ${mainBuildingName} to level ${currentLevel + 1} first!`);
             return;
         }
@@ -306,16 +276,14 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         });
         setResources(newResources);
 
-        // Agrega a la cola de mejoras
+        // Agrega a la cola de mejoras GLOBAL (persiste al ir a batalla)
         const upgradeTime = buildingData.buildTime;
-        setUpgradeQueue(prev => [
-            ...prev,
-            {
-                upgrade: `Level ${currentLevel + 1}`,
-                timeLeft: upgradeTime,
-                buildingId: buildingId
-            }
-        ]);
+        addUpgradeToQueue({
+            upgrade: `Level ${currentLevel + 1}`,
+            timeLeft: upgradeTime,
+            buildingId: buildingId,
+            startedAt: Date.now()
+        });
     };
 
     // Renderiza el costo de recursos
@@ -370,7 +338,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     const currentUpgrade = upgradeQueue.find(
         (item) => item.buildingId === buildingId
     );
-    const currentBuildingLevel = buildingLevels[buildingId] ?? 0;
+    const currentBuildingLevel = buildingLevels[buildingId.toLowerCase()] ?? 0;
 
     return (
         <ModalOverlay onClick={onClose}>
@@ -550,7 +518,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     </SectionTitle>
 
                     {/* Advertencia si se necesita mejorar el edificio principal primero */}
-                    {mainBuildingName !== null && currentBuildingLevel >= mainBuildingLevel && buildingId !== mainBuildingName && (
+                    {mainBuildingName !== null && currentBuildingLevel >= mainBuildingLevel && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && (
                         <UpgradeWarning $accentColor={currentRaceStyle.accentColor}>
                             You need to upgrade your {mainBuildingName} to level {currentBuildingLevel + 1} first!
                         </UpgradeWarning>
@@ -574,7 +542,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                                 stone: building.buildCost.stone * Math.max(1, currentBuildingLevel)
                             }) ||
                             isAnyUpgradeInProgress ||
-                            (mainBuildingName !== null && buildingId !== mainBuildingName && currentBuildingLevel >= mainBuildingLevel)
+                            (mainBuildingName !== null && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && currentBuildingLevel >= mainBuildingLevel)
                         }
                         $primaryColor={currentRaceStyle.primaryColor}
                         $secondaryColor={currentRaceStyle.secondaryColor}

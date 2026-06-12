@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import HomePage from './pages/HomePage';
 import RacePage from './pages/RacePage';
@@ -6,7 +7,22 @@ import './App.css';
 import { useGameStore } from './store/useGameStore';
 
 const App = () => {
-  const { view, race, setView, startGame } = useGameStore();
+  const { view, race, setView, startGame, tickUpgradeQueue, setBuildingLevel } = useGameStore();
+
+  // Timer global: corre siempre, sin importar en qué pantalla estés
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const completed = tickUpgradeQueue();
+      completed.forEach(item => {
+        if (item.upgrade.startsWith('Level')) {
+          const currentLevel = useGameStore.getState().buildingLevels[item.buildingId.toLowerCase()] ?? 0;
+          setBuildingLevel(item.buildingId, currentLevel + 1);
+        }
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="app-main-container" style={{ position: 'relative', height: '100vh', width: '100vw', backgroundColor: '#000' }}>

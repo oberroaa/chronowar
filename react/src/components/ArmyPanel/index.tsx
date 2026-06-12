@@ -419,10 +419,10 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
 
                 <UnitCost $race={race}>
                   <CostValue>
-                    {unit.cost.gold} <GoldIcon>💰</GoldIcon>
-                    {unit.cost.wood && ` ${unit.cost.wood} 🪵`}
-                    {unit.cost.stone && ` ${unit.cost.stone} 🪨`}
-                    {unit.cost.food && ` ${unit.cost.food} 🍖`}
+                    {unit.cost.gold ? `${unit.cost.gold} ` : ''}{unit.cost.gold ? <GoldIcon>💰</GoldIcon> : null}
+                    {unit.cost.wood ? ` ${unit.cost.wood} 🪵` : ''}
+                    {unit.cost.stone ? ` ${unit.cost.stone} 🪨` : ''}
+                    {unit.cost.food ? ` ${unit.cost.food} 🍖` : ''}
                   </CostValue>
                 </UnitCost>
               </UnitInfo>

@@ -3,11 +3,19 @@ import { persist } from 'zustand/middleware';
 import { type RaceType, type ResourceType, type BuildingInfo } from '../types/gameData';
 import { fetchGameData, fetchPlayerData, fetchPlayersList, updatePlayerState } from '../api/gameApi';
 
+export interface UpgradeQueueItem {
+  upgrade: string;
+  timeLeft: number;
+  buildingId: string;
+  startedAt: number;
+}
+
 interface GameState {
   view: 'home' | 'city' | 'battle';
   race: RaceType;
   resources: Record<ResourceType, number>;
   buildingLevels: Record<string, number>;
+  upgradeQueue: UpgradeQueueItem[];
   gameData: Record<string, BuildingInfo> | null;
   playerData: any;
   playersList: any[];
@@ -20,7 +28,9 @@ interface GameState {
   startGame: (selectedRace: RaceType) => Promise<void>;
   setBuildingLevel: (buildingId: string, level: number) => void;
   initBuildingLevels: (initialLevels: Record<string, number>) => void;
-  loadGameData: () => Promise<void>; 
+  addUpgradeToQueue: (item: UpgradeQueueItem) => void;
+  tickUpgradeQueue: () => UpgradeQueueItem[];
+  loadGameData: () => Promise<void>;
   loadPlayerState: () => Promise<void>;
   syncPlayerState: () => Promise<void>;
   addCompletedUnit: (unitName: string, amount: number) => void;
@@ -33,6 +43,7 @@ export const useGameStore = create<GameState>()(
       race: 'valdari',
       resources: { gold: 0, wood: 0, stone: 0, food: 0, chrono: 0 },
       buildingLevels: {},
+      upgradeQueue: [],
       gameData: null,
       playerData: null,
       playersList: [],
@@ -73,10 +84,7 @@ export const useGameStore = create<GameState>()(
         } catch {
           // Si el backend falla, igual entramos al juego con datos locales
         }
-        set({
-          race: selectedRace,
-          view: 'city'
-        });
+        set({ race: selectedRace, view: 'city' });
       },
 
       setBuildingLevel: (buildingId, level) => {
@@ -89,9 +97,22 @@ export const useGameStore = create<GameState>()(
         get().syncPlayerState();
       },
 
-      initBuildingLevels: (initialLevels) => set((state) => ({
-        buildingLevels: { ...initialLevels, ...state.buildingLevels }
+      initBuildingLevels: (initialLevels) => set(() => ({
+        buildingLevels: { ...initialLevels }
       })),
+
+      addUpgradeToQueue: (item) => set((state) => ({
+        upgradeQueue: [...state.upgradeQueue, item]
+      })),
+
+      // Descuenta 1 segundo a cada item, devuelve los completados
+      tickUpgradeQueue: () => {
+        const state = get();
+        const ticked = state.upgradeQueue.map(i => ({ ...i, timeLeft: i.timeLeft - 1 }));
+        const completed = ticked.filter(i => i.timeLeft <= 0);
+        set({ upgradeQueue: ticked.filter(i => i.timeLeft > 0) });
+        return completed;
+      },
 
       loadGameData: async () => {
         const data = await fetchGameData();
@@ -102,13 +123,11 @@ export const useGameStore = create<GameState>()(
       loadPlayerState: async () => {
         const [me, all] = await Promise.all([fetchPlayerData(), fetchPlayersList()]);
         if (me) {
-          set((state) => ({ 
-            playerData: me, 
-            resources: me.resources, 
+          set(() => ({
+            playerData: me,
+            resources: me.resources,
             race: me.race as RaceType,
-            buildingLevels: me.buildingLevels && Object.keys(me.buildingLevels).length > 0 
-              ? me.buildingLevels 
-              : state.buildingLevels
+            buildingLevels: me.buildingLevels ?? {}
           }));
         }
         if (all) {
@@ -131,7 +150,6 @@ export const useGameStore = create<GameState>()(
           if (!state.playerData) return state;
           const gameUnits = [...(state.playerData.gameUnits || [])];
           const existingIndex = gameUnits.findIndex((u: any) => u.name === unitName);
-          
           if (existingIndex >= 0) {
             gameUnits[existingIndex] = {
               ...gameUnits[existingIndex],
@@ -140,20 +158,15 @@ export const useGameStore = create<GameState>()(
           } else {
             gameUnits.push({ name: unitName, available: amount });
           }
-          
-          return {
-            playerData: {
-              ...state.playerData,
-              gameUnits
-            }
-          };
+          return { playerData: { ...state.playerData, gameUnits } };
         });
         get().syncPlayerState();
       }
     }),
     {
       name: 'chronowar-game-storage',
+      version: 2,
+      migrate: () => ({ buildingLevels: {}, upgradeQueue: [] }),
     }
   )
 );
-
