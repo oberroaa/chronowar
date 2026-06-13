@@ -4,7 +4,6 @@ import { type ResourceType, type UnitProduction, type BuildingInfo, getResourceI
 // Importaciones de tipos
 import {
     type BuildingInfoModalProps,
-    type ProductionQueueItem,
     type UpgradeInfo,
     raceColors
 } from './types';
@@ -60,7 +59,9 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 }) => {
 
     // Estado para la cola de producción de unidades
-    const [productionQueue, setProductionQueue] = useState<ProductionQueueItem[]>([]);
+    const productionQueue = useGameStore(s => s.productionQueue);
+    const addProductionQueueItem = useGameStore(s => s.addProductionQueueItem);
+    const tickProductionQueue = useGameStore(s => s.tickProductionQueue);
 
     // Cola de mejoras de nivel: ahora viene del store global (persiste al ir a batalla)
     const upgradeQueue: UpgradeQueueItem[] = useGameStore(s => s.upgradeQueue);
@@ -82,37 +83,29 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setProductionQueue(prevQueue => {
-                const newQueue = prevQueue.map(item => ({ ...item, timeLeft: item.timeLeft - 1 }));
-                const finishedUnits = newQueue.filter(item => item.timeLeft <= 0);
-
-                if (finishedUnits.length > 0) {
-                    setTimeout(() => {
-                        setGameUnits(prevUnits => {
-                            let changed = false;
-                            let updatedUnits = [...prevUnits];
-                            finishedUnits.forEach(item => {
-                                const unitKey = `${item.unit}-${item.startedAt}`;
-                                if (!completedUnitsRef.current.has(unitKey)) {
-                                    completedUnitsRef.current.add(unitKey);
-                                    changed = true;
-                                    updatedUnits = updatedUnits.map(unit =>
-                                        unit.name === item.unit
-                                            ? { ...unit, available: (unit.available || 0) + 1 }
-                                            : unit
-                                    );
-                                }
-                            });
-                            return changed ? updatedUnits : prevUnits;
-                        });
-                    }, 0);
-                }
-
-                return newQueue.filter(item => item.timeLeft > 0);
-            });
+            const finishedUnits = tickProductionQueue();
+            if (finishedUnits.length > 0) {
+                setGameUnits(prevUnits => {
+                    let changed = false;
+                    let updatedUnits = [...prevUnits];
+                    finishedUnits.forEach(item => {
+                        const unitKey = `${item.unit}-${item.startedAt}`;
+                        if (!completedUnitsRef.current.has(unitKey)) {
+                            completedUnitsRef.current.add(unitKey);
+                            changed = true;
+                            updatedUnits = updatedUnits.map(unit =>
+                                unit.name === item.unit
+                                    ? { ...unit, available: (unit.available || 0) + 1 }
+                                    : unit
+                            );
+                        }
+                    });
+                    return changed ? updatedUnits : prevUnits;
+                });
+            }
         }, 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [tickProductionQueue]);
 
     // Sincroniza buildingLevels locales con el store global (cuando App.tsx sube el nivel)
     useEffect(() => {
@@ -201,12 +194,12 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         });
 
         // Agrega a la cola de producción
-        setProductionQueue(prev => [...prev, {
+        addProductionQueueItem({
             unit: unit.name,
             timeLeft: unit.buildTime,
             buildingId: buildingId,
             startedAt: Date.now() // Identificador único
-        }]);
+        });
     };
 
     // Calcula población disponible

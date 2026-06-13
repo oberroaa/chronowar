@@ -112,6 +112,13 @@ export type UnitProduction = {
   armorBonus?: number;
 };
 
+export type ProductionQueueItem = {
+  unit: string;
+  timeLeft: number;
+  buildingId: string;
+  startedAt: number;
+};
+
 export type CostInfo = {
   gold: number;
   wood: number;

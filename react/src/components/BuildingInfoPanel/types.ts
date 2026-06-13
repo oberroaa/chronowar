@@ -24,14 +24,6 @@ export type BuildingInfoModalProps = {
     setGameUnits: React.Dispatch<React.SetStateAction<UnitProduction[]>>;
 };
 
-// Tipo para item de cola de producción
-export type ProductionQueueItem = {
-    unit: string;
-    timeLeft: number;
-    buildingId: string;
-    startedAt: number;
-};
-
 // Tipo para item de cola de mejoras
 export type UpgradeQueueItem = {
     upgrade: string;

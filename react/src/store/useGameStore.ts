@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { type RaceType, type ResourceType, type BuildingInfo } from '../types/gameData';
+import { type RaceType, type ResourceType, type BuildingInfo, type ProductionQueueItem } from '../types/gameData';
 import { fetchGameData, fetchPlayerData, fetchPlayersList, updatePlayerState } from '../api/gameApi';
 
 export interface UpgradeQueueItem {
@@ -19,6 +19,7 @@ interface GameState {
   gameData: Record<string, BuildingInfo> | null;
   playerData: any;
   playersList: any[];
+  productionQueue: ProductionQueueItem[];
 
   setView: (view: 'home' | 'city' | 'battle') => void;
   setRace: (race: RaceType) => void;
@@ -30,6 +31,8 @@ interface GameState {
   initBuildingLevels: (initialLevels: Record<string, number>) => void;
   addUpgradeToQueue: (item: UpgradeQueueItem) => void;
   tickUpgradeQueue: () => UpgradeQueueItem[];
+  addProductionQueueItem: (item: ProductionQueueItem) => void;
+  tickProductionQueue: () => ProductionQueueItem[];
   loadGameData: () => Promise<void>;
   loadPlayerState: () => Promise<void>;
   syncPlayerState: () => Promise<void>;
@@ -47,6 +50,7 @@ export const useGameStore = create<GameState>()(
       gameData: null,
       playerData: null,
       playersList: [],
+      productionQueue: [],
 
       setView: (view) => set({ view }),
       setRace: (race) => set({ race }),
@@ -105,12 +109,24 @@ export const useGameStore = create<GameState>()(
         upgradeQueue: [...state.upgradeQueue, item]
       })),
 
+      addProductionQueueItem: (item) => set((state) => ({
+        productionQueue: [...state.productionQueue, item]
+      })),
+
       // Descuenta 1 segundo a cada item, devuelve los completados
       tickUpgradeQueue: () => {
         const state = get();
         const ticked = state.upgradeQueue.map(i => ({ ...i, timeLeft: i.timeLeft - 1 }));
         const completed = ticked.filter(i => i.timeLeft <= 0);
         set({ upgradeQueue: ticked.filter(i => i.timeLeft > 0) });
+        return completed;
+      },
+
+      tickProductionQueue: () => {
+        const state = get();
+        const ticked = state.productionQueue.map(i => ({ ...i, timeLeft: i.timeLeft - 1 }));
+        const completed = ticked.filter(i => i.timeLeft <= 0);
+        set({ productionQueue: ticked.filter(i => i.timeLeft > 0) });
         return completed;
       },
 
@@ -166,7 +182,7 @@ export const useGameStore = create<GameState>()(
     {
       name: 'chronowar-game-storage',
       version: 2,
-      migrate: () => ({ buildingLevels: {}, upgradeQueue: [] }),
+      migrate: () => ({ buildingLevels: {}, upgradeQueue: [], productionQueue: [] }),
     }
   )
 );
