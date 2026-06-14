@@ -206,6 +206,29 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
     }
   }, [gameUnits]);
 
+  // Tick global production queue every second so completed units are added even when the building panel is closed
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const finishedUnits = useGameStore.getState().tickProductionQueue();
+      if (finishedUnits.length > 0) {
+        setGameUnits(prevUnits => {
+          let changed = false;
+          const updatedUnits = prevUnits.map(unit => {
+            const completedCount = finishedUnits.filter(item => item.unit === unit.name).length;
+            if (completedCount > 0) {
+              changed = true;
+              return { ...unit, available: (unit.available || 0) + completedCount };
+            }
+            return unit;
+          });
+          return changed ? updatedUnits : prevUnits;
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const [portalCountdown, setPortalCountdown] = useState<number | null>(null);
   const [portalCurrentTarget, setPortalCurrentTarget] = useState<number | null>(null);
   const [portalBattleResult, setPortalBattleResult] = useState<BattleResultType | null>(null);

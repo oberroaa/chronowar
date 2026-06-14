@@ -69,9 +69,6 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     const storeBuildingLevels = useGameStore(s => s.buildingLevels);
     const [buildingLevels, setBuildingLevels] = useState<Record<string, number>>(storeBuildingLevels);
 
-    // Referencia para unidades completadas (evita duplicados)
-    const completedUnitsRef = useRef<Set<string>>(new Set());
-
     // Efecto para manejar la tecla Escape
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -80,32 +77,6 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const finishedUnits = tickProductionQueue();
-            if (finishedUnits.length > 0) {
-                setGameUnits(prevUnits => {
-                    let changed = false;
-                    let updatedUnits = [...prevUnits];
-                    finishedUnits.forEach(item => {
-                        const unitKey = `${item.unit}-${item.startedAt}`;
-                        if (!completedUnitsRef.current.has(unitKey)) {
-                            completedUnitsRef.current.add(unitKey);
-                            changed = true;
-                            updatedUnits = updatedUnits.map(unit =>
-                                unit.name === item.unit
-                                    ? { ...unit, available: (unit.available || 0) + 1 }
-                                    : unit
-                            );
-                        }
-                    });
-                    return changed ? updatedUnits : prevUnits;
-                });
-            }
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [tickProductionQueue]);
 
     // Sincroniza buildingLevels locales con el store global (cuando App.tsx sube el nivel)
     useEffect(() => {
