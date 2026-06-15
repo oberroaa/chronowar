@@ -5,9 +5,10 @@ import { fetchGameData, fetchPlayerData, fetchPlayersList, updatePlayerState } f
 
 export interface UpgradeQueueItem {
   upgrade: string;
-  timeLeft: number;
+  timeLeft: number; // seconds
   buildingId: string;
-  startedAt: number;
+  startedAt: number; // ms
+  duration?: number;
 }
 
 interface GameState {
@@ -39,150 +40,204 @@ interface GameState {
   addCompletedUnit: (unitName: string, amount: number) => void;
 }
 
+// Implementation
 export const useGameStore = create<GameState>()(
   persist(
-    (set, get) => ({
-      view: 'home',
-      race: 'valdari',
-      resources: { gold: 0, wood: 0, stone: 0, food: 0, chrono: 0 },
-      buildingLevels: {},
-      upgradeQueue: [],
-      gameData: null,
-      playerData: null,
-      playersList: [],
-      productionQueue: [],
+    (set, get) => {
+      let syncTimer: ReturnType<typeof setTimeout> | null = null;
+      const scheduleSync = () => {
+        if (syncTimer) clearTimeout(syncTimer);
+        syncTimer = setTimeout(() => {
+          // fire-and-forget
+          void get().syncPlayerState();
+          syncTimer = null;
+        }, 5000);
+      };
 
-      setView: (view) => set({ view }),
-      setRace: (race) => set({ race }),
-      setResources: (resources) => {
-        set({ resources });
-        get().syncPlayerState();
-      },
+      return {
+        view: 'home',
+        race: 'valdari',
+        resources: { gold: 0, wood: 0, stone: 0, food: 0, chrono: 0 },
+        buildingLevels: {},
+        upgradeQueue: [],
+        gameData: null,
+        playerData: null,
+        playersList: [],
+        productionQueue: [],
 
-      updateResource: (type, amount) => {
-        set((state) => ({
-          resources: {
-            ...state.resources,
-            [type]: state.resources[type] + amount
-          }
-        }));
-        get().syncPlayerState();
-      },
+        setView: (view) => set({ view }),
+        setRace: (race) => set({ race }),
 
-      addResources: (newResources) => {
-        set((state) => {
-          const updatedResources = { ...state.resources };
-          (Object.keys(newResources) as ResourceType[]).forEach((key) => {
-            if (newResources[key] !== undefined) {
-              updatedResources[key] += newResources[key]!;
-            }
+        setResources: (resources) => {
+          set({ resources });
+          scheduleSync();
+        },
+
+        updateResource: (type, amount) => {
+          set((state) => ({ resources: { ...state.resources, [type]: state.resources[type] + amount } }));
+          scheduleSync();
+        },
+
+        addResources: (newResources) => {
+          set((state) => {
+            const updatedResources = { ...state.resources };
+            (Object.keys(newResources) as ResourceType[]).forEach((k) => {
+              if (newResources[k] !== undefined) updatedResources[k] += newResources[k]!;
+            });
+            return { resources: updatedResources };
           });
-          return { resources: updatedResources };
-        });
-        get().syncPlayerState();
-      },
+          scheduleSync();
+        },
 
-      startGame: async (selectedRace) => {
-        try {
-          await get().loadPlayerState();
-        } catch {
-          // Si el backend falla, igual entramos al juego con datos locales
-        }
-        set({ race: selectedRace, view: 'city' });
-      },
-
-      setBuildingLevel: (buildingId, level) => {
-        set((state) => ({
-          buildingLevels: {
-            ...state.buildingLevels,
-            [buildingId.toLowerCase()]: level
+        startGame: async (selectedRace) => {
+          try {
+            await get().loadPlayerState();
+          } catch {
+            // ignore
           }
-        }));
-        get().syncPlayerState();
-      },
+          set({ race: selectedRace, view: 'city' });
+        },
 
-      initBuildingLevels: (initialLevels) => set(() => ({
-        buildingLevels: { ...initialLevels }
-      })),
+        setBuildingLevel: (buildingId, level) => {
+          set((state) => ({ buildingLevels: { ...state.buildingLevels, [buildingId.toLowerCase()]: level } }));
+          scheduleSync();
+        },
 
-      addUpgradeToQueue: (item) => set((state) => ({
-        upgradeQueue: [...state.upgradeQueue, item]
-      })),
+        initBuildingLevels: (initialLevels) => set(() => ({ buildingLevels: { ...initialLevels } })),
 
-      addProductionQueueItem: (item) => set((state) => ({
-        productionQueue: [...state.productionQueue, item]
-      })),
-
-      // Descuenta 1 segundo a cada item, devuelve los completados
-      tickUpgradeQueue: () => {
-        const state = get();
-        const ticked = state.upgradeQueue.map(i => ({ ...i, timeLeft: i.timeLeft - 1 }));
-        const completed = ticked.filter(i => i.timeLeft <= 0);
-        set({ upgradeQueue: ticked.filter(i => i.timeLeft > 0) });
-        return completed;
-      },
-
-      tickProductionQueue: () => {
-        const state = get();
-        const ticked = state.productionQueue.map(i => ({ ...i, timeLeft: i.timeLeft - 1 }));
-        const completed = ticked.filter(i => i.timeLeft <= 0);
-        set({ productionQueue: ticked.filter(i => i.timeLeft > 0) });
-        return completed;
-      },
-
-      loadGameData: async () => {
-        const data = await fetchGameData();
-        if (data) {
-          set({ gameData: data.buildingsData });
-        }
-      },
-      loadPlayerState: async () => {
-        const [me, all] = await Promise.all([fetchPlayerData(), fetchPlayersList()]);
-        if (me) {
-          set(() => ({
-            playerData: me,
-            resources: me.resources,
-            race: me.race as RaceType,
-            buildingLevels: me.buildingLevels ?? {}
+        addUpgradeToQueue: (item) => {
+          set((state) => ({
+            upgradeQueue: [
+              ...state.upgradeQueue,
+              { ...item, duration: item.duration ?? item.timeLeft }
+            ]
           }));
-        }
-        if (all) {
-          set({ playersList: all });
-        }
-      },
-      syncPlayerState: async () => {
-        const state = get();
-        if (state.playerData) {
+          scheduleSync();
+        },
+
+        addProductionQueueItem: (item) => {
+          set((state) => ({
+            productionQueue: [
+              ...state.productionQueue,
+              {
+                ...item,
+                startedAt: item.startedAt ?? Date.now(),
+                duration: item.duration ?? item.timeLeft
+              }
+            ]
+          }));
+          scheduleSync();
+        },
+
+        // Ticking based on timestamps to avoid timer drift and persisted state mismatches
+        tickUpgradeQueue: () => {
+          const state = get();
+          const now = Date.now();
+          const completed: UpgradeQueueItem[] = [];
+          const remaining = state.upgradeQueue.map((it) => {
+            const elapsedMs = Math.max(0, now - it.startedAt);
+            const durationMs = it.duration !== undefined ? it.duration * 1000 : elapsedMs + it.timeLeft * 1000;
+            const end = it.startedAt + durationMs;
+            if (end <= now) {
+              completed.push(it);
+              return null;
+            }
+            const remainingTime = Math.max(0, Math.ceil((end - now) / 1000));
+            return { ...it, timeLeft: remainingTime, duration: it.duration ?? durationMs / 1000 };
+          }).filter(Boolean) as UpgradeQueueItem[];
+          set({ upgradeQueue: remaining });
+          return completed;
+        },
+
+        tickProductionQueue: () => {
+          const state = get();
+          const now = Date.now();
+          const completed: ProductionQueueItem[] = [];
+          const remaining = state.productionQueue.map((it) => {
+            const elapsedMs = Math.max(0, now - it.startedAt);
+            const durationMs = it.duration !== undefined ? it.duration * 1000 : elapsedMs + it.timeLeft * 1000;
+            const end = it.startedAt + durationMs;
+            if (end <= now) {
+              completed.push(it);
+              return null;
+            }
+            const remainingTime = Math.max(0, Math.ceil((end - now) / 1000));
+            return { ...it, timeLeft: remainingTime, duration: it.duration ?? durationMs / 1000 };
+          }).filter(Boolean) as ProductionQueueItem[];
+          set({ productionQueue: remaining });
+          return completed;
+        },
+
+        loadGameData: async () => {
+          const data = await fetchGameData();
+          if (data) set({ gameData: data.buildingsData });
+        },
+
+        loadPlayerState: async () => {
+          const [me, all] = await Promise.all([fetchPlayerData(), fetchPlayersList()]);
+          if (me) {
+            const updates: Partial<GameState> = {
+              playerData: me,
+              resources: me.resources,
+              race: me.race as RaceType,
+            };
+            // Only overwrite buildingLevels if server has saved levels
+            if (me.buildingLevels && Object.keys(me.buildingLevels).length > 0) {
+              updates.buildingLevels = me.buildingLevels;
+            }
+            // Restore persisted queues from server if present and local is empty
+            const state = get();
+            if (me.upgradeQueue && me.upgradeQueue.length > 0 && state.upgradeQueue.length === 0) {
+              updates.upgradeQueue = me.upgradeQueue;
+            }
+            if (me.productionQueue && me.productionQueue.length > 0 && state.productionQueue.length === 0) {
+              updates.productionQueue = me.productionQueue;
+            }
+            set(updates as any);
+          }
+          if (all) set({ playersList: all });
+        },
+
+        syncPlayerState: async () => {
+          const state = get();
+          if (!state.playerData) return;
           await updatePlayerState({
             resources: state.resources,
             formations: state.playerData.formations,
             gameUnits: state.playerData.gameUnits,
-            buildingLevels: state.buildingLevels
+            buildingLevels: state.buildingLevels,
+            upgradeQueue: state.upgradeQueue,
+            productionQueue: state.productionQueue
           });
+        },
+
+        addCompletedUnit: (unitName: string, amount: number) => {
+          set((state) => {
+            if (!state.playerData) return state;
+            const gameUnits = [...(state.playerData.gameUnits || [])];
+            const idx = gameUnits.findIndex((u: any) => u.name === unitName);
+            if (idx >= 0) gameUnits[idx] = { ...gameUnits[idx], available: (gameUnits[idx].available || 0) + amount };
+            else gameUnits.push({ name: unitName, available: amount });
+            return { playerData: { ...state.playerData, gameUnits } };
+          });
+          scheduleSync();
         }
-      },
-      addCompletedUnit: (unitName: string, amount: number) => {
-        set((state) => {
-          if (!state.playerData) return state;
-          const gameUnits = [...(state.playerData.gameUnits || [])];
-          const existingIndex = gameUnits.findIndex((u: any) => u.name === unitName);
-          if (existingIndex >= 0) {
-            gameUnits[existingIndex] = {
-              ...gameUnits[existingIndex],
-              available: (gameUnits[existingIndex].available || 0) + amount
-            };
-          } else {
-            gameUnits.push({ name: unitName, available: amount });
-          }
-          return { playerData: { ...state.playerData, gameUnits } };
-        });
-        get().syncPlayerState();
-      }
-    }),
+      };
+    },
     {
       name: 'chronowar-game-storage',
       version: 2,
-      migrate: () => ({ buildingLevels: {}, upgradeQueue: [], productionQueue: [] }),
+      migrate: (persistedState: any) => {
+        if (!persistedState) return { buildingLevels: {}, upgradeQueue: [], productionQueue: [] };
+        return {
+          ...persistedState,
+          buildingLevels: persistedState.buildingLevels ?? {},
+          upgradeQueue: persistedState.upgradeQueue ?? [],
+          productionQueue: persistedState.productionQueue ?? []
+        };
+      }
     }
   )
 );
+
+export default useGameStore;

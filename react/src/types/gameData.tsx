@@ -117,6 +117,7 @@ export type ProductionQueueItem = {
   timeLeft: number;
   buildingId: string;
   startedAt: number;
+  duration?: number;
 };
 
 export type CostInfo = {

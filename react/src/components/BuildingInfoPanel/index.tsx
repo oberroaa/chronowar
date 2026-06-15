@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore, type UpgradeQueueItem } from '../../store/useGameStore';
 import { type ResourceType, type UnitProduction, type BuildingInfo, getResourceIcon } from '../../types/gameData';
 // Importaciones de tipos
@@ -61,13 +61,13 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     // Estado para la cola de producción de unidades
     const productionQueue = useGameStore(s => s.productionQueue);
     const addProductionQueueItem = useGameStore(s => s.addProductionQueueItem);
-    const tickProductionQueue = useGameStore(s => s.tickProductionQueue);
-
+    
     // Cola de mejoras de nivel: ahora viene del store global (persiste al ir a batalla)
     const upgradeQueue: UpgradeQueueItem[] = useGameStore(s => s.upgradeQueue);
     const addUpgradeToQueue = useGameStore(s => s.addUpgradeToQueue);
     const storeBuildingLevels = useGameStore(s => s.buildingLevels);
     const [buildingLevels, setBuildingLevels] = useState<Record<string, number>>(storeBuildingLevels);
+    const [message, setMessage] = useState<string | null>(null);
 
     // Efecto para manejar la tecla Escape
     useEffect(() => {
@@ -83,7 +83,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         setBuildingLevels(storeBuildingLevels);
     }, [storeBuildingLevels]);
 
-    const activeBuildingsData: Record<string, BuildingInfo> = useGameStore.getState().gameData || {};
+    const gameData = useGameStore(s => s.gameData);
+    const activeBuildingsData: Record<string, BuildingInfo> = gameData || {};
 
     if (!buildingId) return null;
 
@@ -101,9 +102,10 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     // Maneja la producción de una unidad
     const handleProduceUnit = (unit: UnitProduction) => {
         if (isProducing(unit.name)) {
-            alert(`Ya estás entrenando ${unit.name}!`);
-            return;
-        }
+                setMessage(`Ya estás entrenando ${unit.name}!`);
+                setTimeout(() => setMessage(null), 3000);
+                return;
+            }
 
         // Verifica límite de héroes
         if (unit.unitType === 'heroe') {
@@ -113,19 +115,22 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                 u.available > 0
             );
             if (heroExists) {
-                alert(`¡Ya tienes un ${unit.name}! Solo puedes tener uno.`);
+                setMessage(`¡Ya tienes un ${unit.name}! Solo puedes tener uno.`);
+                setTimeout(() => setMessage(null), 3000);
                 return;
             }
         }
 
         if (!canAfford(unit.cost)) {
-            alert("Not enough resources!");
+            setMessage("Recursos insuficientes para entrenar esta unidad.");
+            setTimeout(() => setMessage(null), 3000);
             return;
         }
 
         const unitToTrain = gameUnits.find(u => u.name === unit.name);
         if (!unitToTrain) {
-            alert("Unit not found!");
+            setMessage("Unidad no encontrada.");
+            setTimeout(() => setMessage(null), 3000);
             return;
         }
 
@@ -136,13 +141,15 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
             const totalAvailablePopulation = populationUnits.reduce((sum, u) => sum + (u.available || 0), 0);
 
             if (totalAvailablePopulation <= 0) {
-                alert("Not enough available population!");
+                setMessage("No hay población disponible para asignar.");
+                setTimeout(() => setMessage(null), 3000);
                 return;
             }
 
             populationToUse = populationUnits.find(u => u.available > 0);
             if (!populationToUse) {
-                alert("No population slots available!");
+                setMessage("No hay huecos de población disponibles.");
+                setTimeout(() => setMessage(null), 3000);
                 return;
             }
         }
@@ -158,7 +165,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         setGameUnits(prevUnits => {
             return prevUnits.map(u => {
                 if (unitToTrain.unitType !== 'poblation' && u.id === populationToUse?.id) {
-                    return { ...u, available: u.available - 1 };
+                    const newAvail = Math.max(0, (u.available || 0) - 1);
+                    return { ...u, available: newAvail };
                 }
                 return u;
             });
@@ -181,7 +189,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     // Maneja la aplicación de mejoras
     const handleApplyUpgrade = (upgrade: UpgradeInfo) => {
         if (!canAfford(upgrade.cost)) {
-            alert("Not enough resources!");
+            setMessage("Recursos insuficientes para aplicar la mejora.");
+            setTimeout(() => setMessage(null), 3000);
             return;
         }
 
@@ -213,7 +222,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 
         // Verifica requisitos de edificio principal
         if (mainBuildingName !== null && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && currentLevel >= (buildingLevels[mainBuildingName.toLowerCase()] ?? 0)) {
-            alert(`You need to upgrade your ${mainBuildingName} to level ${currentLevel + 1} first!`);
+            setMessage(`Necesitas mejorar ${mainBuildingName} a nivel ${currentLevel + 1} primero.`);
+            setTimeout(() => setMessage(null), 3000);
             return;
         }
 
@@ -229,7 +239,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         };
 
         if (!canAfford(levelUpCost)) {
-            alert("Not enough resources for level up!");
+            setMessage("Recursos insuficientes para mejorar el edificio.");
+            setTimeout(() => setMessage(null), 3000);
             return;
         }
 
@@ -320,6 +331,11 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                 >
                     ×
                 </CloseButton>
+                {message && (
+                    <UpgradeWarning $accentColor={currentRaceStyle.accentColor}>
+                        {message}
+                    </UpgradeWarning>
+                )}
 
                 <BuildingTitle $secondaryColor={currentRaceStyle.secondaryColor}>
                     {building.name} (Level {currentBuildingLevel})

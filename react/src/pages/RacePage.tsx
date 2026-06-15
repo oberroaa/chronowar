@@ -127,6 +127,7 @@ const simulateBattle = (action: 'attack' | 'gather', targetLevel: number): Battl
 const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   const currentRaceData = raceData[race];
   const { resources, setResources, buildingLevels, setBuildingLevel, initBuildingLevels, gameData, loadGameData, playersList, playerData } = useGameStore();
+  const storeGameUnits = useGameStore(s => s.playerData?.gameUnits);
   const activeBuildingsData: Record<string, BuildingInfo> = gameData || {};
 
   const jsonPlayersData = playersList?.filter(p => !p.isSystem) || [];
@@ -206,28 +207,23 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
     }
   }, [gameUnits]);
 
-  // Tick global production queue every second so completed units are added even when the building panel is closed
+  // Sync local gameUnits from store when addCompletedUnit updates playerData.gameUnits
   useEffect(() => {
-    const timer = setInterval(() => {
-      const finishedUnits = useGameStore.getState().tickProductionQueue();
-      if (finishedUnits.length > 0) {
-        setGameUnits(prevUnits => {
-          let changed = false;
-          const updatedUnits = prevUnits.map(unit => {
-            const completedCount = finishedUnits.filter(item => item.unit === unit.name).length;
-            if (completedCount > 0) {
-              changed = true;
-              return { ...unit, available: (unit.available || 0) + completedCount };
-            }
-            return unit;
-          });
-          return changed ? updatedUnits : prevUnits;
-        });
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+    if (!storeGameUnits) return;
+    setGameUnits(prevUnits => {
+      let changed = false;
+      const newUnits = prevUnits.map(unit => {
+        const saved = storeGameUnits.find((u: any) => u.name === unit.name);
+        const savedAvail = saved?.available ?? 0;
+        if (savedAvail !== unit.available) {
+          changed = true;
+          return { ...unit, available: savedAvail };
+        }
+        return unit;
+      });
+      return changed ? newUnits : prevUnits;
+    });
+  }, [storeGameUnits]);
 
   const [portalCountdown, setPortalCountdown] = useState<number | null>(null);
   const [portalCurrentTarget, setPortalCurrentTarget] = useState<number | null>(null);
@@ -270,10 +266,15 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   }, [portalCountdown, portalCurrentTarget, portalActiveTab]);
 
   useEffect(() => {
-    initBuildingLevels(getInitialBuildings(race));
-    loadGameData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [race]);
+    (async () => {
+      // Load game data; only set initial building levels if store has none yet
+      await loadGameData();
+      const currentLevels = useGameStore.getState().buildingLevels;
+      if (Object.keys(currentLevels).length === 0) {
+        initBuildingLevels(getInitialBuildings(race));
+      }
+    })();
+  }, [race, loadGameData, initBuildingLevels]);
 
 
 
