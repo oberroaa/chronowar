@@ -32,6 +32,7 @@ export const executeHeroSkill = ({
   let updatedHeroes = H.map(u => ({ ...u }));
 
   switch (action) {
+    // Habilidad de daño ligero a objetivo único: elige un enemigo vivo al azar.
     case 'single_light': { /* 40 dmg a un enemigo aleatorio */
       const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
       if (alive.length > 0) {
@@ -54,6 +55,7 @@ export const executeHeroSkill = ({
     }
 
     case 'heal_all_light': { /* Cura 60 HP a todos los aliados */
+      // Habilidad de curación que restaura una cantidad moderada de HP a cada héroe vivo.
       updatedHeroes = updatedHeroes.map((h, i) => {
         if (h.isDead) return h;
         addFloat('+60', 'heal', hPos(i).x, hPos(i).y);
@@ -63,6 +65,7 @@ export const executeHeroSkill = ({
     }
 
     case 'heal_all_mid': { /* Cura 80 HP a todos los aliados */
+      // Curación de área más fuerte para todos los aliados vivos.
       updatedHeroes = updatedHeroes.map((h, i) => {
         if (h.isDead) return h;
         addFloat('+80', 'heal', hPos(i).x, hPos(i).y);
@@ -72,6 +75,7 @@ export const executeHeroSkill = ({
     }
 
     case 'single_heavy': { /* Golpe Critico: 3x dmg al enemigo con menos HP */
+      // Habilidad de daño alto a un solo objetivo: golpea al enemigo con menos HP.
       const wi = updatedEnemies.reduce(
         (mi, e, i, arr) => (!e.isDead && e.hp < (arr[mi]?.hp ?? Infinity) ? i : mi),
         updatedEnemies.findIndex(e => !e.isDead)
@@ -96,6 +100,7 @@ export const executeHeroSkill = ({
     }
 
     case 'aoe_mid': { /* Devastacion: 60 dmg a TODOS los enemigos */
+      // Daño de área: inflige una cantidad fija a cada enemigo vivo.
       for (let i = 0; i < updatedEnemies.length; i++) {
         const e = updatedEnemies[i];
         if (e.isDead) continue;
@@ -113,6 +118,7 @@ export const executeHeroSkill = ({
     }
 
     case 'heal_single_heavy': { /* Sanacion Mayor: +120 HP al heroe mas herido */
+      // Curación poderosa al aliado con menor porcentaje de HP.
       const mi = updatedHeroes.reduce(
         (minI, h, i) =>
           !h.isDead && h.hp / h.maxHp < (updatedHeroes[minI]?.hp ?? 1) / (updatedHeroes[minI]?.maxHp || 1) ? i : minI,
@@ -126,6 +132,7 @@ export const executeHeroSkill = ({
     }
 
     case 'random_3_mid': { /* Lluvia de Flechas: 45 dmg a 3 enemigos aleatorios */
+      // Ataque aleatorio a varios objetivos: golpea hasta 3 enemigos vivos diferentes.
       const targets = updatedEnemies
         .map((_, i) => i)
         .filter(i => !updatedEnemies[i].isDead)
@@ -150,6 +157,7 @@ export const executeHeroSkill = ({
     }
 
     case 'mana_drain': { /* Drenar 40 de mana a todos los enemigos */
+      // Habilidad de drenaje de maná: quita maná a todos los enemigos vivos, retrasando su próxima habilidad.
       for (let i = 0; i < updatedEnemies.length; i++) {
         const e = updatedEnemies[i];
         if (e.isDead) continue;
@@ -161,6 +169,7 @@ export const executeHeroSkill = ({
     }
 
     case 'random_2_mid': { /* 40 dmg a 2 enemigos aleatorios */
+      // Habilidad aleatoria a varios objetivos: golpea 2 enemigos vivos con daño moderado.
       const tgts2 = updatedEnemies
         .map((_, i) => i)
         .filter(i => !updatedEnemies[i].isDead)
@@ -185,6 +194,7 @@ export const executeHeroSkill = ({
     }
 
     case 'random_3_heavy': { /* 50 dmg a 3 enemigos aleatorios */
+      // Golpe aleatorio más fuerte: ataca 3 enemigos con daño mayor.
       const tgts3 = updatedEnemies
         .map((_, i) => i)
         .filter(i => !updatedEnemies[i].isDead)
@@ -209,6 +219,7 @@ export const executeHeroSkill = ({
     }
 
     case 'single_divine': { /* Golpe Divino: 4x dmg al enemigo con menos HP */
+      // Finalizador de un solo objetivo: inflige daño masivo al enemigo con menos HP.
       const wid = updatedEnemies.reduce(
         (mi, e, i, arr) => (!e.isDead && e.hp < (arr[mi]?.hp ?? Infinity) ? i : mi),
         updatedEnemies.findIndex(e => !e.isDead)
@@ -233,6 +244,7 @@ export const executeHeroSkill = ({
     }
 
     case 'aoe_heavy': { /* Maestria Arcana: 80 dmg a TODOS los enemigos */
+      // Daño de área pesado: golpea a cada enemigo vivo con daño fijo alto.
       for (let i = 0; i < updatedEnemies.length; i++) {
         const e = updatedEnemies[i];
         if (e.isDead) continue;
@@ -250,6 +262,7 @@ export const executeHeroSkill = ({
     }
 
     default: { /* fallback: golpe simple */
+      // Habilidad predeterminada de respaldo: realiza un golpe fuerte cuando no hay skillAction específica.
       const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
       if (alive.length > 0) {
         const target = alive[0];
