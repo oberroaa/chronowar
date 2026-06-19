@@ -77,4 +77,13 @@ export class Unit {
 
   @Column()
   targets: string;
+
+  @Column({ nullable: true })
+  skillName: string;
+
+  @Column({ nullable: true })
+  skillDesc: string;
+
+  @Column({ nullable: true })
+  skillAction: string;
 }
