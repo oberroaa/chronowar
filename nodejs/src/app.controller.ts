@@ -78,16 +78,14 @@ export class AppController {
                skillName: unit.skillName || "",
                skillDesc: unit.skillDesc || "",
                skillAction: unit.skillAction || "none",
+               skillName2: unit.skillName2 || "",
+               skillDesc2: unit.skillDesc2 || "",
+               skillAction2: unit.skillAction2 || "none",
                attack: unit.damage || 0,
-               weaponType: unit.weaponType || "Normal",
-               armorType: unit.armorType || "Light",
                armor: unit.armor || 0,
                hp: unit.hitPoints || 100,
-               hpRegen: unit.hpRegen || 1,
-               mana: unit.mana || 0,
-               manaRegen: unit.manaRegen || 0,
                transportSize: 1,
-               carryCapacity: 10,
+               carryCapacity: unit.name === 'Obrero' ? 50 : 10,
              });
            }
         });

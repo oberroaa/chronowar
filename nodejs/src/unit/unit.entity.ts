@@ -33,20 +33,8 @@ export class Unit {
   @Column({ type: 'int' })
   hitPoints: number;
 
-  @Column({ type: 'float' })
-  hpRegen: number;
-
-  @Column({ type: 'int' })
-  mana: number;
-
-  @Column({ type: 'float' })
-  manaRegen: number;
-
   @Column({ type: 'int' })
   armor: number;
-
-  @Column({ nullable: true })
-  armorType: string;
 
   @Column({ type: 'int' })
   food: number;
@@ -57,9 +45,6 @@ export class Unit {
   @Column({ nullable: true })
   requisito: string;
 
-  @Column({ type: 'int' })
-  speed: number;
-
   @Column()
   type: string;
 
@@ -69,14 +54,8 @@ export class Unit {
   @Column({ type: 'float' })
   range: number;
 
-  @Column({ nullable: true })
-  weaponType: string;
-
   @Column({ type: 'float' })
   cooldown: number;
-
-  @Column()
-  targets: string;
 
   @Column({ nullable: true })
   skillName: string;
@@ -86,4 +65,13 @@ export class Unit {
 
   @Column({ nullable: true })
   skillAction: string;
+
+  @Column({ nullable: true })
+  skillName2: string;
+
+  @Column({ nullable: true })
+  skillDesc2: string;
+
+  @Column({ nullable: true })
+  skillAction2: string;
 }

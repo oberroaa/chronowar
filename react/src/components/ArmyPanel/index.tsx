@@ -164,9 +164,6 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                     <ModalStatLabel $race={race}>Health Points:</ModalStatLabel>
                     <ModalStatValue>
                       {unit.hp} HP
-                      {unit.hpRegen > 0 && (
-                        <RegenText $race={race}> (+{unit.hpRegen}/s)</RegenText>
-                      )}
                     </ModalStatValue>
                   </ModalStatItem>
 
@@ -175,28 +172,16 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                     <ModalStatValue>
                       {unit.attack} 
                       {unit.attackBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.attackBonus})</span> : null}
-                      <SmallText>({unit.weaponType})</SmallText>
                     </ModalStatValue>
                   </ModalStatItem>
                 </ModalStatsColumn>
 
                 <ModalStatsColumn>
                   <ModalStatItem>
-                    <ModalStatLabel $race={race}>Mana:</ModalStatLabel>
-                    <ModalStatValue>
-                      {unit.mana || 0} MP
-                      {unit.manaRegen > 0 && (
-                        <RegenText $race={race}> (+{unit.manaRegen}/s)</RegenText>
-                      )}
-                    </ModalStatValue>
-                  </ModalStatItem>
-
-                  <ModalStatItem>
                     <ModalStatLabel $race={race}>Armor:</ModalStatLabel>
                     <ModalStatValue>
                       {unit.armor} 
                       {unit.armorBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.armorBonus})</span> : null}
-                      <SmallText>({unit.armorType})</SmallText>
                     </ModalStatValue>
                   </ModalStatItem>
 
@@ -212,14 +197,24 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
 
             <ModalSection>
               <ModalSectionTitle $race={race}>
-                <AbilityIcon $race={race}>✨</AbilityIcon> SPECIAL ABILITY
+                <AbilityIcon $race={race}>✨</AbilityIcon> SPECIAL ABILITIES
               </ModalSectionTitle>
-              <ModalAbilityBox $race={race}>
-                <ModalAbilityName $race={race}>{unit.special}</ModalAbilityName>
-                <ModalAbilityDesc>
-                  {getAbilityDescription(unit.special)}
-                </ModalAbilityDesc>
-              </ModalAbilityBox>
+              {unit.skillName && (
+                <ModalAbilityBox $race={race} style={{ marginBottom: unit.skillName2 ? '10px' : '0' }}>
+                  <ModalAbilityName $race={race}>{unit.skillName}</ModalAbilityName>
+                  <ModalAbilityDesc>
+                    {unit.skillDesc}
+                  </ModalAbilityDesc>
+                </ModalAbilityBox>
+              )}
+              {unit.unitType === 'heroe' && unit.skillName2 && (
+                <ModalAbilityBox $race={race}>
+                  <ModalAbilityName $race={race}>{unit.skillName2}</ModalAbilityName>
+                  <ModalAbilityDesc>
+                    {unit.skillDesc2}
+                  </ModalAbilityDesc>
+                </ModalAbilityBox>
+              )}
             </ModalSection>
 
             <ModalSection>
@@ -406,10 +401,6 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
                       {unit.armor}
                       {unit.armorBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.armorBonus})</span> : null}
                     </StatValue>
-                  </StatItem>
-                  <StatItem title="Mana / Special Points">
-                    <StatLabel $race={race}>✨</StatLabel>
-                    <StatValue>{unit.mana || 0}</StatValue>
                   </StatItem>
                   <StatItem title="Carry Capacity">
                     <StatLabel $race={race}>📦</StatLabel>

@@ -95,19 +95,17 @@ export type UnitProduction = {
   gif: string;
   special: string,
   attack: number,
-  weaponType: weaponType,
-  armorType: ArmorType,
   armor: number,
   hp: number,
-  hpRegen: number,
-  mana: number,             // float
-  manaRegen: number,        // float
   transportSize: number,
   carryCapacity: number,  // Cantidad de recursos que puede cargar al saquear/recolectar
   available: number,
   skillName?: string;
   skillDesc?: string;
   skillAction?: string;
+  skillName2?: string;
+  skillDesc2?: string;
+  skillAction2?: string;
   attackBonus?: number;
   armorBonus?: number;
 };

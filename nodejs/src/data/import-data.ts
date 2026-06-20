@@ -34,6 +34,7 @@ async function bootstrap() {
 
    await dataService.importData(); // ✅ No pasar argumento si el método no lo espera
 
+    /*
     // Seed Players
     console.log("Seeding Players...");
     const playerRepo = app.get(getRepositoryToken(Player));
@@ -60,6 +61,7 @@ async function bootstrap() {
 
     await playerRepo.save(playersData);
     console.log("Players seeded correctly.");
+    */
 
     console.log("Importación de datos completada correctamente.");
   } catch (error) {

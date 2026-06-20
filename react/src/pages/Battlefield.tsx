@@ -41,6 +41,9 @@ export interface Unit {
   skillName: string;
   skillDesc: string;
   skillAction?: string;
+  skillName2?: string;
+  skillDesc2?: string;
+  skillAction2?: string;
   poison?: number;
   shield?: number;
   attackBonus?: number;
@@ -107,18 +110,18 @@ const ENEMY_DEFS = [
 ];
 
 const HERO_SKILLS = [
-  { skillName: 'Golpe Crítico', skillDesc: '3× daño al enemigo con menos HP', skillAction: 'single_heavy' },
-  { skillName: 'Escudo Divino', skillDesc: 'Cura 80 HP a todos los aliados', skillAction: 'heal_all_mid' },
-  { skillName: 'Devastación', skillDesc: '60 daño a TODOS los enemigos', skillAction: 'aoe_mid' },
-  { skillName: 'Lluvia de Flechas', skillDesc: '45 daño a 3 enemigos aleatorios', skillAction: 'random_3_mid' },
-  { skillName: 'Sanación Mayor', skillDesc: 'Restaura 120 HP al aliado más herido', skillAction: 'heal_single_heavy' },
+  { skillName: 'Holy Light', skillDesc: 'Cura 150 HP masiva a todos los aliados', skillAction: 'paladin_aura', skillName2: 'Divine Shield', skillDesc2: 'Escudo protector de inmunidad temporal', skillAction2: 'divine_shield' },
+  { skillName: 'Blizzard', skillDesc: '90 de daño masivo a TODOS los enemigos', skillAction: 'archmage_blizzard', skillName2: 'Water Elemental', skillDesc2: 'Invoca elemental de agua para daño extra', skillAction2: 'water_elemental' },
+  { skillName: 'Storm Bolt', skillDesc: '150 de daño devastador a un solo enemigo', skillAction: 'mountain_king_avatar', skillName2: 'Thunder Clap', skillDesc2: 'Golpea el suelo haciendo daño en área', skillAction2: 'thunder_clap' },
+  { skillName: 'Flame Strike', skillDesc: '100 de daño de fuego a 3 enemigos aleatorios', skillAction: 'bloodmage_flamestrike', skillName2: 'Banish', skillDesc2: 'Desierra reduciendo la defensa mágica', skillAction2: 'banish' },
+  { skillName: 'Holy Light', skillDesc: 'Cura 150 HP masiva a todos los aliados', skillAction: 'paladin_aura', skillName2: 'Divine Shield', skillDesc2: 'Escudo protector de inmunidad temporal', skillAction2: 'divine_shield' },
 ];
 const HERO_DEFS = [
-  { maxHp: 280, atk: 22, def: 8 },
-  { maxHp: 320, atk: 18, def: 15 },
-  { maxHp: 420, atk: 35, def: 10 },
-  { maxHp: 260, atk: 28, def: 6 },
-  { maxHp: 240, atk: 15, def: 5 },
+  { maxHp: 675, atk: 24, def: 3 },
+  { maxHp: 575, atk: 23, def: 1 },
+  { maxHp: 725, atk: 31, def: 4 },
+  { maxHp: 500, atk: 22, def: 1 },
+  { maxHp: 600, atk: 20, def: 3 },
 ];
 const BG: Record<Race, string> = {
   valdari: '/images/battlefields/download.png', gorkar: '/images/battlefields/download.png',
@@ -627,9 +630,12 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     const loadedHeroes = HERO_DEFS.map((fallback, i) => {
       const slot = currentFormations.principal.units[i];
       const fallbackSkill = HERO_SKILLS[i] || {
-        skillName: 'Golpe Crítico',
-        skillDesc: '3× daño al enemigo con menos HP',
-        skillAction: 'single_heavy'
+        skillName: 'Holy Light',
+        skillDesc: 'Cura 150 HP masiva a todos los aliados',
+        skillAction: 'paladin_aura',
+        skillName2: 'Divine Shield',
+        skillDesc2: 'Escudo protector de inmunidad temporal',
+        skillAction2: 'divine_shield'
       };
       if (!slot) {
         // Empty slot starts as dead
@@ -641,6 +647,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           skillName: fallbackSkill.skillName,
           skillDesc: fallbackSkill.skillDesc,
           skillAction: fallbackSkill.skillAction,
+          skillName2: fallbackSkill.skillName2,
+          skillDesc2: fallbackSkill.skillDesc2,
+          skillAction2: fallbackSkill.skillAction2,
           poison: 0,
         };
       }
@@ -654,6 +663,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           skillName: fallbackSkill.skillName,
           skillDesc: fallbackSkill.skillDesc,
           skillAction: fallbackSkill.skillAction,
+          skillName2: fallbackSkill.skillName2,
+          skillDesc2: fallbackSkill.skillDesc2,
+          skillAction2: fallbackSkill.skillAction2,
           poison: 0,
         };
       }
@@ -665,6 +677,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         skillName: u.skillName || fallbackSkill.skillName,
         skillDesc: u.skillDesc || fallbackSkill.skillDesc,
         skillAction: u.skillAction || fallbackSkill.skillAction,
+        skillName2: u.skillName2 || fallbackSkill.skillName2,
+        skillDesc2: u.skillDesc2 || fallbackSkill.skillDesc2,
+        skillAction2: u.skillAction2 || fallbackSkill.skillAction2,
         poison: 0,
         attackBonus: u.attackBonus,
         armorBonus: u.armorBonus,
@@ -1254,7 +1269,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
      Player fires skill → effects apply → back to playerTurn
      so they can still make a board move.
   ══════════════════════════════════════════════════════════ */
-  const onHeroClick = useCallback(async (hi: number) => {
+  const onHeroClick = useCallback(async (hi: number, skillNum: number = 1) => {
     if (busyRef.current || phase !== 'playerTurn') return;
     const hero = heroes[hi];
     if (!hero || hero.isDead || !hero.isSkillReady) return;
@@ -1264,15 +1279,18 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
     let E = enemies.map(u => ({ ...u }));
     let H = heroes.map(u => ({ ...u }));
 
+    const selectedSkillName = skillNum === 2 ? hero.skillName2 : hero.skillName;
+    const selectedSkillAction = skillNum === 2 ? hero.skillAction2 : hero.skillAction;
+
     /* cast animation */
     setCastingHero(hi);
     H[hi] = { ...H[hi], mana: 0, isSkillReady: false, isAttacking: true };
     setHeroes([...H]);
-    addFloat(`✨ ${hero.skillName}!`, 'skill', hPos(hi).x, hPos(hi).y - 32);
+    addFloat(`✨ ${selectedSkillName}!`, 'skill', hPos(hi).x, hPos(hi).y - 32);
     await SLEEP(320);
 
     const { E: nextE, H: nextH } = executeHeroSkill({
-      action: hero.skillAction || 'single_heavy',
+      action: selectedSkillAction || 'single_heavy',
       hero,
       E,
       H,
@@ -1413,7 +1431,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                 $skillReady={unit.isSkillReady}
                 $isEnemyUnit={false}
                 $casting={castingHero === i}
-                onClick={() => onHeroClick(i)}
+                onClick={() => { if (!unit.isSkillReady) onHeroClick(i, 1); }}
                 onMouseEnter={() => setHovHero(i)}
                 onMouseLeave={() => setHovHero(null)}
               >
@@ -1427,7 +1445,42 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                     )}
                   </BadgesRow>
                 )}
-                {unit.isSkillReady && !unit.isDead && <HeroSkillBadge>✨ SKILL</HeroSkillBadge>}
+                {unit.isSkillReady && !unit.isDead && (
+                  <div style={{
+                    position: 'absolute', top: '0', bottom: '0', left: '0', right: '0',
+                    display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center',
+                    padding: '8px', zIndex: 100, background: 'rgba(0,0,0,0.7)', borderRadius: '6px'
+                  }}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onHeroClick(i, 1); }}
+                      style={{
+                        background: 'linear-gradient(to bottom, #ffd700, #ff8800)',
+                        border: '1.5px solid #fff', borderRadius: '5px', color: '#000',
+                        fontSize: '9px', fontWeight: 'bold', cursor: 'pointer', padding: '4px 0',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.6)', textTransform: 'uppercase',
+                        fontFamily: 'sans-serif'
+                      }}
+                      title={unit.skillDesc}
+                    >
+                      {unit.skillName || 'Skill 1'}
+                    </button>
+                    {unit.skillName2 && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onHeroClick(i, 2); }}
+                        style={{
+                          background: 'linear-gradient(to bottom, #ffd700, #ff8800)',
+                          border: '1.5px solid #fff', borderRadius: '5px', color: '#000',
+                          fontSize: '9px', fontWeight: 'bold', cursor: 'pointer', padding: '4px 0',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.6)', textTransform: 'uppercase',
+                          fontFamily: 'sans-serif'
+                        }}
+                        title={unit.skillDesc2}
+                      >
+                        {unit.skillName2}
+                      </button>
+                    )}
+                  </div>
+                )}
                 {hovHero === i && !unit.isDead && (
                   <HeroTip>
                     <div style={{ fontWeight: 900, fontSize: '.72rem', color: '#ffd700', marginBottom: '3px', textTransform: 'uppercase' }}>
@@ -1440,7 +1493,12 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                       <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong>{unit.armorBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{unit.armorBonus})</span> : null}</span>
                     </div>
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '4px', whiteSpace: 'normal', color: '#dfd' }}>
-                      <strong style={{ color: '#00ffcc' }}>{unit.skillName || 'Skill'}:</strong> {unit.skillDesc}
+                      <strong style={{ color: '#00ffcc' }}>{unit.skillName || 'Skill 1'}:</strong> {unit.skillDesc}
+                      {unit.skillName2 && (
+                        <div style={{ marginTop: '4px', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '4px' }}>
+                          <strong style={{ color: '#00ffcc' }}>{unit.skillName2}:</strong> {unit.skillDesc2}
+                        </div>
+                      )}
                     </div>
                   </HeroTip>
                 )}

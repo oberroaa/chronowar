@@ -34,15 +34,13 @@ async function reset() {
   const res = await client.query(
     `UPDATE player
      SET
-       resources      = $1,
-       formations     = $2,
-       "gameUnits"    = $3,
-       "buildingLevels" = $4,
+       formations     = $1,
+       "gameUnits"    = $2,
+       "buildingLevels" = $3,
        level          = 1,
        race           = 'valdari'
      WHERE id = 1`,
     [
-      INITIAL_RESOURCES,
       '{}',
       '[]',
       '{}',
@@ -51,7 +49,7 @@ async function reset() {
 
   if (res.rowCount > 0) {
     console.log('✅ Jugador reseteado a valores iniciales:');
-    console.log('   - Recursos: 5000 oro / madera / piedra / comida, 1000 chrono');
+    console.log('   - Recursos: Mantenidos intactos');
     console.log('   - Tropas: vacías (available = 0)');
     console.log('   - Edificios: nivel 0');
     console.log('   - Formaciones: vacías');

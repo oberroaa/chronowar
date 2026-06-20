@@ -368,7 +368,7 @@ export const executeHeroSkill = ({
       }
       break;
     }
-    case 'paladin_aura': { /* Cura 150 HP masiva a todos los aliados */
+    case 'paladin_aura': { /* Holy Light: Cura 150 HP masiva a todos los aliados */
       updatedHeroes = updatedHeroes.map((h, i) => {
         if (h.isDead) return h;
         addFloat('+150 💛', 'heal', hPos(i).x, hPos(i).y);
@@ -376,7 +376,15 @@ export const executeHeroSkill = ({
       });
       break;
     }
-    case 'archmage_blizzard': { /* 90 de daño masivo a TODOS los enemigos */
+    case 'divine_shield': { /* Divine Shield: Otorga un escudo masivo al Paladín */
+      updatedHeroes = updatedHeroes.map((h, i) => {
+        if (h.isDead || h.name !== hero.name) return h;
+        addFloat('🛡️ Inmune +150', 'combo', hPos(i).x, hPos(i).y - 28);
+        return { ...h, shield: (h.shield || 0) + 150 };
+      });
+      break;
+    }
+    case 'archmage_blizzard': { /* Blizzard: 90 de daño masivo a TODOS los enemigos */
       for (let i = 0; i < updatedEnemies.length; i++) {
         const e = updatedEnemies[i];
         if (e.isDead) continue;
@@ -389,32 +397,152 @@ export const executeHeroSkill = ({
       setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
       break;
     }
-    case 'mountain_king_avatar': { /* 150 de daño devastador a un solo enemigo */
+    case 'arcane_blast': { /* Arcane Blast: 60 daño a 2 enemigos y reduce armadura en 2 */
       const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
-      if (alive.length > 0) {
-        const wi = updatedEnemies.reduce((mi, e, i, arr) => (!e.isDead && e.hp > (arr[mi]?.hp ?? -1) ? i : mi), updatedEnemies.findIndex(e => !e.isDead));
-        const actual = Math.max(1, 150 - updatedEnemies[wi].defense);
-        updatedEnemies[wi] = { ...updatedEnemies[wi], hp: Math.max(0, updatedEnemies[wi].hp - actual), isDead: updatedEnemies[wi].hp - actual <= 0, isHit: true };
-        addFloat(`⚡ ${actual}`, 'crit', ePos(wi).x, ePos(wi).y);
-        doShake();
-        setTimeout(() => setEnemies(prev => prev.map((u, i) => (i === wi ? { ...u, isHit: false } : u))), 430);
-      }
-      break;
-    }
-    case 'bloodmage_flamestrike': { /* 100 de daño de fuego a 3 enemigos aleatorios */
-      const tgts3 = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead).sort(() => Math.random() - 0.5).slice(0, 3);
-      for (const i of tgts3) {
-        const actual = Math.max(1, 100 - updatedEnemies[i].defense);
-        updatedEnemies[i] = { ...updatedEnemies[i], hp: Math.max(0, updatedEnemies[i].hp - actual), isDead: updatedEnemies[i].hp - actual <= 0, isHit: true };
-        addFloat(`🔥 ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+      const targets = alive.sort(() => Math.random() - 0.5).slice(0, 2);
+      for (const i of targets) {
+        const actual = Math.max(1, 60 - updatedEnemies[i].defense);
+        updatedEnemies[i] = { 
+          ...updatedEnemies[i], 
+          hp: Math.max(0, updatedEnemies[i].hp - actual), 
+          defense: Math.max(0, updatedEnemies[i].defense - 2), // Reduce armor by 2
+          isDead: updatedEnemies[i].hp - actual <= 0, 
+          isHit: true 
+        };
+        addFloat(`✨ ${actual} (-2 Def)`, 'crit', ePos(i).x, ePos(i).y);
       }
       doShake();
       setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
       break;
     }
+    case 'mountain_king_avatar': { /* Storm Bolt: 150 de daño a un solo enemigo */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const wi = updatedEnemies.reduce((mi, e, i, arr) => (!e.isDead && e.hp > (arr[mi]?.hp ?? -1) ? i : mi), updatedEnemies.findIndex(e => !e.isDead));
+        const actual = Math.max(1, 150 - updatedEnemies[wi].defense);
+        updatedEnemies[wi] = { ...updatedEnemies[wi], hp: Math.max(0, updatedEnemies[wi].hp - actual), isDead: updatedEnemies[wi].hp - actual <= 0, isHit: true };
+        addFloat(`⚡ Storm Bolt: ${actual}`, 'crit', ePos(wi).x, ePos(wi).y);
+        doShake();
+        setTimeout(() => setEnemies(prev => prev.map((u, i) => (i === wi ? { ...u, isHit: false } : u))), 430);
+      }
+      break;
+    }
+    case 'thunder_clap': { /* Thunder Clap: 70 daño en área a todos */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const actual = Math.max(1, 70 - e.defense);
+        addFloat(`💥 Clap: ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+        const hp = Math.max(0, e.hp - actual);
+        updatedEnemies[i] = { ...e, hp, isDead: hp <= 0, isHit: true };
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+    case 'bloodmage_flamestrike': { /* Flame Strike: 100 daño a 3 enemigos */
+      const tgts3 = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead).sort(() => Math.random() - 0.5).slice(0, 3);
+      for (const i of tgts3) {
+        const actual = Math.max(1, 100 - updatedEnemies[i].defense);
+        updatedEnemies[i] = { ...updatedEnemies[i], hp: Math.max(0, updatedEnemies[i].hp - actual), isDead: updatedEnemies[i].hp - actual <= 0, isHit: true };
+        addFloat(`🔥 Flame: ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+    case 'banish': { /* Banish: reduce defensa y hace daño */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        // Reduce defensa a 0 temporalmente
+        addFloat(`✨ Banished! Def: 0`, 'skill', ePos(target).x, ePos(target).y - 25);
+        const actual = 80; // Daño mágico puro que ignora defensa
+        updatedEnemies[target] = { ...updatedEnemies[target], defense: 0, hp: Math.max(0, updatedEnemies[target].hp - actual), isDead: updatedEnemies[target].hp - actual <= 0, isHit: true };
+        addFloat(`💥 ${actual}`, 'crit', ePos(target).x, ePos(target).y);
+        doShake();
+        setTimeout(() => setEnemies(prev => prev.map((u, i) => (i === target ? { ...u, isHit: false } : u))), 430);
+      }
+      break;
+    }
+    case 'defend': { /* Defend: Escudo defensivo de 80 al primer aliado */
+      const alive = updatedHeroes.map((_, i) => i).filter(i => !updatedHeroes[i].isDead);
+      if (alive.length > 0) {
+        const target = alive[0];
+        updatedHeroes[target] = { ...updatedHeroes[target], shield: (updatedHeroes[target].shield || 0) + 80 };
+        addFloat(`🛡️ Defend +80`, 'combo', hPos(target).x, hPos(target).y - 25);
+      }
+      break;
+    }
+    case 'spell_immunity': { /* Spell Immunity: Escudo purificador */
+      updatedHeroes = updatedHeroes.map((h, i) => {
+        if (h.isDead) return h;
+        addFloat(`🛡️ Immune +100`, 'combo', hPos(i).x, hPos(i).y - 25);
+        return { ...h, shield: (h.shield || 0) + 100, poison: 0 };
+      });
+      break;
+    }
+    case 'barricade': { /* Barricade: Escudo de 80 a todos los aliados */
+      updatedHeroes = updatedHeroes.map((h, i) => {
+        if (h.isDead) return h;
+        addFloat(`🛡️ Barricade +80`, 'combo', hPos(i).x, hPos(i).y - 25);
+        return { ...h, shield: (h.shield || 0) + 80 };
+      });
+      break;
+    }
+    case 'slow': { /* Slow: reduce ataque de 2 enemigos en 30% */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      const targets = alive.sort(() => Math.random() - 0.5).slice(0, 2);
+      for (const i of targets) {
+        updatedEnemies[i] = { ...updatedEnemies[i], attack: Math.max(1, Math.round(updatedEnemies[i].attack * 0.7)) };
+        addFloat(`❄️ Ralentizado (-30% ATK)`, 'skill', ePos(i).x, ePos(i).y - 25);
+      }
+      break;
+    }
+    case 'feedback': { /* Feedback: drena 60 mana */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const drained = Math.min(e.mana, 60);
+        addFloat(`⚡ Feedback: -${drained} Mana`, 'skill', ePos(i).x, ePos(i).y);
+        updatedEnemies[i] = { ...e, mana: Math.max(0, e.mana - 60) };
+      }
+      break;
+    }
+    case 'flare': { /* Flare: daño explosivo en cruz */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      const targets = alive.sort(() => Math.random() - 0.5).slice(0, 2);
+      for (const i of targets) {
+        const actual = Math.max(1, 60 - updatedEnemies[i].defense);
+        updatedEnemies[i] = { ...updatedEnemies[i], hp: Math.max(0, updatedEnemies[i].hp - actual), isDead: updatedEnemies[i].hp - actual <= 0, isHit: true };
+        addFloat(`💥 Flare: ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+    case 'storm_hammer': { /* Storm Hammer: daño masivo y encadenado */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const targets = alive.sort(() => Math.random() - 0.5).slice(0, 3);
+        const mainTarget = targets[0];
+        const actualMain = Math.max(1, 70 - updatedEnemies[mainTarget].defense);
+        updatedEnemies[mainTarget] = { ...updatedEnemies[mainTarget], hp: Math.max(0, updatedEnemies[mainTarget].hp - actualMain), isDead: updatedEnemies[mainTarget].hp - actualMain <= 0, isHit: true };
+        addFloat(`🔨 Hammer: ${actualMain}`, 'crit', ePos(mainTarget).x, ePos(mainTarget).y);
+
+        for (let j = 1; j < targets.length; j++) {
+            const spl = targets[j];
+            const actualSpl = Math.max(1, 35 - updatedEnemies[spl].defense);
+            updatedEnemies[spl] = { ...updatedEnemies[spl], hp: Math.max(0, updatedEnemies[spl].hp - actualSpl), isDead: updatedEnemies[spl].hp - actualSpl <= 0, isHit: true };
+            addFloat(`⚡ Splash: ${actualSpl}`, 'dmg', ePos(spl).x, ePos(spl).y);
+        }
+        doShake();
+        setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      }
+      break;
+    }
 
     default: { /* fallback: golpe simple */
-      // Habilidad predeterminada de respaldo: realiza un golpe fuerte cuando no hay skillAction específica.
       const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
       if (alive.length > 0) {
         const target = alive[0];
