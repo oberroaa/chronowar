@@ -335,16 +335,6 @@ const BossLabel = styled.div`
   font-size:.62rem;font-weight:900;text-transform:uppercase;z-index:20;
   box-shadow:0 4px 10px rgba(0,0,0,.85);white-space:nowrap;
 `;
-// Gold badge for hero skills
-const HeroSkillBadge = styled.div`
-  position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);
-  background:linear-gradient(to bottom,#ffd700,#ff8800);
-  border:1px solid rgba(255,255,255,.8);color:#000;
-  padding:1px 9px;border-radius:10px;
-  font-size:.54rem;font-weight:900;text-transform:uppercase;z-index:20;
-  box-shadow:0 0 10px rgba(255,215,0,.9);white-space:nowrap;
-  animation:${popIn} .35s ease-out;
-`;
 // Red badge for enemy skills
 const EnemySkillBadge = styled.div`
   position:absolute;top:-16px;left:50%;transform:translateX(-50%);
@@ -353,6 +343,15 @@ const EnemySkillBadge = styled.div`
   padding:1px 9px;border-radius:10px;
   font-size:.52rem;font-weight:900;text-transform:uppercase;z-index:20;
   box-shadow:0 0 12px rgba(255,68,68,.95);white-space:nowrap;
+  animation:${popIn} .35s ease-out;
+`;
+const HeroSkillBadge = styled.div`
+  position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(to bottom,#ffaa00,#cc6600);
+  border:1px solid rgba(255,220,100,.8);color:#fff;
+  padding:1px 9px;border-radius:10px;
+  font-size:.52rem;font-weight:900;text-transform:uppercase;z-index:20;
+  box-shadow:0 0 12px rgba(255,170,0,.95);white-space:nowrap;
   animation:${popIn} .35s ease-out;
 `;
 const badgePopIn = keyframes`
@@ -677,9 +676,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         skillName: u.skillName || fallbackSkill.skillName,
         skillDesc: u.skillDesc || fallbackSkill.skillDesc,
         skillAction: u.skillAction || fallbackSkill.skillAction,
-        skillName2: u.skillName2 || fallbackSkill.skillName2,
-        skillDesc2: u.skillDesc2 || fallbackSkill.skillDesc2,
-        skillAction2: u.skillAction2 || fallbackSkill.skillAction2,
+        skillName2: u.skillName2 || '',
+        skillDesc2: u.skillDesc2 || '',
+        skillAction2: u.skillAction2 || 'none',
         poison: 0,
         attackBonus: u.attackBonus,
         armorBonus: u.armorBonus,
@@ -1431,7 +1430,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                 $skillReady={unit.isSkillReady}
                 $isEnemyUnit={false}
                 $casting={castingHero === i}
-                onClick={() => { if (!unit.isSkillReady) onHeroClick(i, 1); }}
+                onClick={() => { if (unit.isSkillReady && !unit.isDead) onHeroClick(i, 1); }}
                 onMouseEnter={() => setHovHero(i)}
                 onMouseLeave={() => setHovHero(null)}
               >
@@ -1445,42 +1444,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                     )}
                   </BadgesRow>
                 )}
-                {unit.isSkillReady && !unit.isDead && (
-                  <div style={{
-                    position: 'absolute', top: '0', bottom: '0', left: '0', right: '0',
-                    display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center',
-                    padding: '8px', zIndex: 100, background: 'rgba(0,0,0,0.7)', borderRadius: '6px'
-                  }}>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onHeroClick(i, 1); }}
-                      style={{
-                        background: 'linear-gradient(to bottom, #ffd700, #ff8800)',
-                        border: '1.5px solid #fff', borderRadius: '5px', color: '#000',
-                        fontSize: '9px', fontWeight: 'bold', cursor: 'pointer', padding: '4px 0',
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.6)', textTransform: 'uppercase',
-                        fontFamily: 'sans-serif'
-                      }}
-                      title={unit.skillDesc}
-                    >
-                      {unit.skillName || 'Skill 1'}
-                    </button>
-                    {unit.skillName2 && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); onHeroClick(i, 2); }}
-                        style={{
-                          background: 'linear-gradient(to bottom, #ffd700, #ff8800)',
-                          border: '1.5px solid #fff', borderRadius: '5px', color: '#000',
-                          fontSize: '9px', fontWeight: 'bold', cursor: 'pointer', padding: '4px 0',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.6)', textTransform: 'uppercase',
-                          fontFamily: 'sans-serif'
-                        }}
-                        title={unit.skillDesc2}
-                      >
-                        {unit.skillName2}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {unit.isSkillReady && !unit.isDead && <HeroSkillBadge>⚡ SKILL</HeroSkillBadge>}
                 {hovHero === i && !unit.isDead && (
                   <HeroTip>
                     <div style={{ fontWeight: 900, fontSize: '.72rem', color: '#ffd700', marginBottom: '3px', textTransform: 'uppercase' }}>
@@ -1493,12 +1457,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
                       <span>🛡️ DEF: <strong style={{ color: '#fff' }}>{unit.defense}{unit.shield ? ` (+${unit.shield})` : ''}</strong>{unit.armorBonus ? <span style={{color:'#ffd700',marginLeft:'3px'}}>(+{unit.armorBonus})</span> : null}</span>
                     </div>
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '4px', whiteSpace: 'normal', color: '#dfd' }}>
-                      <strong style={{ color: '#00ffcc' }}>{unit.skillName || 'Skill 1'}:</strong> {unit.skillDesc}
-                      {unit.skillName2 && (
-                        <div style={{ marginTop: '4px', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '4px' }}>
-                          <strong style={{ color: '#00ffcc' }}>{unit.skillName2}:</strong> {unit.skillDesc2}
-                        </div>
-                      )}
+                      <strong style={{ color: '#00ffcc' }}>{unit.skillName}:</strong> {unit.skillDesc}
                     </div>
                   </HeroTip>
                 )}

@@ -14,10 +14,9 @@ export type UnitImageDisplayProps = {
   onUnitClick: (unit: UnitProduction) => void;
 };
 
-export type ArmyModalProps = {
+export interface ArmyModalProps {
   unit: UnitProduction;
   race: RaceType;
   isOpen: boolean;
   onClose: () => void;
-  getAbilityDescription: (abilityName: string) => string;
 };

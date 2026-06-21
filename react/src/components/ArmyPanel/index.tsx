@@ -52,7 +52,6 @@ import {
   ModalStatItem,
   ModalStatLabel,
   ModalStatValue,
-  RegenText,
   SmallText,
   ModalAbilityBox,
   ModalAbilityName,
@@ -113,7 +112,6 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
   race,
   isOpen,
   onClose,
-  getAbilityDescription,
 }) => {
   if (!isOpen) return null;
 
@@ -200,18 +198,10 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                 <AbilityIcon $race={race}>✨</AbilityIcon> SPECIAL ABILITIES
               </ModalSectionTitle>
               {unit.skillName && (
-                <ModalAbilityBox $race={race} style={{ marginBottom: unit.skillName2 ? '10px' : '0' }}>
+                <ModalAbilityBox $race={race}>
                   <ModalAbilityName $race={race}>{unit.skillName}</ModalAbilityName>
                   <ModalAbilityDesc>
                     {unit.skillDesc}
-                  </ModalAbilityDesc>
-                </ModalAbilityBox>
-              )}
-              {unit.unitType === 'heroe' && unit.skillName2 && (
-                <ModalAbilityBox $race={race}>
-                  <ModalAbilityName $race={race}>{unit.skillName2}</ModalAbilityName>
-                  <ModalAbilityDesc>
-                    {unit.skillDesc2}
                   </ModalAbilityDesc>
                 </ModalAbilityBox>
               )}
@@ -288,12 +278,7 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
     Object.values(activeBuildingsData).forEach((building: BuildingInfo) => {
       if (building.race === race && building.unitsProduced) {
         building.unitsProduced.forEach(unit => {
-          const unitWithMana = {
-            ...unit,
-            mana: unit.mana || 0,
-            manaRegen: unit.manaRegen || 0
-          };
-          allUnits.push(unitWithMana);
+          allUnits.push(unit);
         });
       }
     });
@@ -321,14 +306,6 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
   const handleUnitClick = (unit: UnitProduction) => {
     setSelectedUnit(unit);
     setIsModalOpen(true);
-  };
-
-  // Obtiene la descripción de una habilidad especial
-  const getAbilityDescription = (abilityName: string) => {
-    const descriptions: Record<string, string> = {
-      "Call to Arms": "Can rally nearby units, increasing their attack speed by 15% for 10 seconds.",
-    };
-    return descriptions[abilityName] || "Special ability unique to this unit.";
   };
 
   return (
@@ -428,7 +405,6 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
           race={race}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          getAbilityDescription={getAbilityDescription}
         />
       )}
     </>
