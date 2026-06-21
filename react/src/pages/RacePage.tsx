@@ -140,7 +140,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
 
   const [gameUnits, setGameUnits] = useState<UnitProduction[]>(() => {
     const initialLevels = Object.keys(buildingLevels).length > 0 ? buildingLevels : getInitialBuildings(race);
-    const baseUnits = getUpgradedUnits(initialLevels, activeBuildingsData);
+    const baseUnits = getUpgradedUnits(initialLevels, activeBuildingsData, race);
     const savedUnits = playerData?.gameUnits || [];
     
     return baseUnits.map(unit => {
@@ -177,9 +177,9 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
   useEffect(() => {
     setGameUnits(prevUnits => {
       if (prevUnits.length === 0) return prevUnits;
-      return applyBuildingLevelBonuses(prevUnits, buildingLevels, activeBuildingsData);
+      return applyBuildingLevelBonuses(prevUnits, buildingLevels, activeBuildingsData, race);
     });
-  }, [buildingLevels, activeBuildingsData]);
+  }, [buildingLevels, activeBuildingsData, race]);
 
   // Sync gameUnits to store when they change
   useEffect(() => {

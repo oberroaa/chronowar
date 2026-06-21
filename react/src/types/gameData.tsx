@@ -157,14 +157,14 @@ export const SquaresValdari = [
 ];
 
 export const SquaresGorkar = [
-  { name: 'BloodHall', top: '46%', left: '39%' },
-  { name: 'HuntCamp', top: '60%', left: '55%' },
-  { name: 'WarHut', top: '60.5%', left: '9.5%' },
-  { name: 'ShamanTent', top: '36.5%', left: '15.5%' },
-  { name: 'SkyPerch', top: '28%', left: '70%' },
-  { name: 'TotemCircle', top: '19.5%', left: '8.5%' },
-  { name: 'TradeHut', top: '25%', left: '37%' },
-  { name: 'BoneWatch', top: '44%', left: '76%' }
+  { name: 'BloodHall', top: '36%', left: '47%' },
+  { name: 'WarHut', top: '50%', left: '22%' },
+  { name: 'ShamanTent', top: '50%', left: '76%' },
+  { name: 'HuntCamp', top: '66%', left: '28%' },
+  { name: 'SkyPerch', top: '73%', left: '40%' },
+  { name: 'TotemCircle', top: '78%', left: '50%' },
+  { name: 'TradeHut', top: '73%', left: '60%' },
+  { name: 'BoneWatch', top: '66%', left: '71%' }
 ];
 
 export const SquaresSylvaran = [

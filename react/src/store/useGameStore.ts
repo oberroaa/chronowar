@@ -95,7 +95,23 @@ export const useGameStore = create<GameState>()(
           } catch {
             // ignore
           }
-          set({ race: selectedRace, view: 'city' });
+
+          const currentRace = get().race;
+
+          if (currentRace !== selectedRace) {
+            // Si el usuario cambia de raza, reseteamos el progreso local para cargar los nuevos
+            set({ 
+              race: selectedRace, 
+              view: 'city',
+              buildingLevels: {},
+              productionQueue: [],
+              upgradeQueue: [],
+              playerData: { ...get().playerData, gameUnits: [] }
+            });
+            void get().syncPlayerState();
+          } else {
+            set({ race: selectedRace, view: 'city' });
+          }
         },
 
         setBuildingLevel: (buildingId, level) => {

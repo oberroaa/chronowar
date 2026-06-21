@@ -85,7 +85,7 @@ export class AppController {
                armor: unit.armor || 0,
                hp: unit.hitPoints || 100,
                transportSize: 1,
-               carryCapacity: unit.name === 'Obrero' ? 50 : 10,
+               carryCapacity: (unit.name === 'Obrero' || unit.name === 'Vigía') ? 50 : 10,
              });
            }
         });
