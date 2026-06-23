@@ -100,7 +100,7 @@ export class DataService {
             requisito: unitData.Requisito !== "null" && unitData.Requisito !== undefined ? unitData.Requisito : null,
             type: unitData.Type,
             damage: Number(unitData.Damage || 0),
-            range: Number(unitData.Range || 0),
+            mana: Number(unitData.Mana || 0),
             cooldown: Number(unitData.Cooldown || 1.5),
             skillName: unitData.skillName || null,
             skillDesc: unitData.skillDesc || null,

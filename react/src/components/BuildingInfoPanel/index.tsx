@@ -346,7 +346,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     )}
                 </BuildingTitle>
 
-                {building.name !== "Market" && (
+                {(building.name !== "Market" && building.name !== "TradeHut" && building.name !== "AncientWonder") && (
                     <PopulationDisplay $secondaryColor={currentRaceStyle.secondaryColor}>
                         Población disponible: {availablePopulation}
                     </PopulationDisplay>
@@ -354,7 +354,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 
                 {/* Se eliminó la descripción redundante a petición del usuario */}
 
-                {building.name === "Market" && <TradingChart />}
+                {(building.name === "Market" || building.name === "TradeHut" || building.name === "AncientWonder") && <TradingChart />}
 
                 {/* Muestra colas de producción y mejoras */}
                 {(productionQueue.length > 0 || upgradeQueue.length > 0) && (

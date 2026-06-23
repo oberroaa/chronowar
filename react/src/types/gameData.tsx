@@ -97,6 +97,7 @@ export type UnitProduction = {
   attack: number,
   armor: number,
   hp: number,
+  mana?: number,
   transportSize: number,
   carryCapacity: number,  // Cantidad de recursos que puede cargar al saquear/recolectar
   available: number,
@@ -157,19 +158,18 @@ export const SquaresValdari = [
 ];
 
 export const SquaresGorkar = [
-  { name: 'BloodHall', top: '36%', left: '47%' },
-  { name: 'WarHut', top: '50%', left: '22%' },
-  { name: 'ShamanTent', top: '50%', left: '76%' },
-  { name: 'HuntCamp', top: '66%', left: '28%' },
-  { name: 'SkyPerch', top: '73%', left: '40%' },
-  { name: 'TotemCircle', top: '78%', left: '50%' },
-  { name: 'TradeHut', top: '73%', left: '60%' },
-  { name: 'BoneWatch', top: '66%', left: '71%' }
+  { name: 'BloodHall', top: '52%', left: '41%', scale: 1.6 },
+  { name: 'WarHut', top: '45%', left: '24%' },
+  { name: 'ShamanTent', top: '44.5%', left: '66%' },
+  { name: 'HuntCamp', top: '55%', left: '11%' },
+  { name: 'SkyPerch', top: '53.5%', left: '78%' },
+  { name: 'TotemCircle', top: '40%', left: '47%', scale: 1.0 },
+  { name: 'TradeHut', top: '32.5%', left: '59%', scale: 1.0 }
+
 ];
 
 export const SquaresSylvaran = [
   { name: 'TreeOfLife', top: '57%', left: '42%' },
-  { name: 'AncientGrove', top: '29%', left: '60%' },
   { name: 'Moonwell', top: '46%', left: '63%' },
   { name: 'DruidsCircle', top: '27%', left: '28%' },
   { name: 'HuntersLodge', top: '49%', left: '29%' },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import {
   SquaresValdari,
   SquaresGorkar,
@@ -49,6 +49,13 @@ type BattleResultType = {
     resources?: number;
     items?: string[];
   };
+};
+
+const raceAspectRatios: Record<string, number> = {
+  valdari: 1264 / 842,
+  gorkar: 1264 / 842,
+  sylvaran: 1264 / 848,
+  mortharim: 1.5
 };
 
 // Función para obtener los edificios iniciales de cada raza
@@ -142,7 +149,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
     const initialLevels = Object.keys(buildingLevels).length > 0 ? buildingLevels : getInitialBuildings(race);
     const baseUnits = getUpgradedUnits(initialLevels, activeBuildingsData, race);
     const savedUnits = playerData?.gameUnits || [];
-    
+
     return baseUnits.map(unit => {
       const saved = savedUnits.find((u: any) => u.name === unit.name);
       if (saved && saved.available !== undefined) {
@@ -173,6 +180,29 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
 
   const isFirstRender = useRef(true);
 
+  // Initialize buildingLevels on mount if empty or corrupted
+  useEffect(() => {
+    if (Object.keys(activeBuildingsData).length === 0) return;
+
+    const keys = Object.keys(buildingLevels);
+    let needsInit = false;
+
+    if (keys.length === 0) {
+      needsInit = true;
+    } else {
+      // Si tenemos edificios de otra raza (corrupción del guardado), forzamos reinicio
+      const firstKey = keys[0];
+      const matchingBuilding = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.name.toLowerCase() === firstKey);
+      if (!matchingBuilding || matchingBuilding.race !== race) {
+        needsInit = true;
+      }
+    }
+
+    if (needsInit) {
+      initBuildingLevels(getInitialBuildings(race));
+    }
+  }, [race, activeBuildingsData, buildingLevels, initBuildingLevels]);
+
   // Recalculate stats when building levels or game data changes
   useEffect(() => {
     setGameUnits(prevUnits => {
@@ -191,10 +221,10 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
     const storeState = useGameStore.getState();
     if (storeState.playerData) {
       const unitsToSave = gameUnits.map(u => ({ name: u.name, available: u.available || 0 }));
-      
+
       const currentSavedStr = JSON.stringify(storeState.playerData.gameUnits || []);
       const newSavedStr = JSON.stringify(unitsToSave);
-      
+
       if (currentSavedStr !== newSavedStr) {
         useGameStore.setState({
           playerData: {
@@ -393,6 +423,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
                         src={bData.image}
                         alt={`${square.name} building`}
                         $race={race}
+                        $scale={(square as any).scale}
                       />
                     ) : (
                       <ArcaneSymbol $race={race}>
@@ -452,11 +483,7 @@ const PageContainer = styled.div`
   }
 `;
 
-const ambientMotion = keyframes`
-  0% { transform: scale(1.05) translate(0, 0); }
-  50% { transform: scale(1.15) translate(-1%, 1%); }
-  100% { transform: scale(1.05) translate(0, 0); }
-`;
+
 
 const MapWrapper = styled.div<{ $bg: string }>`
   position: fixed;
@@ -478,13 +505,8 @@ const MapWrapper = styled.div<{ $bg: string }>`
     left: -5%;
     right: -5%;
     bottom: -5%;
-    background-image: url(${props => props.$bg});
-    background-size: cover;
-    background-position: center;
-    filter: blur(40px) brightness(0.35) saturate(1.2);
-    z-index: -1;
-    animation: ${ambientMotion} 20s ease-in-out infinite;
-  }
+  background: #0a0805;
+  overflow: hidden;
 `;
 
 const MapStage = styled.div`
@@ -538,6 +560,7 @@ const SquaresOverlay = styled.div`
   }
 `;
 
+
 /* EDIFICIOS: Interacción y Sombras mejoradas */
 const ConstructionSquare = styled.div<ConstructionSquareProps>`
   position: absolute;
@@ -585,11 +608,11 @@ const ArcaneSymbol = styled.span<RaceStyledProps>`
   }
 `;
 
-const BuildingImage = styled.img<RaceStyledProps>`
+const BuildingImage = styled.img<RaceStyledProps & { $scale?: number }>`
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: rotate(-45deg) scale(1.4);
+  transform: rotate(-45deg) scale(${props => props.$scale || 1.4});
   filter: ${props => props.$race === 'mortharim' ? 'sepia(50%) hue-rotate(240deg)' : 'none'};
   transition: filter 0.3s ease;
 `;

@@ -106,7 +106,11 @@ export const useGameStore = create<GameState>()(
               buildingLevels: {},
               productionQueue: [],
               upgradeQueue: [],
-              playerData: { ...get().playerData, gameUnits: [] }
+              playerData: { 
+                ...get().playerData, 
+                gameUnits: [],
+                formations: { principal: { units: Array(10).fill(null) } }
+              }
             });
             void get().syncPlayerState();
           } else {

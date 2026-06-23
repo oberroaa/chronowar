@@ -52,7 +52,7 @@ export class Unit {
   damage: number;
 
   @Column({ type: 'float' })
-  range: number;
+  mana: number;
 
   @Column({ type: 'float' })
   cooldown: number;

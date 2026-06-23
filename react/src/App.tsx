@@ -12,20 +12,26 @@ const App = () => {
   // Timer global: upgrade queue + production queue - runs on ALL views
   useEffect(() => {
     const timer = setInterval(() => {
-      // --- Upgrade completions ---
-      const completedUpgrades = tickUpgradeQueue();
-      completedUpgrades.forEach(item => {
-        if (item.upgrade.startsWith('Level')) {
-          const currentLevel = useGameStore.getState().buildingLevels[item.buildingId.toLowerCase()] ?? 0;
-          setBuildingLevel(item.buildingId, currentLevel + 1);
-        }
-      });
+      try {
+        // --- Upgrade completions ---
+        const completedUpgrades = tickUpgradeQueue();
+        completedUpgrades.forEach(item => {
+          if (item && item.upgrade && typeof item.upgrade === 'string' && item.upgrade.startsWith('Level')) {
+            const currentLevel = useGameStore.getState().buildingLevels[item.buildingId?.toLowerCase()] ?? 0;
+            setBuildingLevel(item.buildingId, currentLevel + 1);
+          }
+        });
 
-      // --- Production completions ---
-      const completedUnits = tickProductionQueue();
-      completedUnits.forEach(item => {
-        addCompletedUnit(item.unit, 1);
-      });
+        // --- Production completions ---
+        const completedUnits = tickProductionQueue();
+        completedUnits.forEach(item => {
+          if (item && item.unit) {
+            addCompletedUnit(item.unit, 1);
+          }
+        });
+      } catch (e) {
+        console.error("Error in game loop:", e);
+      }
     }, 1000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps

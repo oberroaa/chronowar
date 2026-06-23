@@ -79,31 +79,31 @@ const AI_PREF: Record<Race, number> = {
 const ENEMY_DEFS = [
   {
     name: 'Berserker', img: '/images/GorKar/units/Berserker.png',
-    maxHp: 300, atk: 24, def: 5, maxMana: 90,
+    maxHp: 300, atk: 24, def: 5, maxMana: 400,
     skillName: 'Furia Berserker',
     skillDesc: 'Golpea 2 héroes aleatorios con 1.5× daño',
   },
   {
     name: 'Machacador', img: '/images/GorKar/units/Machacador.png',
-    maxHp: 250, atk: 28, def: 3, maxMana: 100,
+    maxHp: 250, atk: 28, def: 3, maxMana: 400,
     skillName: 'Aplastamiento',
     skillDesc: '90 de daño al héroe con más HP',
   },
   {
-    name: 'JEFE', img: '/images/GorKar/units/Jinete.png',
-    maxHp: 600, atk: 45, def: 15, maxMana: 120,
+    name: 'JEFE', img: '/images/GorKar/units/DrakTharon.png',
+    maxHp: 600, atk: 45, def: 15, maxMana: 400,
     skillName: 'Grito de Guerra',
     skillDesc: '40 de daño a TODOS los héroes',
   },
   {
     name: 'Chamán', img: '/images/GorKar/units/Chaman.png',
-    maxHp: 200, atk: 18, def: 8, maxMana: 80,
+    maxHp: 200, atk: 18, def: 8, maxMana: 200,
     skillName: 'Curación Tribal',
     skillDesc: 'Cura 60 HP a todos los enemigos vivos',
   },
   {
     name: 'Raider', img: '/images/GorKar/units/Raider.png',
-    maxHp: 180, atk: 32, def: 2, maxMana: 100,
+    maxHp: 180, atk: 32, def: 2, maxMana: 400,
     skillName: 'Emboscada',
     skillDesc: '3 golpes de 25 daño a héroes aleatorios',
   },
@@ -653,12 +653,15 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         };
       }
       const u = allUnits.find((u: any) => u.id === slot.id) as any;
-      if (!u) {
+      const savedU = playerData?.gameUnits?.find((su: any) => su.name === u?.name);
+      const isAvailable = savedU && savedU.available > 0;
+      
+      if (!u || !isAvailable) {
         return {
           name: `Desconocido ${i + 1}`, img: '',
-          hp: fallback.maxHp, maxHp: fallback.maxHp, mana: 0, maxMana: 100,
+          hp: fallback.maxHp, maxHp: fallback.maxHp, mana: 0, maxMana: 400,
           attack: fallback.atk, defense: fallback.def,
-          isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
+          isDead: true, isAttacking: false, isHit: false, isSkillReady: false,
           skillName: fallbackSkill.skillName,
           skillDesc: fallbackSkill.skillDesc,
           skillAction: fallbackSkill.skillAction,
@@ -670,7 +673,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       }
       return {
         name: u.name, img: u.image || '',
-        hp: u.hp || fallback.maxHp, maxHp: u.hp || fallback.maxHp, mana: 0, maxMana: 100,
+        hp: u.hp || fallback.maxHp, maxHp: u.hp || fallback.maxHp, mana: 0, maxMana: u.mana || 100,
         attack: Math.round(u.attack) || fallback.atk, defense: u.armor || fallback.def,
         isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
         skillName: u.skillName || fallbackSkill.skillName,
@@ -768,13 +771,13 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       return -1;
     };
 
-    const getLaneAttacker = (units: Unit[]): Unit | null => {
-      // Find all alive units
-      const aliveUnits = units.filter(u => u && !u.isDead);
-      if (aliveUnits.length === 0) return null;
+    const getLaneAttacker = (units: Unit[]): { unit: Unit, index: number } | null => {
+      // Find all alive indices
+      const aliveIndices = units.map((u, i) => (u && !u.isDead) ? i : -1).filter(i => i !== -1);
+      if (aliveIndices.length === 0) return null;
       // Randomly select one alive unit to attack
-      const randIdx = Math.floor(Math.random() * aliveUnits.length);
-      return aliveUnits[randIdx];
+      const randIdx = aliveIndices[Math.floor(Math.random() * aliveIndices.length)];
+      return { unit: units[randIdx], index: randIdx };
     };
 
     while (true) {
@@ -807,7 +810,8 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         totalAtk += fx.dmg * n * multSize;
         totalValdariDmg += fx.valdariDmg * n * multSize;
         totalHeal += fx.heal * n;
-        totalMana += fx.manaGain * n * (n >= 4 ? 1.6 : 1);
+        if (side === 'player' && g.type === race) totalMana += 30 * n;
+        else if (side === 'enemy' && g.type === 'gorkar') totalMana += 30 * n;
         totalPoison += fx.poison * n;
         totalShield += fx.shield * n;
         if (n === 4) specials.push({ idx: g.centerIdx, special: 'power' });
@@ -826,7 +830,8 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
             totalAtk += fx.dmg;
             totalValdariDmg += fx.valdariDmg;
             totalHeal += fx.heal;
-            totalMana += fx.manaGain;
+            if (side === 'player' && extraGem.type === race) totalMana += 30;
+            else if (side === 'enemy' && extraGem.type === 'gorkar') totalMana += 30;
             totalPoison += fx.poison;
             totalShield += fx.shield;
           }
@@ -836,7 +841,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       totalAtk = Math.round(totalAtk * mult);
       totalValdariDmg = Math.round(totalValdariDmg * mult);
       totalHeal = Math.round(totalHeal * mult);
-      totalMana = Math.min(40, Math.round(totalMana));
+      totalMana = Math.round(totalMana * mult);
       totalPoison = Math.round(totalPoison * mult);
       totalShield = Math.round(totalShield * mult);
 
@@ -851,7 +856,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         if (ti >= 0) {
           // Add player troop base attack starting from the targeted side if the lane hero is dead
           const laneAttacker = getLaneAttacker(H);
-          const extraAtk = laneAttacker ? laneAttacker.attack : 0;
+          const extraAtk = laneAttacker ? laneAttacker.unit.attack : 0;
           appliedDmg = totalAtk + extraAtk;
 
           const actual = Math.max(1, appliedDmg - (E[ti].defense + (E[ti].shield || 0)));
@@ -859,22 +864,9 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           const isCrit = mult >= 1.62 || actual > 80;
           addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', ePos(ti).x, ePos(ti).y);
           if (extraAtk > 0 && laneAttacker) {
-            addFloat(`⚔️ +${extraAtk} ${laneAttacker.name}`, 'combo', ePos(ti).x, ePos(ti).y - 25);
+            addFloat(`⚔️ +${extraAtk} ${laneAttacker.unit.name}`, 'combo', ePos(ti).x, ePos(ti).y - 25);
           }
           if (isCrit || actual > 80) doShake();
-        }
-        /* ← rage mana: enemies build fury when attacked */
-        const rage = Math.min(18, Math.floor(appliedDmg / 7));
-        if (rage > 0) {
-          E = E.map((e, i) => {
-            if (e.isDead) return e;
-            const newMana = Math.min(e.maxMana, e.mana + rage);
-            const wasReady = e.isSkillReady;
-            const isReady = newMana >= e.maxMana;
-            if (isReady && !wasReady)
-              addFloat(`⚡ ${e.skillName}!`, 'skill', ePos(i).x, ePos(i).y - 26);
-            return { ...e, mana: newMana, isSkillReady: isReady };
-          });
         }
         setEnemies([...E]);
         setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 430);
@@ -936,7 +928,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         if (ti >= 0) {
           // Add enemy troop base attack starting from the targeted side if the lane unit is dead
           const laneAttacker = getLaneAttacker(E);
-          const extraAtk = laneAttacker ? laneAttacker.attack : 0;
+          const extraAtk = laneAttacker ? laneAttacker.unit.attack : 0;
           const finalDmg = totalAtk + extraAtk;
 
           const actual = Math.max(1, finalDmg - (H[ti].defense + (H[ti].shield || 0)));
@@ -944,7 +936,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           const isCrit = mult >= 1.62 || actual > 80;
           addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', hPos(ti).x, hPos(ti).y);
           if (extraAtk > 0 && laneAttacker) {
-            addFloat(`⚔️ +${extraAtk} ${laneAttacker.name}`, 'combo', hPos(ti).x, hPos(ti).y - 25);
+            addFloat(`⚔️ +${extraAtk} ${laneAttacker.unit.name}`, 'combo', hPos(ti).x, hPos(ti).y - 25);
           }
           if (isCrit || actual > 80) doShake();
           setHeroes([...H]);

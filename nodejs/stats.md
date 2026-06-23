@@ -1,0 +1,52 @@
+# Unit Stats
+## valdari
+- Men: Type=poblation, HP=220, Dmg=5.5, Armor=0, Gold=50, Wood=0, Time=20, Food=1
+- Woman: Type=poblation, HP=220, Dmg=5.5, Armor=0, Gold=50, Wood=0, Time=20, Food=1
+- Emisario: Type=poblation, HP=180, Dmg=2.0, Armor=0, Gold=50, Wood=0, Time=20, Food=1
+- Obrero: Type=unit, HP=150, Dmg=3, Armor=0, Gold=30, Wood=0, Time=15, Food=1
+- Centinela: Type=unit, HP=420, Dmg=13, Armor=2, Gold=50, Wood=0, Time=20, Food=1
+- Francotirador: Type=unit, HP=535, Dmg=22, Armor=0, Gold=75, Wood=0, Time=27, Food=1
+- Caballero: Type=unit, HP=800, Dmg=33, Armor=5, Gold=120, Wood=0, Time=40, Food=2
+- Cirujano: Type=unit, HP=290, Dmg=11, Armor=0, Gold=80, Wood=0, Time=30, Food=1
+- Arcanista: Type=unit, HP=305, Dmg=11, Armor=0, Gold=100, Wood=0, Time=30, Food=1
+- Disruptor: Type=unit, HP=600, Dmg=15, Armor=3, Gold=100, Wood=0, Time=28, Food=1
+- Falange: Type=unit, HP=360, Dmg=59, Armor=0, Gold=90, Wood=0, Time=33, Food=1
+- Jinetes: Type=unit, HP=825, Dmg=50, Armor=0, Gold=150, Wood=0, Time=45, Food=2
+- Dawnforged: Type=heroe, HP=675, Dmg=24, Armor=3, Gold=150, Wood=0, Time=55, Food=2
+- Arconte: Type=heroe, HP=575, Dmg=23, Armor=1, Gold=150, Wood=0, Time=55, Food=2
+- Thane: Type=heroe, HP=725, Dmg=31, Armor=4, Gold=150, Wood=0, Time=55, Food=2
+- Vastago: Type=heroe, HP=500, Dmg=22, Armor=1, Gold=150, Wood=0, Time=55, Food=2
+## gorkar
+- Berserker: Type=unit, HP=700, Dmg=25, Armor=1, Gold=200, Wood=0, Time=30, Food=1
+- Cazacabezas: Type=unit, HP=350, Dmg=20, Armor=0, Gold=135, Wood=20, Time=20, Food=1
+- Chaman: Type=unit, HP=305, Dmg=11, Armor=0, Gold=130, Wood=20, Time=30, Food=1
+- Invocador: Type=unit, HP=265, Dmg=11, Armor=0, Gold=145, Wood=25, Time=30, Food=1
+- Machacador: Type=unit, HP=1300, Dmg=41, Armor=2, Gold=280, Wood=80, Time=55, Food=2
+- Jinete: Type=unit, HP=570, Dmg=40, Armor=0, Gold=265, Wood=40, Time=40, Food=2
+- Raider: Type=unit, HP=610, Dmg=22, Armor=1, Gold=180, Wood=40, Time=28, Food=1
+- Rompehueso: Type=unit, HP=425, Dmg=100, Armor=0, Gold=220, Wood=50, Time=40, Food=1
+- Vigía: Type=unit, HP=1000, Dmg=30, Armor=1, Gold=255, Wood=60, Time=40, Food=2
+- Gorruk: Type=heroe, HP=575, Dmg=29, Armor=3, Gold=300, Wood=50, Time=55, Food=2
+- Kargath: Type=heroe, HP=500, Dmg=24, Armor=1, Gold=300, Wood=50, Time=55, Food=2
+- Urzok: Type=heroe, HP=700, Dmg=31, Armor=3, Gold=300, Wood=50, Time=55, Food=2
+- Valka: Type=heroe, HP=575, Dmg=24, Armor=1, Gold=300, Wood=50, Time=55, Food=2
+- Goblin: Type=poblation, HP=220, Dmg=5.5, Armor=0, Gold=50, Wood=0, Time=20, Food=1
+- Korg: Type=poblation, HP=220, Dmg=5.5, Armor=0, Gold=50, Wood=0, Time=20, Food=1
+- Korga: Type=poblation, HP=220, Dmg=5.5, Armor=0, Gold=50, Wood=0, Time=20, Food=1
+## sylvaran
+- Sylron: Type=poblation, HP=200, Dmg=5, Armor=1, Gold=50, Wood=0, Time=20, Food=1
+- Sylwen: Type=poblation, HP=200, Dmg=5, Armor=1, Gold=50, Wood=0, Time=20, Food=1
+- Emissary: Type=poblation, HP=250, Dmg=5, Armor=1, Gold=70, Wood=0, Time=25, Food=1
+- Archer: Type=unit, HP=245, Dmg=17, Armor=0, Gold=150, Wood=20, Time=20, Food=1
+- Huntress: Type=unit, HP=600, Dmg=17, Armor=2, Gold=200, Wood=30, Time=30, Food=2
+- Sentinel: Type=unit, HP=500, Dmg=25, Armor=2, Gold=220, Wood=40, Time=35, Food=2
+- Druid: Type=unit, HP=300, Dmg=15, Armor=1, Gold=180, Wood=50, Time=40, Food=2
+- SpiritWalker: Type=unit, HP=240, Dmg=12, Armor=0, Gold=200, Wood=60, Time=28, Food=2
+- Dryad: Type=unit, HP=435, Dmg=18, Armor=0, Gold=160, Wood=40, Time=28, Food=2
+- Hippogryph: Type=unit, HP=575, Dmg=30, Armor=0, Gold=250, Wood=80, Time=30, Food=3
+- Treant: Type=unit, HP=1200, Dmg=60, Armor=1, Gold=300, Wood=150, Time=50, Food=4
+- Quimera: Type=unit, HP=1000, Dmg=65, Armor=0, Gold=450, Wood=200, Time=60, Food=5
+- Lunarion: Type=heroe, HP=550, Dmg=23, Armor=1, Gold=500, Wood=200, Time=55, Food=5
+- Moonwhisper: Type=heroe, HP=675, Dmg=26, Armor=3, Gold=500, Wood=200, Time=55, Food=5
+- Shadowleaf: Type=heroe, HP=600, Dmg=26, Armor=3, Gold=500, Wood=200, Time=55, Food=5
+- Stormbark: Type=heroe, HP=625, Dmg=24, Armor=1, Gold=500, Wood=200, Time=55, Food=5

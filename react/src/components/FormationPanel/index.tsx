@@ -38,11 +38,11 @@ import UnitSlot from './UnitSlot';
 const FormationPanel: React.FC<FormationPanelProps> = ({
   isOpen, onClose, race, gameUnits
 }) => {
-  const [unitsMap] = useState(() => {
+  const unitsMap = React.useMemo(() => {
     const map = new Map<number, any>();
     gameUnits.forEach(unit => map.set(unit.id, unit));
     return map;
-  });
+  }, [gameUnits]);
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' }>({
     visible: false, message: '', type: 'success'
@@ -84,21 +84,27 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
       setFormations({
         principal: {
           name: playerData.formations.principal?.name || "Ataque Principal",
-          units: (playerData.formations.principal?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) =>
-            unit ? unitsMap.get(unit.id) || null : null
-          )
+          units: (playerData.formations.principal?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) => {
+            if (!unit) return null;
+            const u = unitsMap.get(unit.id);
+            return (u && u.available > 0) ? u : null;
+          })
         },
         secondary: {
           name: playerData.formations.secondary?.name || "Defensa Ciudad",
-          units: (playerData.formations.secondary?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) =>
-            unit ? unitsMap.get(unit.id) || null : null
-          )
+          units: (playerData.formations.secondary?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) => {
+            if (!unit) return null;
+            const u = unitsMap.get(unit.id);
+            return (u && u.available > 0) ? u : null;
+          })
         },
         reserve: {
           name: "Escuadra Recolectora",
-          units: (playerData.formations.reserve?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) =>
-            unit ? unitsMap.get(unit.id) || null : null
-          )
+          units: (playerData.formations.reserve?.units || Array(10).fill(null)).slice(0, 5).map((unit: any) => {
+            if (!unit) return null;
+            const u = unitsMap.get(unit.id);
+            return (u && u.available > 0) ? u : null;
+          })
         }
       });
     } else {
