@@ -90,7 +90,7 @@ const ENEMY_DEFS = [
     skillDesc: '90 de daño al héroe con más HP',
   },
   {
-    name: 'JEFE', img: '/images/GorKar/units/DrakTharon.png',
+    name: 'JEFE', img: '/images/GorKar/units/Rompehueso.png',
     maxHp: 600, atk: 45, def: 15, maxMana: 400,
     skillName: 'Grito de Guerra',
     skillDesc: '40 de daño a TODOS los héroes',
@@ -624,7 +624,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
 
     // Load active heroes dynamically from selected formation units in barracks/altar
     const activeBuildingsData = useGameStore.getState().gameData || {};
-    const allUnits = getUpgradedUnits(buildingLevels, activeBuildingsData);
+    const allUnits = getUpgradedUnits(buildingLevels, activeBuildingsData, race);
     const currentFormations = playerData?.formations || { principal: { units: Array(10).fill(null) } };
     const loadedHeroes = HERO_DEFS.map((fallback, i) => {
       const slot = currentFormations.principal.units[i];
@@ -810,8 +810,8 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
         totalAtk += fx.dmg * n * multSize;
         totalValdariDmg += fx.valdariDmg * n * multSize;
         totalHeal += fx.heal * n;
-        if (side === 'player' && g.type === race) totalMana += 30 * n;
-        else if (side === 'enemy' && g.type === 'gorkar') totalMana += 30 * n;
+        if (side === 'player' && g.type === race) totalMana += 10 * n;
+        else if (side === 'enemy' && g.type === 'gorkar') totalMana += 10 * n;
         totalPoison += fx.poison * n;
         totalShield += fx.shield * n;
         if (n === 4) specials.push({ idx: g.centerIdx, special: 'power' });
@@ -830,8 +830,8 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
             totalAtk += fx.dmg;
             totalValdariDmg += fx.valdariDmg;
             totalHeal += fx.heal;
-            if (side === 'player' && extraGem.type === race) totalMana += 30;
-            else if (side === 'enemy' && extraGem.type === 'gorkar') totalMana += 30;
+            if (side === 'player' && extraGem.type === race) totalMana += 10;
+            else if (side === 'enemy' && extraGem.type === 'gorkar') totalMana += 10;
             totalPoison += fx.poison;
             totalShield += fx.shield;
           }

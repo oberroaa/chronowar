@@ -52,61 +52,66 @@ export class AppController {
 
   @Get('game-data')
   async getGameData() {
-    const buildings = await this.dataSource.getRepository(Building).find({ relations: ['race'] });
-    const units = await this.dataSource.getRepository(Unit).find({ relations: ['race'] });
-    
-    const buildingsData: Record<string, any> = {};
-    let idCounter = 1;
-    
-    buildings.forEach(b => {
-      const buildingUnits: any[] = [];
-      if (b.builds && b.builds !== 'null') {
-        const buildNames = b.builds.split(',').map(n => n.trim());
-        buildNames.forEach(uName => {
-           const unit = units.find(u => u.name === uName);
-           if (unit) {
-             buildingUnits.push({
-               id: unit.id,
-               available: 0,
-               name: unit.name,
-               unitType: unit.type,
-               cost: { gold: unit.gold || 0, food: unit.food || 0, stone: unit.stone || 0, wood: unit.wood || 0 },
-               buildTime: unit.time || 10,
-               image: unit.img,
-               gif: '',
-               special: "Skill",
-               skillName: unit.skillName || "",
-               skillDesc: unit.skillDesc || "",
-               skillAction: unit.skillAction || "none",
-               skillName2: unit.skillName2 || "",
-               skillDesc2: unit.skillDesc2 || "",
-               skillAction2: unit.skillAction2 || "none",
-               attack: unit.damage || 0,
-               armor: unit.armor || 0,
-               hp: unit.hitPoints || 100,
-               transportSize: 1,
-               carryCapacity: (unit.name === 'Obrero' || unit.name === 'Vigía') ? 50 : 10,
-             });
-           }
-        });
-      }
+    try {
+      const buildings = await this.dataSource.getRepository(Building).find({ relations: ['race'] });
+      const units = await this.dataSource.getRepository(Unit).find({ relations: ['race'] });
       
-      buildingsData[idCounter] = {
-        id: idCounter,
-        race: b.race ? b.race.name : 'valdari',
-        name: b.name,
-        main: !b.requisito || b.requisito === "null",
-        description: b.name,
-        level: 0,
-        buildCost: { gold: b.gold || 0, wood: b.wood || 0, stone: b.stone || 0 },
-        buildTime: b.time || 30,
-        image: b.img,
-        unitsProduced: buildingUnits,
-        upgradesAvailable: []
-      };
-      idCounter++;
-    });
-    
-    return { buildingsData };
+      const buildingsData: Record<string, any> = {};
+      let idCounter = 1;
+      
+      buildings.forEach(b => {
+        const buildingUnits: any[] = [];
+        if (b.builds && b.builds !== 'null') {
+          const buildNames = b.builds.split(',').map(n => n.trim());
+          buildNames.forEach(uName => {
+             const unit = units.find(u => u.name === uName);
+             if (unit) {
+               buildingUnits.push({
+                 id: unit.id,
+                 available: 0,
+                 name: unit.name,
+                 unitType: unit.type,
+                 cost: { gold: unit.gold || 0, food: unit.food || 0, stone: unit.stone || 0, wood: unit.wood || 0 },
+                 buildTime: unit.time || 10,
+                 image: unit.img,
+                 gif: '',
+                 special: "Skill",
+                 skillName: unit.skillName || "",
+                 skillDesc: unit.skillDesc || "",
+                 skillAction: unit.skillAction || "none",
+                 skillName2: unit.skillName2 || "",
+                 skillDesc2: unit.skillDesc2 || "",
+                 skillAction2: unit.skillAction2 || "none",
+                 attack: unit.damage || 0,
+                 armor: unit.armor || 0,
+                 hp: unit.hitPoints || 100,
+                 mana: unit.mana || 100,
+                 transportSize: 1,
+                 carryCapacity: (unit.name === 'Obrero' || unit.name === 'Vigía') ? 50 : 10,
+               });
+             }
+          });
+        }
+        
+        buildingsData[idCounter] = {
+          id: idCounter,
+          race: b.race ? b.race.name : 'valdari',
+          name: b.name,
+          main: !b.requisito || b.requisito === "null",
+          description: b.name,
+          level: 0,
+          buildCost: { gold: b.gold || 0, wood: b.wood || 0, stone: b.stone || 0 },
+          buildTime: b.time || 30,
+          image: b.img,
+          unitsProduced: buildingUnits,
+          upgradesAvailable: []
+        };
+        idCounter++;
+      });
+      
+      return { buildingsData };
+    } catch (e) {
+      return { statusCode: 500, message: e.message, stack: e.stack };
+    }
   }
 }

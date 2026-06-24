@@ -166,6 +166,13 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                   </ModalStatItem>
 
                   <ModalStatItem>
+                    <ModalStatLabel $race={race}>Mana:</ModalStatLabel>
+                    <ModalStatValue>
+                      {unit.mana || 100} MP
+                    </ModalStatValue>
+                  </ModalStatItem>
+
+                  <ModalStatItem>
                     <ModalStatLabel $race={race}>Attack:</ModalStatLabel>
                     <ModalStatValue>
                       {unit.attack} 
@@ -364,6 +371,10 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
                   <StatItem title="Health Points">
                     <StatLabel $race={race}>❤️</StatLabel>
                     <StatValue>{unit.hp}</StatValue>
+                  </StatItem>
+                  <StatItem title="Mana">
+                    <StatLabel $race={race}>⚡</StatLabel>
+                    <StatValue>{unit.mana || 100}</StatValue>
                   </StatItem>
                   <StatItem title="Attack Damage">
                     <StatLabel $race={race}>⚔️</StatLabel>
