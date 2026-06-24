@@ -1,3 +1,5 @@
+import { scale } from "framer-motion";
+
 export type RaceType = 'valdari' | 'gorkar' | 'sylvaran' | 'mortharim';
 
 export type ResourceType = 'gold' | 'wood' | 'stone' | 'food' | 'chrono';
@@ -169,13 +171,13 @@ export const SquaresGorkar = [
 ];
 
 export const SquaresSylvaran = [
-  { name: 'TreeOfLife', top: '57%', left: '42%' },
-  { name: 'Moonwell', top: '46%', left: '63%' },
-  { name: 'DruidsCircle', top: '27%', left: '28%' },
-  { name: 'HuntersLodge', top: '49%', left: '29%' },
-  { name: 'AncientWonder', top: '24%', left: '42%' },
-  { name: 'LunarAltar', top: '68%', left: '8%' },
-  { name: 'SentinelPost', top: '58%', left: '54%' },
+  { name: 'TreeOfLife', top: '55%', left: '41%' },
+  { name: 'Moonwell', top: '48%', left: '63%', scale: 1.2 },
+  { name: 'DruidsCircle', top: '71%', left: '58%' },
+  { name: 'HuntersLodge', top: '58%', left: '14%' },
+  { name: 'AncientWonder', top: '57%', left: '74%', scale: 1.2 },
+  { name: 'LunarAltar', top: '71%', left: '27%' },
+  { name: 'SentinelPost', top: '45%', left: '26%' },
 ];
 
 export const SquaresMortharim = [
