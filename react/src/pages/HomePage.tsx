@@ -59,18 +59,25 @@ const HomePage: React.FC<HomePageProps> = ({ onPlay }) => {
           <HeroTitle>Forja tu imperio</HeroTitle>
           {/* Selector Visual Interactivo de Raza */}
           <RaceSelectorContainer>
-            {raceOptions.map(race => (
-              <RaceOptionCard 
-                key={race.value}
-                $isSelected={selectedRace === race.value}
-                onClick={() => setSelectedRace(race.value)}
-              >
-                <RaceIcon>
-                  {race.label.charAt(0)}
-                </RaceIcon>
-                <RaceName>{race.label.split('(')[0].trim()}</RaceName>
-              </RaceOptionCard>
-            ))}
+            {raceOptions.map(race => {
+              // Extraer correctamente el emoji (incluso los de 2 bytes) y el nombre
+              const emoji = Array.from(race.label)[0];
+              const nameParts = race.label.split(' ');
+              const nameOnly = nameParts[1]; // asume que el formato es "🔥 GorKar (..."
+
+              return (
+                <RaceOptionCard 
+                  key={race.value}
+                  $isSelected={selectedRace === race.value}
+                  onClick={() => setSelectedRace(race.value)}
+                >
+                  <RaceIcon>
+                    {emoji}
+                  </RaceIcon>
+                  <RaceName>{nameOnly}</RaceName>
+                </RaceOptionCard>
+              );
+            })}
           </RaceSelectorContainer>
           {/* Botón para comenzar a jugar */}
           <PlayNowButton onClick={handlePlayNow}>
