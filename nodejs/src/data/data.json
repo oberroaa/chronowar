@@ -453,7 +453,9 @@
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Recolección Rápida",
+      "skillDesc": "Aumenta la velocidad de recolección de madera en un 10%."
     },
     {
       "Race": "valdari",
@@ -471,7 +473,9 @@
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Cuidado de la Tierra",
+      "skillDesc": "Aumenta el rendimiento de las granjas en un 5%."
     },
     {
       "Race": "valdari",
@@ -489,7 +493,9 @@
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Impuestos",
+      "skillDesc": "Genera 1 de oro extra cada 10 segundos."
     },
     {
       "Race": "valdari",
@@ -897,7 +903,9 @@
       "Type": "unit",
       "Damage": "40",
       "Cooldown": "1.4",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Fuego Cruzado",
+      "skillDesc": "Sus ataques aplican quemadura que reduce la armadura temporalmente."
     },
     {
       "Race": "gorkar",
@@ -1062,7 +1070,9 @@
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Regateo",
+      "skillDesc": "Reduce el costo de unidades en edificios cercanos en 2%."
     },
     {
       "Race": "gorkar",
@@ -1080,7 +1090,9 @@
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Fuerza Bruta",
+      "skillDesc": "Extrae piedra un 15% más rápido."
     },
     {
       "Race": "gorkar",
@@ -1098,7 +1110,9 @@
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Carne de Caza",
+      "skillDesc": "Extrae comida un 15% más rápido."
     },
     {
       "Race": "sylvaran",
@@ -1116,7 +1130,9 @@
       "Damage": "5",
       "Armor": "1",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Camuflaje Natural",
+      "skillDesc": "Invisible mientras no esté recolectando o moviéndose."
     },
     {
       "Race": "sylvaran",
@@ -1134,7 +1150,9 @@
       "Damage": "5",
       "Armor": "1",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Bendición Solar",
+      "skillDesc": "Las estructuras cercanas regeneran salud lentamente."
     },
     {
       "Race": "sylvaran",
@@ -1152,7 +1170,9 @@
       "Damage": "5",
       "Armor": "1",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Explorador Alado",
+      "skillDesc": "Otorga un campo de visión extendido."
     },
     {
       "Race": "sylvaran",
@@ -1305,12 +1325,13 @@
       "Hit Points": "575",
       "Food": "3",
       "Damage": "30",
-      "skillName": "Ataque Aéreo",
+      "skillName": "Raíces Profundas",
       "skillAction": "aerial_assault",
       "Stone": "0",
       "Armor": "0",
       "Cooldown": "1.5",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Al inmovilizarse, gana +5 de armadura."
     },
     {
       "Race": "sylvaran",
@@ -1325,12 +1346,13 @@
       "Hit Points": "1200",
       "Food": "4",
       "Damage": "60",
-      "skillName": "Raíces Enredaderas",
+      "skillName": "Simbiosis",
       "skillAction": "entangling_roots",
       "Stone": "0",
       "Armor": "1",
       "Cooldown": "1.5",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Sana pasivamente a unidades biológicas cercanas."
     },
     {
       "Race": "sylvaran",
@@ -1468,7 +1490,9 @@
       "Damage": "5",
       "Armor": "0",
       "Cooldown": "1.5",
-      "Mana": "0"
+      "Mana": "0",
+      "skillName": "Aura Letal",
+      "skillDesc": "Los atacantes cuerpo a cuerpo reciben un pequeño daño de vacío."
     },
     {
       "Race": "mortharim",
@@ -1486,9 +1510,10 @@
       "Damage": "14",
       "Armor": "0",
       "Cooldown": "1.5",
-      "skillName": "Cannibalize",
+      "skillName": "Frenesí de Sangre",
       "skillAction": "cannibalize",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Aumenta su velocidad de ataque un 20% tras matar a un enemigo."
     },
     {
       "Race": "mortharim",
@@ -1506,9 +1531,10 @@
       "Damage": "28",
       "Armor": "0",
       "Cooldown": "1.5",
-      "skillName": "Web",
+      "skillName": "Red de Sombras",
       "skillAction": "web",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Atrapa a unidades aéreas obligándolas a bajar a tierra."
     },
     {
       "Race": "mortharim",
@@ -1526,9 +1552,10 @@
       "Damage": "22",
       "Armor": "3",
       "Cooldown": "1.5",
-      "skillName": "Stone Form",
+      "skillName": "Forma de Piedra",
       "skillAction": "stone_form",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Se convierte en piedra curándose pasivamente pero sin poder atacar."
     },
     {
       "Race": "mortharim",
@@ -1546,9 +1573,10 @@
       "Damage": "36",
       "Armor": "2",
       "Cooldown": "1.5",
-      "skillName": "Disease Cloud",
+      "skillName": "Nube de Enfermedad",
       "skillAction": "disease_cloud",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Inflige daño continuo en área a todas las unidades enemigas cercanas."
     },
     {
       "Race": "mortharim",
@@ -1566,9 +1594,10 @@
       "Damage": "80",
       "Armor": "0",
       "Cooldown": "3.0",
-      "skillName": "Exhume Corpses",
+      "skillName": "Impacto Profano",
       "skillAction": "exhume_corpses",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Sus ataques ignoran un porcentaje de la armadura del enemigo."
     },
     {
       "Race": "mortharim",
@@ -1586,11 +1615,12 @@
       "Damage": "10",
       "Armor": "0",
       "Cooldown": "1.5",
-      "skillName": "Raise Dead",
+      "skillName": "Levantar Muertos",
       "skillAction": "raise_dead",
       "skillName2": "Unholy Frenzy",
       "skillAction2": "unholy_frenzy",
-      "Mana": "200"
+      "Mana": "200",
+      "skillDesc": "Invoca dos esqueletos oscuros a partir de los cadáveres cercanos."
     },
     {
       "Race": "mortharim",
@@ -1608,11 +1638,12 @@
       "Damage": "12",
       "Armor": "0",
       "Cooldown": "1.5",
-      "skillName": "Curse",
+      "skillName": "Posesión",
       "skillAction": "curse",
       "skillName2": "Possession",
       "skillAction2": "possession",
-      "Mana": "200"
+      "Mana": "200",
+      "skillDesc": "Toma el control de una unidad enemiga, destruyendo al Lamento Espectral en el proceso."
     },
     {
       "Race": "mortharim",
@@ -1630,9 +1661,10 @@
       "Damage": "105",
       "Armor": "1",
       "Cooldown": "2.0",
-      "skillName": "Freezing Breath",
+      "skillName": "Aliento Gélido",
       "skillAction": "freezing_breath",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Congela a los enemigos y estructuras ralentizando su velocidad de ataque y movimiento."
     },
     {
       "Race": "mortharim",
@@ -1650,9 +1682,10 @@
       "Damage": "0",
       "Armor": "0",
       "Cooldown": "1.5",
-      "skillName": "Invisibility",
+      "skillName": "Paso Umbrío",
       "skillAction": "invisibility",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Puede atravesar unidades para evitar ser bloqueada."
     },
     {
       "Race": "mortharim",
@@ -1670,11 +1703,12 @@
       "Damage": "30",
       "Armor": "4",
       "Cooldown": "1.5",
-      "skillName": "Death Coil",
+      "skillName": "Pacto de Muerte",
       "skillAction": "death_coil",
       "skillName2": "Unholy Aura",
       "skillAction2": "unholy_aura",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Sacrifica una unidad aliada para curarse gran parte de su salud máxima."
     },
     {
       "Race": "mortharim",
@@ -1692,11 +1726,12 @@
       "Damage": "25",
       "Armor": "1",
       "Cooldown": "1.5",
-      "skillName": "Frost Nova",
+      "skillName": "Nova de Escarcha",
       "skillAction": "frost_nova",
       "skillName2": "Dark Ritual",
       "skillAction2": "dark_ritual",
-      "Mana": "200"
+      "Mana": "200",
+      "skillDesc": "Daña y ralentiza drásticamente a todos los enemigos en una gran área."
     },
     {
       "Race": "mortharim",
@@ -1714,11 +1749,12 @@
       "Damage": "28",
       "Armor": "3",
       "Cooldown": "1.5",
-      "skillName": "Carrion Swarm",
+      "skillName": "Enjambre de Vampiros",
       "skillAction": "carrion_swarm",
       "skillName2": "Sleep",
       "skillAction2": "sleep",
-      "Mana": "200"
+      "Mana": "200",
+      "skillDesc": "Libera murciélagos de vacío que dañan enemigos y curan a Vane."
     },
     {
       "Race": "mortharim",
@@ -1736,11 +1772,12 @@
       "Damage": "32",
       "Armor": "5",
       "Cooldown": "1.5",
-      "skillName": "Impale",
+      "skillName": "Caparazón con Púas",
       "skillAction": "impale",
       "skillName2": "Spiked Carapace",
       "skillAction2": "spiked_carapace",
-      "Mana": "400"
+      "Mana": "400",
+      "skillDesc": "Devuelve pasivamente un porcentaje del daño cuerpo a cuerpo a los atacantes."
     }
   ]
 }
