@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGameStore, type UpgradeQueueItem } from '../../store/useGameStore';
 import { type ResourceType, type UnitProduction, type BuildingInfo, getResourceIcon } from '../../types/gameData';
+import { formatName } from '../../utils/formatName';
 // Importaciones de tipos
 import {
     type BuildingInfoModalProps,
@@ -102,7 +103,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     // Maneja la producción de una unidad
     const handleProduceUnit = (unit: UnitProduction) => {
         if (isProducing(unit.name)) {
-                setMessage(`Ya estás entrenando ${unit.name}!`);
+                setMessage(`Ya estás entrenando ${formatName(unit.name)}!`);
                 setTimeout(() => setMessage(null), 3000);
                 return;
             }
@@ -115,7 +116,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                 u.available > 0
             );
             if (heroExists) {
-                setMessage(`¡Ya tienes un ${unit.name}! Solo puedes tener uno.`);
+                setMessage(`¡Ya tienes un ${formatName(unit.name)}! Solo puedes tener uno.`);
                 setTimeout(() => setMessage(null), 3000);
                 return;
             }
@@ -222,7 +223,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 
         // Verifica requisitos de edificio principal
         if (mainBuildingName !== null && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && currentLevel >= (buildingLevels[mainBuildingName.toLowerCase()] ?? 0)) {
-            setMessage(`Necesitas mejorar ${mainBuildingName} a nivel ${currentLevel + 1} primero.`);
+            setMessage(`Necesitas mejorar ${formatName(mainBuildingName)} a nivel ${currentLevel + 1} primero.`);
             setTimeout(() => setMessage(null), 3000);
             return;
         }
@@ -338,10 +339,10 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                 )}
 
                 <BuildingTitle $secondaryColor={currentRaceStyle.secondaryColor}>
-                    {building.name} (Level {currentBuildingLevel})
+                    {formatName(building.name)} (Level {currentBuildingLevel})
                     {currentUpgrade && (
                         <UpgradeStatus $accentColor={currentRaceStyle.accentColor}>
-                            Upgrading <strong>{building.name}</strong>: {currentUpgrade.upgrade} ({currentUpgrade.timeLeft}s)
+                            Upgrading <strong>{formatName(building.name)}</strong>: {currentUpgrade.upgrade} ({currentUpgrade.timeLeft}s)
                         </UpgradeStatus>
                     )}
                 </BuildingTitle>
@@ -352,16 +353,15 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     </PopulationDisplay>
                 )}
 
-                {/* Se eliminó la descripción redundante a petición del usuario */}
-
-                {(building.name === "Market" || building.name === "TradeHut" || building.name === "AncientWonder") && <TradingChart />}
+                {/* Chart para los Mercados */}
+                {(building.name === "GranBazar" || building.name === "PuestoTrueque" || building.name === "RaizPrimigenia" || building.name === "MausoleoReliquias") && <TradingChart />}
 
                 {/* Muestra colas de producción y mejoras */}
                 {(productionQueue.length > 0 || upgradeQueue.length > 0) && (
                     <QueueStatus $secondaryColor={currentRaceStyle.secondaryColor}>
                         {productionQueue.map((item, index) => (
                             <QueueItem key={`unit-${index}`} $accentColor={currentRaceStyle.accentColor}>
-                                Producing {item.unit}... {item.timeLeft}s
+                                Producing {formatName(item.unit)}... {item.timeLeft}s
                             </QueueItem>
                         ))}
                         {upgradeQueue.map((item, index) => {
@@ -369,8 +369,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                             return (
                                 <QueueItem key={`upgrade-${index}`} $accentColor={currentRaceStyle.accentColor}>
                                     {item.upgrade.startsWith('Level')
-                                        ? `Upgrading ${buildingName} to ${item.upgrade}... ${item.timeLeft}s`
-                                        : `Upgrading ${buildingName}: ${item.upgrade}... ${item.timeLeft}s`}
+                                        ? `Upgrading ${formatName(buildingName)} to ${item.upgrade}... ${item.timeLeft}s`
+                                        : `Upgrading ${formatName(buildingName)}: ${item.upgrade}... ${item.timeLeft}s`}
                                 </QueueItem>
                             );
                         })}
@@ -401,7 +401,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                                         <UnitNameContainer>
                                             <UnitImage src={unit.image} alt={unit.name} />
                                             <UnitName $secondaryColor={currentRaceStyle.secondaryColor}>
-                                                {unit.name}
+                                                {formatName(unit.name)}
                                                 {unitToTrain && (
                                                     <QuantityBadge
                                                         $secondaryColor={currentRaceStyle.secondaryColor}
@@ -461,7 +461,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                                 <UpgradeItem key={index}>
                                     <UpgradeInfoStyled>
                                         <UpgradeName $secondaryColor={currentRaceStyle.secondaryColor}>
-                                            {upgrade.name}
+                                            {formatName(upgrade.name)}
                                         </UpgradeName>
                                         <UpgradeDescription>{upgrade.description}</UpgradeDescription>
                                         <UpgradeCost>
@@ -500,7 +500,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     {/* Advertencia si se necesita mejorar el edificio principal primero */}
                     {mainBuildingName !== null && currentBuildingLevel >= mainBuildingLevel && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && (
                         <UpgradeWarning $accentColor={currentRaceStyle.accentColor}>
-                            You need to upgrade your {mainBuildingName} to level {currentBuildingLevel + 1} first!
+                            You need to upgrade your {formatName(mainBuildingName)} to level {currentBuildingLevel + 1} first!
                         </UpgradeWarning>
                     )}
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { UnitProduction, BuildingInfo } from '../../types/gameData';
 import { raceColors } from '../../types/raceColors';
 import { useGameStore } from '../../store/useGameStore';
+import { formatName } from '../../utils/formatName';
 import type { ArmyPanelProps, UnitImageDisplayProps, ArmyModalProps } from './types';
 import {
   LeftPanelContainer,
@@ -99,7 +100,7 @@ const UnitImageDisplay: React.FC<UnitImageDisplayProps> = ({ unit, onUnitClick }
 
       {(imgError || (gifError && showGif)) && (
         <ImageFallback>
-          {unit.name}
+          {formatName(unit.name)}
         </ImageFallback>
       )}
     </ImageContainer>
@@ -125,7 +126,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
         <ModalFlexContainer>
           <ModalImageSection>
             <ModalUnitImage src={unit.image} alt={unit.name} />
-            <ModalTitle>{unit.name}</ModalTitle>
+            <ModalTitle>{formatName(unit.name)}</ModalTitle>
 
             <ModalInfoBox $race={race}>
               <ModalInfoRow>
@@ -305,9 +306,25 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
     return acc;
   }, {} as Record<string, UnitProduction[]>);
 
+  // Calcula un valor para ordenar por tier (menor a mayor)
+  const getUnitValue = (unit: UnitProduction) => {
+    let baseValue = 0;
+    if (unit.unitType === 'poblation') baseValue = 0;
+    else if (unit.unitType === 'unit') baseValue = 10000;
+    else if (unit.unitType === 'heroe') baseValue = 100000;
+    
+    // El costo sirve para diferenciar el tier dentro de la misma categoría
+    const cost = (unit.cost.gold || 0) + (unit.cost.wood || 0) + (unit.cost.stone || 0) + ((unit.cost.food || 0) * 10);
+    return baseValue + cost;
+  };
+
   // Tipos de unidades disponibles
   const unitTypes = Object.keys(groupedUnits);
-  const displayUnits = activeTab === 'all' ? availableUnits : groupedUnits[activeTab] || [];
+  
+  // Obtener unidades y ordenarlas por tier
+  const displayUnits = (activeTab === 'all' ? availableUnits : groupedUnits[activeTab] || [])
+    .slice()
+    .sort((a, b) => getUnitValue(a) - getUnitValue(b));
 
   // Maneja el clic en una unidad
   const handleUnitClick = (unit: UnitProduction) => {
@@ -363,7 +380,7 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
 
               <UnitInfo>
                 <UnitNameContainer>
-                  <UnitName $race={race}>{unit.name}</UnitName>
+                  <UnitName $race={race}>{formatName(unit.name).toUpperCase()}</UnitName>
                   <UnitAvailable $race={race}>{unit.available}</UnitAvailable>
                 </UnitNameContainer>
 

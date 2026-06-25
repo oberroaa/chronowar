@@ -51,13 +51,6 @@ type BattleResultType = {
   };
 };
 
-const raceAspectRatios: Record<string, number> = {
-  valdari: 1264 / 842,
-  gorkar: 1264 / 842,
-  sylvaran: 1264 / 848,
-  mortharim: 1.5
-};
-
 // Función para obtener los edificios iniciales de cada raza
 const getInitialBuildings = (race: RaceType): Record<string, number> => {
   const buildings: Record<string, number> = {};
@@ -424,6 +417,7 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
                         alt={`${square.name} building`}
                         $race={race}
                         $scale={(square as any).scale}
+                        $rotate={(square as any).rotate}
                       />
                     ) : (
                       <ArcaneSymbol $race={race}>
@@ -608,11 +602,11 @@ const ArcaneSymbol = styled.span<RaceStyledProps>`
   }
 `;
 
-const BuildingImage = styled.img<RaceStyledProps & { $scale?: number }>`
+const BuildingImage = styled.img<RaceStyledProps & { $scale?: number, $rotate?: number }>`
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: rotate(-45deg) scale(${props => props.$scale || 1.4});
+  transform: rotate(${props => -45 + (props.$rotate || 0)}deg) scale(${props => props.$scale || 1.4});
   filter: ${props => props.$race === 'mortharim' ? 'sepia(50%) hue-rotate(240deg)' : 'none'};
   transition: filter 0.3s ease;
 `;

@@ -1,5 +1,6 @@
 import { scale } from "framer-motion";
 
+
 export type RaceType = 'valdari' | 'gorkar' | 'sylvaran' | 'mortharim';
 
 export type ResourceType = 'gold' | 'wood' | 'stone' | 'food' | 'chrono';
@@ -150,45 +151,43 @@ export type BuildingInfo = {
 
 
 export const SquaresValdari = [
-  { name: 'Palace', top: '48%', left: '47%' },
-  { name: 'Farm', top: '74%', left: '77%' },
-  { name: 'Barracks', top: '60%', left: '23%' },
-  { name: 'Temple', top: '72%', left: '9%' },
-  { name: 'Aviary', top: '60%', left: '65%' },
-  { name: 'Altar', top: '71%', left: '41%' },
-  { name: 'Market', top: '39%', left: '59%' }
+  { name: 'BastionAlborada', top: '50%', left: '47%', scale: 1.1, rotate: 5 },
+  { name: 'CamposAbastecimiento', top: '75%', left: '77%', rotate: -8 },
+  { name: 'FuerteValor', top: '60%', left: '23%' },
+  { name: 'SagrarioLuminoso', top: '72%', left: '9%' },
+  { name: 'CupulaCielos', top: '60%', left: '65%' },
+  { name: 'SantuarioCaidos', top: '71%', left: '41%' },
+  { name: 'GranBazar', top: '41%', left: '59%', scale: 0.9, rotate: -10 }
 ];
 
 export const SquaresGorkar = [
-  { name: 'BloodHall', top: '52%', left: '41%', scale: 1.6 },
-  { name: 'WarHut', top: '45%', left: '24%' },
-  { name: 'ShamanTent', top: '44.5%', left: '66%' },
-  { name: 'HuntCamp', top: '55%', left: '11%' },
-  { name: 'SkyPerch', top: '53.5%', left: '78%' },
-  { name: 'TotemCircle', top: '40%', left: '47%', scale: 1.0 },
-  { name: 'TradeHut', top: '32.5%', left: '59%', scale: 1.0 }
-
+  { name: 'BastionSangre', top: '52%', left: '41%', scale: 1.6 },
+  { name: 'FuerteCeniza', top: '45%', left: '24%' },
+  { name: 'CirculoIgneo', top: '44.5%', left: '66%' },
+  { name: 'FosoDepredadores', top: '55%', left: '11%' },
+  { name: 'NidoCumbres', top: '53.5%', left: '78%' },
+  { name: 'TotemsTierra', top: '40%', left: '47%', scale: 1.0 },
+  { name: 'PuestoTrueque', top: '32.5%', left: '59%', scale: 1.0 }
 ];
 
 export const SquaresSylvaran = [
-  { name: 'TreeOfLife', top: '55%', left: '41%' },
-  { name: 'Moonwell', top: '48%', left: '63%', scale: 1.2 },
-  { name: 'DruidsCircle', top: '71%', left: '58%' },
-  { name: 'HuntersLodge', top: '58%', left: '14%' },
-  { name: 'AncientWonder', top: '57%', left: '74%', scale: 1.2 },
-  { name: 'LunarAltar', top: '71%', left: '27%' },
-  { name: 'SentinelPost', top: '45%', left: '26%' },
+  { name: 'CorazonBosque', top: '55%', left: '41%' },
+  { name: 'ManantialEstelar', top: '48%', left: '63%', scale: 1.2 },
+  { name: 'EnclaveSabios', top: '71%', left: '58%' },
+  { name: 'RefugioCazador', top: '58%', left: '14%' },
+  { name: 'RaizPrimigenia', top: '57%', left: '74%', scale: 1.2 },
+  { name: 'AltarLuna', top: '71%', left: '27%' },
+  { name: 'AtalayaHojas', top: '45%', left: '26%' }
 ];
 
 export const SquaresMortharim = [
-  { name: 'Necropolis', top: '33%', left: '45%' },
-  { name: 'Crypt', top: '65%', left: '13%' },
-  { name: 'Slaughterhouse', top: '51%', left: '30%' },
-  { name: 'AltarDarkness', top: '73%', left: '10%' },
-  { name: 'TombRelics', top: '60%', left: '65%' },
-  { name: 'Zigurat', top: '71%', left: '41%' },
-  { name: 'SpiritTower', top: '33%', left: '21%' },
-  { name: 'BlackCitadel', top: '38%', left: '60%' },
+  { name: 'PinaculoVacio', top: '33%', left: '45%' },
+  { name: 'CriptaLamentos', top: '65%', left: '13%' },
+  { name: 'FosoAlmas', top: '51%', left: '30%' },
+  { name: 'AltarCondenados', top: '73%', left: '10%' },
+  { name: 'MausoleoReliquias', top: '60%', left: '65%' },
+  { name: 'ObeliscoSombras', top: '33%', left: '21%' },
+  { name: 'BastionEbano', top: '38%', left: '60%' }
 ];
 
 // types/gameData.ts (extender las interfaces existentes)
