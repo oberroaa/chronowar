@@ -157,7 +157,7 @@ export const SquaresValdari = [
   { name: 'SagrarioLuminoso', top: '72%', left: '9%' },
   { name: 'CupulaCielos', top: '60%', left: '65%' },
   { name: 'SantuarioCaidos', top: '71%', left: '41%' },
-  { name: 'GranBazar', top: '41%', left: '59%', scale: 0.9, rotate: -10 }
+  { name: 'GranBazar', top: '40%', left: '60%', scale: 1.35, rotate: 0 }
 ];
 
 export const SquaresGorkar = [
