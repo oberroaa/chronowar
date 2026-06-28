@@ -18,8 +18,7 @@ export const raceColors = {
     iconGlow: '#1e90ff',
     resourceColors: {
       gold: '#FFD700',
-      wood: '#8B4513',
-      stone: '#A8A8A8',
+      supplies: '#8B4513',
       food: '#32CD32',
       chrono: '#00BFFF'
     }
@@ -43,8 +42,7 @@ export const raceColors = {
     iconGlow: '#ff4500',
     resourceColors: {
       gold: '#FFA500',
-      wood: '#8B0000',
-      stone: '#696969',
+      supplies: '#8B0000',
       food: '#CD5C5C',
       chrono: '#FF6347'
     }
@@ -68,8 +66,7 @@ export const raceColors = {
     iconGlow: '#32cd32',
     resourceColors: {
       gold: '#DAA520',
-      wood: '#556B2F',
-      stone: '#778899',
+      supplies: '#556B2F',
       food: '#7CFC00',
       chrono: '#98FB98'
     }
@@ -93,8 +90,7 @@ export const raceColors = {
     iconGlow: '#8a2be2',
     resourceColors: {
       gold: '#9370DB',
-      wood: '#4B0082',
-      stone: '#2F4F4F',
+      supplies: '#4B0082',
       food: '#9932CC',
       chrono: '#BA55D3'
     }

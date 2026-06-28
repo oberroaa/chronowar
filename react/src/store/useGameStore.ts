@@ -57,7 +57,7 @@ export const useGameStore = create<GameState>()(
       return {
         view: 'home',
         race: 'valdari',
-        resources: { gold: 0, wood: 0, stone: 0, food: 0, chrono: 0 },
+        resources: { gold: 0, supplies: 0, food: 0, chrono: 0 },
         buildingLevels: {},
         upgradeQueue: [],
         gameData: null,
@@ -246,15 +246,29 @@ export const useGameStore = create<GameState>()(
     },
     {
       name: 'chronowar-game-storage',
-      version: 2,
-      migrate: (persistedState: any) => {
+      version: 3,
+      migrate: (persistedState: any, version: number) => {
         if (!persistedState) return { buildingLevels: {}, upgradeQueue: [], productionQueue: [] };
-        return {
+        const state = {
           ...persistedState,
           buildingLevels: persistedState.buildingLevels ?? {},
           upgradeQueue: persistedState.upgradeQueue ?? [],
           productionQueue: persistedState.productionQueue ?? []
         };
+        
+        // Migración v2 -> v3: Convertir wood y stone a supplies
+        if (version < 3 && state.resources) {
+          const wood = state.resources.wood || 0;
+          const stone = state.resources.stone || 0;
+          const supplies = state.resources.supplies || 0;
+          if (wood > 0 || stone > 0 || ('wood' in state.resources) || ('stone' in state.resources)) {
+            state.resources.supplies = supplies + wood + stone;
+            delete state.resources.wood;
+            delete state.resources.stone;
+          }
+        }
+        
+        return state;
       }
     }
   )

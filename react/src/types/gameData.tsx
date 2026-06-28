@@ -3,7 +3,7 @@
 
 export type RaceType = 'valdari' | 'gorkar' | 'sylvaran' | 'mortharim';
 
-export type ResourceType = 'gold' | 'wood' | 'stone' | 'food' | 'chrono';
+export type ResourceType = 'gold' | 'supplies' | 'food' | 'chrono';
 
 export type UnitType = 'unit' | 'poblation' | 'heroe';
 
@@ -45,8 +45,7 @@ export interface ResourcePanelProps {
 export const getResourceIcon = (type: ResourceType): string => {
   switch (type) {
     case 'gold': return '💰';     // Oro
-    case 'wood': return '🪵';     // Madera
-    case 'stone': return '🪨';    // Piedra
+    case 'supplies': return '📦'; // Suministros
     case 'food': return '🍖';     // Comida
     case 'chrono': return '⏳';  // chrono
     default: return '';           // Por si se recibe un tipo no reconocido
@@ -59,30 +58,30 @@ export const getTravelCost = (race: RaceType, level: number) => {
     case 'valdari':
       return ({
         gold: level * 20,
-        wood: level * 15,
+        supplies: level * 15,
         food: level * 10
       });
     case 'gorkar':
       return ({
         gold: level * 10,
-        wood: level * 15,
+        supplies: level * 15,
         food: level * 20
-      });     // Madera
+      });     // Suministros
     case 'mortharim':
       return ({
         gold: level * 15,
-        wood: level * 20,
+        supplies: level * 20,
         food: level * 10
-      });    // Piedra
+      });    
     case 'sylvaran':
       return ({
         gold: level * 15,
-        wood: level * 10,
+        supplies: level * 10,
         food: level * 15
       });     // Comida    
     default: return ({
       gold: level * 10,
-      wood: level * 10,
+      supplies: level * 10,
       food: level * 10
     });           // Por si se recibe un tipo no reconocido
   }
@@ -124,8 +123,7 @@ export type ProductionQueueItem = {
 
 export type CostInfo = {
   gold: number;
-  wood: number;
-  stone: number;
+  supplies: number;
 };
 
 export type UpgradeInfo = {
@@ -149,15 +147,15 @@ export type BuildingInfo = {
   buildTime: number;
 };
 
-
+//{ name: 'BastionAlborada', top: '50%', left: '47%', scale: 1.1, rotate: 5 },
 export const SquaresValdari = [
-  { name: 'BastionAlborada', top: '50%', left: '47%', scale: 1.1, rotate: 5 },
+  { name: 'BastionAlborada', top: '71%', left: '41%' },
   { name: 'CamposAbastecimiento', top: '75%', left: '77%', rotate: -8 },
-  { name: 'FuerteValor', top: '60%', left: '23%' },
-  { name: 'SagrarioLuminoso', top: '72%', left: '9%' },
-  { name: 'CupulaCielos', top: '60%', left: '65%' },
-  { name: 'SantuarioCaidos', top: '71%', left: '41%' },
-  { name: 'GranBazar', top: '40%', left: '60%', scale: 1.35, rotate: 0 }
+  { name: 'FuerteValor', top: '62%', left: '23%', rotate: 2, scale: 1.2 },
+  { name: 'SagrarioLuminoso', top: '73%', left: '11%', rotate: 2 },
+  { name: 'CupulaCielos', top: '58%', left: '65%' },
+  { name: 'SantuarioCaidos', top: '51%', left: '47%', scale: 1.1 },
+  { name: 'GranBazar', top: '41%', left: '59%', scale: 1.1 }
 ];
 
 export const SquaresGorkar = [

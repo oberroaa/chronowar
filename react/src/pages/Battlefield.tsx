@@ -78,31 +78,31 @@ const AI_PREF: Record<Race, number> = {
 // ← Each enemy now has mana cap + full skill definition
 const ENEMY_DEFS = [
   {
-    name: 'Berserker', img: '/images/GorKar/units/Berserker.png',
+    name: 'Berserker', img: '/images/GorKar/units/Furia_de_Ceniza.png',
     maxHp: 300, atk: 24, def: 5, maxMana: 400,
     skillName: 'Furia Berserker',
     skillDesc: 'Golpea 2 héroes aleatorios con 1.5× daño',
   },
   {
-    name: 'Machacador', img: '/images/GorKar/units/Machacador.png',
+    name: 'Machacador', img: '/images/GorKar/units/Caminante_del_Crater.png',
     maxHp: 250, atk: 28, def: 3, maxMana: 400,
     skillName: 'Aplastamiento',
     skillDesc: '90 de daño al héroe con más HP',
   },
   {
-    name: 'JEFE', img: '/images/GorKar/units/Rompehueso.png',
+    name: 'JEFE', img: '/images/GorKar/units/Quebrantahuesos.png',
     maxHp: 600, atk: 45, def: 15, maxMana: 400,
     skillName: 'Grito de Guerra',
     skillDesc: '40 de daño a TODOS los héroes',
   },
   {
-    name: 'Chamán', img: '/images/GorKar/units/Chaman.png',
+    name: 'Chamán', img: '/images/GorKar/units/Chaman_de_Magma.png',
     maxHp: 200, atk: 18, def: 8, maxMana: 200,
     skillName: 'Curación Tribal',
     skillDesc: 'Cura 60 HP a todos los enemigos vivos',
   },
   {
-    name: 'Raider', img: '/images/GorKar/units/Raider.png',
+    name: 'Raider', img: '/images/GorKar/units/Jinete_de_Bestia.png',
     maxHp: 180, atk: 32, def: 2, maxMana: 400,
     skillName: 'Emboscada',
     skillDesc: '3 golpes de 25 daño a héroes aleatorios',
@@ -674,7 +674,7 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       return {
         name: u.name, img: u.image || '',
         hp: u.hp || fallback.maxHp, maxHp: u.hp || fallback.maxHp, mana: 0, maxMana: u.mana || 100,
-        attack: Math.round(u.attack) || fallback.atk, defense: u.armor || fallback.def,
+        attack: Math.round(u.attack) || fallback.atk, defense: (u.armor || fallback.def) + ((u.skillName || fallbackSkill.skillName) === 'Raíces Profundas' ? 5 : 0),
         isDead: false, isAttacking: false, isHit: false, isSkillReady: false,
         skillName: u.skillName || fallbackSkill.skillName,
         skillDesc: u.skillDesc || fallbackSkill.skillDesc,
@@ -859,13 +859,57 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           const extraAtk = laneAttacker ? laneAttacker.unit.attack : 0;
           appliedDmg = totalAtk + extraAtk;
 
-          const actual = Math.max(1, appliedDmg - (E[ti].defense + (E[ti].shield || 0)));
-          E[ti] = { ...E[ti], hp: Math.max(0, E[ti].hp - actual), isDead: E[ti].hp - actual <= 0, isHit: true };
+          let targetDef = E[ti].defense;
+          let targetShield = E[ti].shield || 0;
+          
+          if (laneAttacker) {
+            const skill = laneAttacker.unit.skillName;
+            if (skill === 'Paso Umbrío') targetShield = 0;
+            if (skill === 'Impacto Profano') targetDef = 0;
+          }
+
+          const actual = Math.max(1, appliedDmg - (targetDef + targetShield));
+          const wasDead = E[ti].isDead;
+          const newHp = Math.max(0, E[ti].hp - actual);
+          E[ti] = { ...E[ti], hp: newHp, isDead: newHp <= 0, isHit: true };
+          
           const isCrit = mult >= 1.62 || actual > 80;
           addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', ePos(ti).x, ePos(ti).y);
           if (extraAtk > 0 && laneAttacker) {
             addFloat(`⚔️ +${extraAtk} ${laneAttacker.unit.name}`, 'combo', ePos(ti).x, ePos(ti).y - 25);
           }
+
+          if (laneAttacker) {
+            const skill = laneAttacker.unit.skillName;
+            if (skill === 'Fuego Cruzado') E[ti].defense = Math.max(0, E[ti].defense - 1);
+            if (skill === 'Aliento Gélido') E[ti].attack = Math.max(1, Math.floor(E[ti].attack * 0.9));
+            if (skill === 'Enjambre de Vampiros') {
+              const heal = Math.floor(actual * 0.3);
+              if (heal > 0) {
+                H[laneAttacker.index].hp = Math.min(H[laneAttacker.index].maxHp, H[laneAttacker.index].hp + heal);
+                addFloat(`🦇 +${heal}`, 'heal', hPos(laneAttacker.index).x, hPos(laneAttacker.index).y - 20);
+              }
+            }
+            if (skill === 'Frenesí de Sangre' && newHp <= 0 && !wasDead) {
+              H[laneAttacker.index].attack += 5;
+              addFloat('🩸 +5 ATK', 'skill', hPos(laneAttacker.index).x, hPos(laneAttacker.index).y - 20);
+            }
+          }
+
+          if (E[ti].skillName === 'Aura Letal' && laneAttacker) {
+            H[laneAttacker.index].hp = Math.max(0, H[laneAttacker.index].hp - 10);
+            H[laneAttacker.index].isDead = H[laneAttacker.index].hp <= 0;
+            addFloat(`☠️ 10`, 'dmg', hPos(laneAttacker.index).x, hPos(laneAttacker.index).y - 20);
+          }
+          if (E[ti].skillName === 'Caparazón con Púas' && laneAttacker) {
+            const reflect = Math.floor(actual * 0.3);
+            if (reflect > 0) {
+              H[laneAttacker.index].hp = Math.max(0, H[laneAttacker.index].hp - reflect);
+              H[laneAttacker.index].isDead = H[laneAttacker.index].hp <= 0;
+              addFloat(`🪡 ${reflect}`, 'dmg', hPos(laneAttacker.index).x, hPos(laneAttacker.index).y - 20);
+            }
+          }
+
           if (isCrit || actual > 80) doShake();
         }
         setEnemies([...E]);
@@ -931,13 +975,57 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
           const extraAtk = laneAttacker ? laneAttacker.unit.attack : 0;
           const finalDmg = totalAtk + extraAtk;
 
-          const actual = Math.max(1, finalDmg - (H[ti].defense + (H[ti].shield || 0)));
-          H[ti] = { ...H[ti], hp: Math.max(0, H[ti].hp - actual), isDead: H[ti].hp - actual <= 0, isHit: true };
+          let targetDef = H[ti].defense;
+          let targetShield = H[ti].shield || 0;
+          
+          if (laneAttacker) {
+            const skill = laneAttacker.unit.skillName;
+            if (skill === 'Paso Umbrío') targetShield = 0;
+            if (skill === 'Impacto Profano') targetDef = 0;
+          }
+
+          const actual = Math.max(1, finalDmg - (targetDef + targetShield));
+          const wasDead = H[ti].isDead;
+          const newHp = Math.max(0, H[ti].hp - actual);
+          H[ti] = { ...H[ti], hp: newHp, isDead: newHp <= 0, isHit: true };
+          
           const isCrit = mult >= 1.62 || actual > 80;
           addFloat(isCrit ? `💥 ${actual}` : `${actual}`, isCrit ? 'crit' : 'dmg', hPos(ti).x, hPos(ti).y);
           if (extraAtk > 0 && laneAttacker) {
             addFloat(`⚔️ +${extraAtk} ${laneAttacker.unit.name}`, 'combo', hPos(ti).x, hPos(ti).y - 25);
           }
+
+          if (laneAttacker) {
+            const skill = laneAttacker.unit.skillName;
+            if (skill === 'Fuego Cruzado') H[ti].defense = Math.max(0, H[ti].defense - 1);
+            if (skill === 'Aliento Gélido') H[ti].attack = Math.max(1, Math.floor(H[ti].attack * 0.9));
+            if (skill === 'Enjambre de Vampiros') {
+              const heal = Math.floor(actual * 0.3);
+              if (heal > 0) {
+                E[laneAttacker.index].hp = Math.min(E[laneAttacker.index].maxHp, E[laneAttacker.index].hp + heal);
+                addFloat(`🦇 +${heal}`, 'heal', ePos(laneAttacker.index).x, ePos(laneAttacker.index).y - 20);
+              }
+            }
+            if (skill === 'Frenesí de Sangre' && newHp <= 0 && !wasDead) {
+              E[laneAttacker.index].attack += 5;
+              addFloat('🩸 +5 ATK', 'skill', ePos(laneAttacker.index).x, ePos(laneAttacker.index).y - 20);
+            }
+          }
+
+          if (H[ti].skillName === 'Aura Letal' && laneAttacker) {
+            E[laneAttacker.index].hp = Math.max(0, E[laneAttacker.index].hp - 10);
+            E[laneAttacker.index].isDead = E[laneAttacker.index].hp <= 0;
+            addFloat(`☠️ 10`, 'dmg', ePos(laneAttacker.index).x, ePos(laneAttacker.index).y - 20);
+          }
+          if (H[ti].skillName === 'Caparazón con Púas' && laneAttacker) {
+            const reflect = Math.floor(actual * 0.3);
+            if (reflect > 0) {
+              E[laneAttacker.index].hp = Math.max(0, E[laneAttacker.index].hp - reflect);
+              E[laneAttacker.index].isDead = E[laneAttacker.index].hp <= 0;
+              addFloat(`🪡 ${reflect}`, 'dmg', ePos(laneAttacker.index).x, ePos(laneAttacker.index).y - 20);
+            }
+          }
+
           if (isCrit || actual > 80) doShake();
           setHeroes([...H]);
           setTimeout(() => setHeroes(prev => prev.map((u, i) => i === ti ? { ...u, isHit: false } : u)), 430);
@@ -1026,6 +1114,72 @@ const Battlefield: React.FC<BattlefieldProps> = ({ race = 'valdari', onExit }) =
       G = G.map(g => ({ ...g, isFalling: false }));
       setGems([...G]); await SLEEP(90);
     }
+
+    // End of Turn Passive Effects
+    if (side === 'player') {
+      let healAll = 0;
+      H.forEach((h, i) => {
+        if (h.isDead) return;
+        if (h.skillName === 'Simbiosis') healAll += 10;
+        if (h.skillName === 'Nube de Enfermedad') {
+          E.forEach((e, j) => {
+            if (!e.isDead) { e.poison = (e.poison || 0) + 2; addFloat('☠️', 'skill', ePos(j).x, ePos(j).y - 20); }
+          });
+        }
+        if (h.skillName === 'Forma de Piedra' && h.hp < h.maxHp * 0.3) {
+           h.hp += 20; addFloat('🪨 +20', 'heal', hPos(i).x, hPos(i).y - 20);
+        }
+        if (h.skillName === 'Pacto de Muerte' && h.hp < h.maxHp * 0.25) {
+           const sacrifices = H.filter(s => !s.isDead && s.name !== h.name);
+           if (sacrifices.length > 0) {
+             const sac = sacrifices[Math.floor(Math.random() * sacrifices.length)];
+             const idx = H.indexOf(sac);
+             H[idx].hp = 0; H[idx].isDead = true;
+             h.hp = h.maxHp;
+             addFloat('💀 Sacrificio', 'dmg', hPos(idx).x, hPos(idx).y - 20);
+             addFloat('🩸 100%', 'heal', hPos(i).x, hPos(i).y - 20);
+           }
+        }
+      });
+      if (healAll > 0) {
+         H.forEach((h, i) => { 
+           if (!h.isDead) { h.hp = Math.min(h.maxHp, h.hp + healAll); addFloat(`🌱 +${healAll}`, 'heal', hPos(i).x, hPos(i).y); }
+         });
+      }
+    } else {
+      let healAll = 0;
+      E.forEach((e, i) => {
+        if (e.isDead) return;
+        if (e.skillName === 'Simbiosis') healAll += 10;
+        if (e.skillName === 'Nube de Enfermedad') {
+          H.forEach((h, j) => {
+            if (!h.isDead) { h.poison = (h.poison || 0) + 2; addFloat('☠️', 'skill', hPos(j).x, hPos(j).y - 20); }
+          });
+        }
+        if (e.skillName === 'Forma de Piedra' && e.hp < e.maxHp * 0.3) {
+           e.hp += 20; addFloat('🪨 +20', 'heal', ePos(i).x, ePos(i).y - 20);
+        }
+        if (e.skillName === 'Pacto de Muerte' && e.hp < e.maxHp * 0.25) {
+           const sacrifices = E.filter(s => !s.isDead && s.name !== e.name);
+           if (sacrifices.length > 0) {
+             const sac = sacrifices[Math.floor(Math.random() * sacrifices.length)];
+             const idx = E.indexOf(sac);
+             E[idx].hp = 0; E[idx].isDead = true;
+             e.hp = e.maxHp;
+             addFloat('💀 Sacrificio', 'dmg', ePos(idx).x, ePos(idx).y - 20);
+             addFloat('🩸 100%', 'heal', ePos(i).x, ePos(i).y - 20);
+           }
+        }
+      });
+      if (healAll > 0) {
+         E.forEach((e, i) => { 
+           if (!e.isDead) { e.hp = Math.min(e.maxHp, e.hp + healAll); addFloat(`🌱 +${healAll}`, 'heal', ePos(i).x, ePos(i).y); }
+         });
+      }
+    }
+
+    setEnemies([...E]);
+    setHeroes([...H]);
 
     setCombo(0);
     return { gems: G, enemies: E, heroes: H, ended: false };

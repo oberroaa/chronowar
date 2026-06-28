@@ -228,25 +228,6 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                   </ModalCostDetails>
                 </ModalCostItem>
 
-                {unit.cost.wood && (
-                  <ModalCostItem $race={race}>
-                    <ModalCostIcon>🪵</ModalCostIcon>
-                    <ModalCostDetails>
-                      <ModalCostAmount>{unit.cost.wood}</ModalCostAmount>
-                      <ModalCostResource>Wood</ModalCostResource>
-                    </ModalCostDetails>
-                  </ModalCostItem>
-                )}
-
-                {unit.cost.stone && (
-                  <ModalCostItem $race={race}>
-                    <ModalCostIcon>🪨</ModalCostIcon>
-                    <ModalCostDetails>
-                      <ModalCostAmount>{unit.cost.stone}</ModalCostAmount>
-                      <ModalCostResource>Stone</ModalCostResource>
-                    </ModalCostDetails>
-                  </ModalCostItem>
-                )}
 
                 {unit.cost.food && (
                   <ModalCostItem $race={race}>

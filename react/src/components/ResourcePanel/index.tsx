@@ -8,13 +8,15 @@ const ResourcePanel: React.FC<ResourcePanelComponentProps> = ({
   resources,
   race = 'valdari' // Valor por defecto
 }) => {  
+  const orderedResources = ['gold', 'supplies', 'food', 'chrono'];
+
   return (
     <ResourcesContainer $race={race}>
-      {Object.entries(resources).map(([type, value]) => (
+      {orderedResources.map((type) => (
         <ResourceItem 
           key={type} 
           type={type as any} 
-          value={value} 
+          value={resources[type as keyof typeof resources] || 0} 
           race={race} 
         />
       ))}

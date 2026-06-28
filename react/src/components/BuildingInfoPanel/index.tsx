@@ -235,8 +235,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
         const costMultiplier = Math.max(1, currentLevel);
         const levelUpCost = {
             gold: buildingData.buildCost.gold * costMultiplier,
-            wood: buildingData.buildCost.wood * costMultiplier,
-            stone: buildingData.buildCost.stone * costMultiplier
+            supplies: buildingData.buildCost.supplies * costMultiplier
         };
 
         if (!canAfford(levelUpCost)) {
@@ -507,8 +506,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     <LevelUpCost>
                         {renderResourceCost({
                             gold: building.buildCost.gold * Math.max(1, currentBuildingLevel),
-                            wood: building.buildCost.wood * Math.max(1, currentBuildingLevel),
-                            stone: building.buildCost.stone * Math.max(1, currentBuildingLevel)
+                            supplies: building.buildCost.supplies * Math.max(1, currentBuildingLevel)
                         })}
                         <TimeBadge>⏱️ 60s</TimeBadge>
                     </LevelUpCost>
@@ -518,8 +516,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                         disabled={
                             !canAfford({
                                 gold: building.buildCost.gold * Math.max(1, currentBuildingLevel),
-                                wood: building.buildCost.wood * Math.max(1, currentBuildingLevel),
-                                stone: building.buildCost.stone * Math.max(1, currentBuildingLevel)
+                                supplies: building.buildCost.supplies * Math.max(1, currentBuildingLevel)
                             }) ||
                             isAnyUpgradeInProgress ||
                             (mainBuildingName !== null && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && currentBuildingLevel >= mainBuildingLevel)

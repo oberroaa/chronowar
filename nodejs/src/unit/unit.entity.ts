@@ -21,11 +21,6 @@ export class Unit {
   @Column({ type: 'int' })
   gold: number;
 
-  @Column({ type: 'int' })
-  wood: number;
-
-  @Column({ type: 'int', nullable: true })
-  stone: number;
 
   @Column({ type: 'int' })
   time: number;

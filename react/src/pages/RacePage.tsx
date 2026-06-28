@@ -685,24 +685,17 @@ const BottomPanelButton = styled(PanelButtonBase)`
   }
 `;
 
-/* Botón de Salir - Estilo de Peligro / Advertencia */
+/* Botón de Salir */
 const ExitGameButton = styled(PanelButtonBase)`
   bottom: 20px;
   left: 20px;
   border-radius: 8px;
-  padding: 10px 20px;
-  background: rgba(40, 10, 10, 0.6); 
-  border: 1px solid rgba(255, 68, 68, 0.3);
-  border-left: 3px solid #ff4444; 
-  color: #ffcccc;
-  border-bottom: 1px solid rgba(255, 68, 68, 0.3); /* Sobrescribe la línea de raza */
+  padding: 12px 24px;
+  border-left: 2px solid ${props => raceColors[props.$race].primary};
+  border-bottom: none;
   
   &:hover {
-    background: rgba(80, 20, 20, 0.8);
-    border-color: #ff4444;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
-    text-shadow: 0 0 8px #ff4444;
+    padding-left: 28px;
   }
 `;
 

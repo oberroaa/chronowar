@@ -202,8 +202,7 @@ export const ResourceCost = styled.span<ResourceCostProps>`
   color: ${props => {
         switch (props.$type) {
             case 'gold': return '#FFD700';
-            case 'wood': return '#8B4513';
-            case 'stone': return '#A8A8A8';
+            case 'supplies': return '#8B4513';
             case 'food': return '#32CD32';
             case 'chrono': return '#00BFFF';
             default: return 'white';
@@ -212,8 +211,7 @@ export const ResourceCost = styled.span<ResourceCostProps>`
   border: 1px solid ${props => {
         switch (props.$type) {
             case 'gold': return '#FFD700';
-            case 'wood': return '#8B4513';
-            case 'stone': return '#A8A8A8';
+            case 'supplies': return '#8B4513';
             case 'food': return '#32CD32';
             case 'chrono': return '#00BFFF';
             default: return '#555';

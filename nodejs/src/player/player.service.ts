@@ -19,7 +19,7 @@ export class PlayerService {
         level: 1,
         race: 'valdari',
         isSystem: false,
-        resources: { gold: 5000, wood: 5000, stone: 5000, food: 5000, chrono: 1000 },
+        resources: { gold: 5000, supplies: 10000, food: 5000, chrono: 1000 },
         formations: {},
         gameUnits: []
       });

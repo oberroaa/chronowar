@@ -27,6 +27,7 @@
     "@nestjs/platform-socket.io": "^11.1.19",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.19",
+    "jimp": "^1.6.1",
     "mysql2": "^3.14.1",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",

@@ -19,10 +19,7 @@ export class Building {
   gold: number;
 
   @Column({ nullable: true })
-  wood: number;
-
-  @Column({ nullable: true })
-  stone: number;
+  supplies: number;
 
   @Column({ nullable: true })
   time: number;

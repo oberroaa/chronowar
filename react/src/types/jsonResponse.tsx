@@ -8,7 +8,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     main: true,
     description: "The Palace is the heart of your kingdom.",
     level: 0,
-    buildCost: { gold: 1000, wood: 500, stone: 300 },
+    buildCost: { gold: 1000, supplies: 800 },
     buildTime: 120,
     image: '/images/Valdari/construcciones/palacio.png',
     unitsProduced: [
@@ -76,7 +76,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     upgradesAvailable: [
       {
         name: "Royal Guard Training",
-        cost: { gold: 500, wood: 200, chrono: 5 },
+        cost: { gold: 500, supplies: 200, chrono: 5 },
         time: 60,
         description: "Increases palace defense by 50%"
       },
@@ -95,7 +95,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     main: false,
     description: "Produces food for your population.",
     level: 0,
-    buildCost: { gold: 300, wood: 150, stone: 50 },
+    buildCost: { gold: 300, supplies: 200 },
     buildTime: 45,
     image: '/images/Valdari/construcciones/granja.png',
     unitsProduced: [
@@ -123,7 +123,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     upgradesAvailable: [
       {
         name: "Improved Irrigation",
-        cost: { gold: 150, wood: 100 },
+        cost: { gold: 150, supplies: 100 },
         time: 30,
         description: "Increases food production by 30%"
       }
@@ -136,7 +136,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     main: false,
     description: "Train Footmen, Riflemen, Knights, and Siege Engines here.",
     level: 0,
-    buildCost: { gold: 600, wood: 300, stone: 150 },
+    buildCost: { gold: 600, supplies: 450 },
     buildTime: 90,
     image: '/images/Valdari/construcciones/cuartel.png',
     unitsProduced: [
@@ -205,13 +205,13 @@ export const buildingsData: Record<string, BuildingInfo> = {
     upgradesAvailable: [
       {
         name: "Defensive Training",
-        cost: { gold: 100, wood: 50 },
+        cost: { gold: 100, supplies: 50 },
         time: 40,
         description: "Increases armor of trained units by 2"
       },
       {
         name: "Long Rifles",
-        cost: { gold: 150, stone: 30, chrono: 5 },
+        cost: { gold: 150, supplies: , chrono: 5 },
         time: 50,
         description: "Increases range of riflemen by 20%"
       }
@@ -224,7 +224,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     main: false,
     description: "Train Priests, Sorceresses, and Spell Breakers here.",
     level: 0,
-    buildCost: { gold: 500, wood: 200, stone: 100 },
+    buildCost: { gold: 500, supplies: 300 },
     buildTime: 80,
     image: '/images/Valdari/construcciones/templo.png',
     unitsProduced: [
@@ -298,7 +298,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         name: "Mana Surge",
-        cost: { gold: 150, wood: 30, chrono: 5 },
+        cost: { gold: 150, supplies: 30, chrono: 5 },
         time: 50,
         description: "Reduces mana costs by 20%"
       }
@@ -311,7 +311,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     main: false,
     description: "Train Mortar Teams and Gryphon Riders here.",
     level: 0,
-    buildCost: { gold: 700, wood: 400, stone: 100 },
+    buildCost: { gold: 700, supplies: 500 },
     buildTime: 100,
     image: '/images/Valdari/construcciones/aviary.png',
     unitsProduced: [
@@ -359,13 +359,13 @@ export const buildingsData: Record<string, BuildingInfo> = {
     upgradesAvailable: [
       {
         name: "Aerial Superiority",
-        cost: { gold: 200, wood: 50, chrono: 8 },
+        cost: { gold: 200, supplies: 50, chrono: 8 },
         time: 60,
         description: "Increases flying units' attack by 25%"
       },
       {
         name: "Dive Bomb",
-        cost: { gold: 180, stone: 20 },
+        cost: { gold: 180, supplies:  },
         time: 45,
         description: "Adds splash damage to flying attacks"
       }
@@ -378,7 +378,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     main: false,
     description: "Revive your fallen heroes here.",
     level: 0,
-    buildCost: { gold: 800, wood: 300, stone: 200 },
+    buildCost: { gold: 800, supplies: 500 },
     buildTime: 110,
     image: '/images/Valdari/construcciones/altar.png',
     unitsProduced: [
@@ -484,7 +484,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         name: "Divine Shield",
-        cost: { gold: 300, stone: 50, chrono: 10 },
+        cost: { gold: 300, supplies: , chrono: 10 },
         time: 60,
         description: "Gives heroes temporary invulnerability"
       }
@@ -497,7 +497,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
     main: false,
     description: "Trade resources and buy items here.",
     level: 0,
-    buildCost: { gold: 400, wood: 200, stone: 100 },
+    buildCost: { gold: 400, supplies: 300 },
     buildTime: 60,
     image: '/images/Valdari/construcciones/mercado.png',
     unitsProduced: [],
