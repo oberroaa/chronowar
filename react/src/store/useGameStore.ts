@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { calculateProductionRates } from './productionUtils';
 import { type RaceType, type ResourceType, type BuildingInfo, type ProductionQueueItem } from '../types/gameData';
 import { fetchGameData, fetchPlayerData, fetchPlayersList, updatePlayerState } from '../api/gameApi';
+
 
 export interface UpgradeQueueItem {
   upgrade: string;
@@ -38,6 +40,7 @@ interface GameState {
   loadPlayerState: () => Promise<void>;
   syncPlayerState: () => Promise<void>;
   addCompletedUnit: (unitName: string, amount: number) => void;
+  tickEconomy: () => void;
 }
 
 // Implementation
@@ -188,6 +191,22 @@ export const useGameStore = create<GameState>()(
           return completed;
         },
 
+        tickEconomy: () => {
+          const state = get();
+          // Solo calculamos si hay playerData (usuario cargado)
+          if (!state.playerData) return;
+          
+          const rates = calculateProductionRates(state.race, state.buildingLevels, state.playerData.gameUnits || []);
+          set({
+            resources: {
+              gold: state.resources.gold + rates.gold,
+              supplies: state.resources.supplies + rates.supplies,
+              food: state.resources.food + rates.food,
+              chrono: state.resources.chrono
+            } as any
+          });
+        },
+
         loadGameData: async () => {
           const data = await fetchGameData();
           if (data) set({ gameData: data.buildingsData });
@@ -196,9 +215,23 @@ export const useGameStore = create<GameState>()(
         loadPlayerState: async () => {
           const [me, all] = await Promise.all([fetchPlayerData(), fetchPlayersList()]);
           if (me) {
+            let loadedResources = me.resources;
+
+            // Offline Progression (Progreso inactivo anti-abuso)
+            if (loadedResources?.lastSyncAt) {
+               const secondsOffline = Math.max(0, Math.floor((Date.now() - loadedResources.lastSyncAt) / 1000));
+               if (secondsOffline > 60) {
+                  // Offline calculation ignores gameUnits! Pass empty array []
+                  const offlineRates = calculateProductionRates(me.race, me.buildingLevels || {}, []);
+                  loadedResources.gold = (loadedResources.gold || 0) + (secondsOffline * offlineRates.gold);
+                  loadedResources.supplies = (loadedResources.supplies || 0) + (secondsOffline * offlineRates.supplies);
+                  loadedResources.food = (loadedResources.food || 0) + (secondsOffline * offlineRates.food);
+               }
+            }
+            
             const updates: Partial<GameState> = {
               playerData: me,
-              resources: me.resources,
+              resources: loadedResources,
               race: me.race as RaceType,
             };
             // Only overwrite buildingLevels if server has saved levels
@@ -221,8 +254,11 @@ export const useGameStore = create<GameState>()(
         syncPlayerState: async () => {
           const state = get();
           if (!state.playerData) return;
+          
+          const resToSave = { ...state.resources, lastSyncAt: Date.now() };
+          
           await updatePlayerState({
-            resources: state.resources,
+            resources: resToSave,
             formations: state.playerData.formations,
             gameUnits: state.playerData.gameUnits,
             buildingLevels: state.buildingLevels,
@@ -247,7 +283,7 @@ export const useGameStore = create<GameState>()(
     {
       name: 'chronowar-game-storage',
       version: 3,
-      migrate: (persistedState: any, version: number) => {
+      migrate: (persistedState: any) => {
         if (!persistedState) return { buildingLevels: {}, upgradeQueue: [], productionQueue: [] };
         const state = {
           ...persistedState,
@@ -256,17 +292,7 @@ export const useGameStore = create<GameState>()(
           productionQueue: persistedState.productionQueue ?? []
         };
         
-        // Migración v2 -> v3: Convertir wood y stone a supplies
-        if (version < 3 && state.resources) {
-          const wood = state.resources.wood || 0;
-          const stone = state.resources.stone || 0;
-          const supplies = state.resources.supplies || 0;
-          if (wood > 0 || stone > 0 || ('wood' in state.resources) || ('stone' in state.resources)) {
-            state.resources.supplies = supplies + wood + stone;
-            delete state.resources.wood;
-            delete state.resources.stone;
-          }
-        }
+
         
         return state;
       }

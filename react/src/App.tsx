@@ -7,7 +7,7 @@ import './App.css';
 import { useGameStore } from './store/useGameStore';
 
 const App = () => {
-  const { view, race, setView, startGame, tickUpgradeQueue, tickProductionQueue, setBuildingLevel, addCompletedUnit } = useGameStore();
+  const { view, race, setView, startGame, tickUpgradeQueue, tickProductionQueue, tickEconomy, setBuildingLevel, addCompletedUnit } = useGameStore();
 
   // Timer global: upgrade queue + production queue - runs on ALL views
   useEffect(() => {
@@ -29,6 +29,10 @@ const App = () => {
             addCompletedUnit(item.unit, 1);
           }
         });
+
+        // --- Economy Tick ---
+        tickEconomy();
+
       } catch (e) {
         console.error("Error in game loop:", e);
       }

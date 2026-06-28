@@ -101,7 +101,6 @@ export type UnitProduction = {
   hp: number,
   mana?: number,
   transportSize: number,
-  carryCapacity: number,  // Cantidad de recursos que puede cargar al saquear/recolectar
   available: number,
   skillName?: string;
   skillDesc?: string;

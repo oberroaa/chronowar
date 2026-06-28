@@ -368,10 +368,7 @@ const FormationPanel: React.FC<FormationPanelProps> = ({
                   <StatLabel $race={race}>🛡️ ARMADURA</StatLabel>
                   <StatValue $race={race}>{showUnitInfo.armor}{showUnitInfo.armorBonus ? <span style={{color:'#ffd700',marginLeft:'4px'}}>(+{showUnitInfo.armorBonus})</span> : null}</StatValue>
                 </StatItem>
-                <StatItem $race={race}>
-                  <StatLabel $race={race}>📦 CARGA</StatLabel>
-                  <StatValue $race={race}>{showUnitInfo.carryCapacity}</StatValue>
-                </StatItem>
+
                 <StatItem $race={race}>
                   <StatLabel $race={race}>✨ HABILIDAD</StatLabel>
                   <StatValue $race={race} style={{ fontSize: '0.8rem' }}>{showUnitInfo.special}</StatValue>

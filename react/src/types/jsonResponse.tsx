@@ -211,7 +211,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         name: "Long Rifles",
-        cost: { gold: 150, supplies: , chrono: 5 },
+        cost: { gold: 150, supplies: 0, chrono: 5 },
         time: 50,
         description: "Increases range of riflemen by 20%"
       }
@@ -365,7 +365,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         name: "Dive Bomb",
-        cost: { gold: 180, supplies:  },
+        cost: { gold: 180, supplies: 0 },
         time: 45,
         description: "Adds splash damage to flying attacks"
       }
@@ -484,7 +484,7 @@ export const buildingsData: Record<string, BuildingInfo> = {
       },
       {
         name: "Divine Shield",
-        cost: { gold: 300, supplies: , chrono: 10 },
+        cost: { gold: 300, supplies: 0, chrono: 10 },
         time: 60,
         description: "Gives heroes temporary invulnerability"
       }

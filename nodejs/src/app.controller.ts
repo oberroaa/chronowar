@@ -70,7 +70,7 @@ export class AppController {
                  available: 0,
                  name: unit.name,
                  unitType: unit.type,
-                 cost: { gold: unit.gold || 0, food: unit.food || 0 },
+                 cost: { gold: unit.gold || 0, food: unit.food || 0, chrono: unit.chrono || 0 },
                  buildTime: unit.time || 10,
                  image: unit.img,
                  gif: '',
@@ -86,7 +86,7 @@ export class AppController {
                  hp: unit.hitPoints || 100,
                  mana: unit.mana || 100,
                  transportSize: 1,
-                 carryCapacity: (unit.name === 'Artesano' || unit.name === 'Rastreador' || unit.name === 'Susurro_del_Bosque' || unit.name === 'Siervo_del_Vacio') ? 50 : 10,
+
                });
              }
           });

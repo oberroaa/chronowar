@@ -25,6 +25,9 @@ export class Unit {
   @Column({ type: 'int' })
   time: number;
 
+  @Column({ type: 'int', nullable: true })
+  chrono: number;
+
   @Column({ type: 'int' })
   hitPoints: number;
 

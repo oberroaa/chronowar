@@ -407,8 +407,8 @@
       "Damage": "5",
       "Cooldown": "1.5",
       "Mana": "0",
-      "skillName": "Recolección Rápida",
-      "skillDesc": "Aumenta la velocidad de recolección de madera en un 10%."
+      "skillName": "Recolección de Oro",
+      "skillDesc": "Aumenta la recolección de oro un 4%."
     },
     {
       "Race": "valdari",
@@ -426,25 +426,26 @@
       "Cooldown": "1.5",
       "Mana": "0",
       "skillName": "Cuidado de la Tierra",
-      "skillDesc": "Aumenta el rendimiento de las granjas en un 5%."
+      "skillDesc": "Aumenta la recolección de comida un 4%."
     },
     {
       "Race": "valdari",
       "Name": "Emisario",
       "Img": "/images/Valdari/poblation/Emisario.png",
-      "Gold": "50",
+      "Gold": "150",
       "Time": "20",
       "Hit Points": "220",
       "Armor": "0",
-      "Food": "1",
+      "Food": "100",
       "Builds": "null",
       "Requisito": "null",
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
       "Mana": "0",
-      "skillName": "Impuestos",
-      "skillDesc": "Genera 1 de oro extra cada 10 segundos."
+      "skillName": "Operador de Mercado",
+      "skillDesc": "Permitirá realizar transacciones comerciales en el futuro.",
+      "Chrono": "50"
     },
     {
       "Race": "valdari",
@@ -851,9 +852,9 @@
       "Type": "unit",
       "Damage": "35",
       "Cooldown": "1.5",
-      "skillName": "Reparar",
-      "skillDesc": "Repara una estructura aliada",
-      "skillAction": "repair_building",
+      "skillName": "Tiro Letal",
+      "skillDesc": "Disparo certero al enemigo más herido, infligiendo 80 de daño",
+      "skillAction": "sniper_shot",
       "Mana": "400"
     },
     {
@@ -936,19 +937,20 @@
       "Race": "gorkar",
       "Name": "Comerciante_Nomada",
       "Img": "/images/GorKar/poblation/Comerciante_Nomada.png",
-      "Gold": "50",
+      "Gold": "150",
       "Time": "20",
       "Hit Points": "220",
       "Armor": "0",
-      "Food": "1",
+      "Food": "100",
       "Builds": "null",
       "Requisito": "null",
       "Type": "poblation",
       "Damage": "5",
       "Cooldown": "1.5",
       "Mana": "0",
-      "skillName": "Regateo",
-      "skillDesc": "Reduce el costo de unidades en edificios cercanos en 2%."
+      "skillName": "Operador de Mercado",
+      "skillDesc": "Permitirá realizar transacciones comerciales en el futuro.",
+      "Chrono": "50"
     },
     {
       "Race": "gorkar",
@@ -966,7 +968,7 @@
       "Cooldown": "1.5",
       "Mana": "0",
       "skillName": "Fuerza Bruta",
-      "skillDesc": "Extrae piedra un 15% más rápido."
+      "skillDesc": "Extrae suministros un 4% más rápido."
     },
     {
       "Race": "gorkar",
@@ -984,7 +986,7 @@
       "Cooldown": "1.5",
       "Mana": "0",
       "skillName": "Carne de Caza",
-      "skillDesc": "Extrae comida un 15% más rápido."
+      "skillDesc": "Extrae comida un 4% más rápido."
     },
     {
       "Race": "sylvaran",
@@ -1002,7 +1004,7 @@
       "Cooldown": "1.5",
       "Mana": "0",
       "skillName": "Camuflaje Natural",
-      "skillDesc": "Invisible mientras no esté recolectando o moviéndose."
+      "skillDesc": "Aumenta la recolección de suministros un 4%."
     },
     {
       "Race": "sylvaran",
@@ -1020,7 +1022,7 @@
       "Cooldown": "1.5",
       "Mana": "0",
       "skillName": "Bendición Solar",
-      "skillDesc": "Las estructuras cercanas regeneran salud lentamente."
+      "skillDesc": "Aumenta la recolección de comida un 4%."
     },
     {
       "Race": "sylvaran",
@@ -1029,16 +1031,17 @@
       "Builds": "null",
       "Requisito": "null",
       "Type": "poblation",
-      "Gold": "70",
+      "Gold": "150",
       "Time": "25",
       "Hit Points": "250",
-      "Food": "1",
+      "Food": "100",
       "Damage": "5",
       "Armor": "1",
       "Cooldown": "1.5",
       "Mana": "0",
-      "skillName": "Explorador Alado",
-      "skillDesc": "Otorga un campo de visión extendido."
+      "skillName": "Operador de Mercado",
+      "skillDesc": "Permitirá realizar transacciones comerciales en el futuro.",
+      "Chrono": "50"
     },
     {
       "Race": "sylvaran",
@@ -1330,7 +1333,7 @@
       "Cooldown": "1.5",
       "Mana": "0",
       "skillName": "Aura Letal",
-      "skillDesc": "Los atacantes cuerpo a cuerpo reciben un pequeño daño de vacío."
+      "skillDesc": "Extrae suministros un 4% más rápido."
     },
     {
       "Race": "mortharim",
@@ -1505,7 +1508,7 @@
       "skillName": "Paso Umbrío",
       "skillAction": "invisibility",
       "Mana": "400",
-      "skillDesc": "Puede atravesar unidades para evitar ser bloqueada."
+      "skillDesc": "Aumenta la recolección de oro un 4%."
     },
     {
       "Race": "mortharim",
@@ -1590,6 +1593,26 @@
       "skillAction2": "spiked_carapace",
       "Mana": "400",
       "skillDesc": "Devuelve pasivamente un porcentaje del daño cuerpo a cuerpo a los atacantes."
+    },
+    {
+      "Race": "mortharim",
+      "Name": "Recolector_de_Almas",
+      "Img": "/images/Mortharim/poblation/Recolector_de_Almas.png",
+      "Builds": "null",
+      "Requisito": "null",
+      "Type": "poblation",
+      "Gold": "150",
+      "Time": "15",
+      "Hit Points": "125",
+      "Food": "100",
+      "Damage": "0",
+      "Armor": "0",
+      "Cooldown": "1.5",
+      "skillName": "Operador de Mercado",
+      "skillAction": "invisibility",
+      "Mana": "400",
+      "skillDesc": "Permitirá realizar transacciones comerciales en el futuro.",
+      "Chrono": "50"
     }
   ]
 }

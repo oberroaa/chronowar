@@ -374,3 +374,47 @@ export const PopulationDisplay = styled.div<{ $secondaryColor: string }>`
   font-weight: bold;
   text-align: center;
 `;
+
+// Gráfico de Producción
+export const ProductionGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+`;
+
+export const ProductionCard = styled.div<{ $secondaryColor: string; $accentColor: string }>`
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+
+  &:hover {
+    border-color: ${props => props.$secondaryColor};
+    box-shadow: 0 0 15px ${props => props.$accentColor + '60'};
+    transform: translateY(-2px);
+  }
+`;
+
+export const ProductionIconContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #eee;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+`;
+
+export const ProductionRate = styled.div`
+  color: #32cd32;
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-shadow: 0 0 5px rgba(50, 205, 50, 0.4);
+`;

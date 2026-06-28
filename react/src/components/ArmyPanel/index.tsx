@@ -27,8 +27,7 @@ import {
   StatLabel,
   StatValue,
   UnitCost,
-  CostValue,
-  GoldIcon
+  CostValue
 } from './ArmyPanel.styles';
 import {
   ModalOverlay,
@@ -53,7 +52,6 @@ import {
   ModalStatItem,
   ModalStatLabel,
   ModalStatValue,
-  SmallText,
   ModalAbilityBox,
   ModalAbilityName,
   ModalAbilityDesc,
@@ -144,10 +142,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                 <ModalInfoValue>{unit.transportSize}</ModalInfoValue>
               </ModalInfoRow>
 
-              <ModalInfoRow>
-                <ModalInfoLabel $race={race}>Carry Capacity:</ModalInfoLabel>
-                <ModalInfoValue>📦 {unit.carryCapacity}</ModalInfoValue>
-              </ModalInfoRow>
+
             </ModalInfoBox>
           </ModalImageSection>
 
@@ -163,13 +158,6 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                     <ModalStatLabel $race={race}>Health Points:</ModalStatLabel>
                     <ModalStatValue>
                       {unit.hp} HP
-                    </ModalStatValue>
-                  </ModalStatItem>
-
-                  <ModalStatItem>
-                    <ModalStatLabel $race={race}>Mana:</ModalStatLabel>
-                    <ModalStatValue>
-                      {unit.mana || 100} MP
                     </ModalStatValue>
                   </ModalStatItem>
 
@@ -192,9 +180,9 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                   </ModalStatItem>
 
                   <ModalStatItem>
-                    <ModalStatLabel $race={race}>Carry Capacity:</ModalStatLabel>
+                    <ModalStatLabel $race={race}>Mana:</ModalStatLabel>
                     <ModalStatValue>
-                      📦 {unit.carryCapacity} <SmallText>resources</SmallText>
+                      {unit.mana || 100} MP
                     </ModalStatValue>
                   </ModalStatItem>
                 </ModalStatsColumn>
@@ -220,21 +208,39 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                 <CostIcon $race={race}>📦</CostIcon> PRODUCTION COSTS
               </ModalSectionTitle>
               <ModalCostGrid>
-                <ModalCostItem $race={race}>
-                  <ModalCostIcon>💰</ModalCostIcon>
-                  <ModalCostDetails>
-                    <ModalCostAmount>{unit.cost.gold}</ModalCostAmount>
-                    <ModalCostResource>Gold</ModalCostResource>
-                  </ModalCostDetails>
-                </ModalCostItem>
-
-
+                {unit.cost.gold && (
+                  <ModalCostItem $race={race}>
+                    <ModalCostIcon>💰</ModalCostIcon>
+                    <ModalCostDetails>
+                      <ModalCostAmount>{unit.cost.gold}</ModalCostAmount>
+                      <ModalCostResource>Gold</ModalCostResource>
+                    </ModalCostDetails>
+                  </ModalCostItem>
+                )}
+                {unit.cost.supplies && (
+                  <ModalCostItem $race={race}>
+                    <ModalCostIcon>📦</ModalCostIcon>
+                    <ModalCostDetails>
+                      <ModalCostAmount>{unit.cost.supplies}</ModalCostAmount>
+                      <ModalCostResource>Supplies</ModalCostResource>
+                    </ModalCostDetails>
+                  </ModalCostItem>
+                )}
                 {unit.cost.food && (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>🍖</ModalCostIcon>
                     <ModalCostDetails>
                       <ModalCostAmount>{unit.cost.food}</ModalCostAmount>
                       <ModalCostResource>Food</ModalCostResource>
+                    </ModalCostDetails>
+                  </ModalCostItem>
+                )}
+                {unit.cost.chrono && (
+                  <ModalCostItem $race={race}>
+                    <ModalCostIcon>⏳</ModalCostIcon>
+                    <ModalCostDetails>
+                      <ModalCostAmount>{unit.cost.chrono}</ModalCostAmount>
+                      <ModalCostResource>Chrono</ModalCostResource>
                     </ModalCostDetails>
                   </ModalCostItem>
                 )}
@@ -295,7 +301,7 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
     else if (unit.unitType === 'heroe') baseValue = 100000;
     
     // El costo sirve para diferenciar el tier dentro de la misma categoría
-    const cost = (unit.cost.gold || 0) + (unit.cost.wood || 0) + (unit.cost.stone || 0) + ((unit.cost.food || 0) * 10);
+    const cost = (unit.cost.gold || 0) + (unit.cost.supplies || 0) + ((unit.cost.chrono || 0) * 5) + ((unit.cost.food || 0) * 10);
     return baseValue + cost;
   };
 
@@ -388,18 +394,14 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
                       {unit.armorBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.armorBonus})</span> : null}
                     </StatValue>
                   </StatItem>
-                  <StatItem title="Carry Capacity">
-                    <StatLabel $race={race}>📦</StatLabel>
-                    <StatValue>{unit.carryCapacity}</StatValue>
-                  </StatItem>
                 </UnitStats>
 
                 <UnitCost $race={race}>
                   <CostValue>
-                    {unit.cost.gold ? `${unit.cost.gold} ` : ''}{unit.cost.gold ? <GoldIcon>💰</GoldIcon> : null}
-                    {unit.cost.wood ? ` ${unit.cost.wood} 🪵` : ''}
-                    {unit.cost.stone ? ` ${unit.cost.stone} 🪨` : ''}
-                    {unit.cost.food ? ` ${unit.cost.food} 🍖` : ''}
+                    {unit.cost.gold ? `${unit.cost.gold} 💰 ` : ''}
+                    {unit.cost.supplies ? `${unit.cost.supplies} 📦 ` : ''}
+                    {unit.cost.food ? `${unit.cost.food} 🍖 ` : ''}
+                    {unit.cost.chrono ? `${unit.cost.chrono} ⏳ ` : ''}
                   </CostValue>
                 </UnitCost>
               </UnitInfo>

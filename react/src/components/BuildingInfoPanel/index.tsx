@@ -9,6 +9,7 @@ import {
     raceColors
 } from './types';
 import TradingChart from '../TradingChart';
+import { calculateProductionRates } from '../../store/productionUtils';
 
 // Importaciones de estilos
 import {
@@ -44,7 +45,11 @@ import {
     LevelUpButton,
     UpgradeWarning,
     QuantityBadge,
-    PopulationDisplay
+    PopulationDisplay,
+    ProductionGrid,
+    ProductionCard,
+    ProductionIconContainer,
+    ProductionRate
 } from './BuildingInfoPanel.styles';
 
 // Componente principal del panel de información de edificios
@@ -54,7 +59,6 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     resources,
     setResources,
     race,
-    onBuildingUpgraded: _onBuildingUpgraded,
     gameUnits,
     setGameUnits,
 }) => {
@@ -91,6 +95,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
 
     const building = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.name === buildingId);
     if (!building) return null;
+
+    const prodRates = building.main ? calculateProductionRates(race, storeBuildingLevels, gameUnits) : null;
 
     const currentRaceStyle = raceColors[race];
 
@@ -264,7 +270,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     // Renderiza el costo de recursos
     const renderResourceCost = (cost: Partial<Record<ResourceType, number>>) => {
         return Object.entries(cost)
-            .filter(([_, amount]) => amount && amount > 0)
+            .filter(([, amount]) => amount && amount > 0)
             .map(([resource, amount]) => (
                 <ResourceCost key={resource} $type={resource as ResourceType}>
                     {getResourceIcon(resource as ResourceType)} {amount}
@@ -376,13 +382,40 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     </QueueStatus>
                 )}
 
+                {/* Producción de Recursos (Solo para Edificio Principal) */}
+                {building.main && prodRates && (
+                    <BuildingSection $primaryColor={currentRaceStyle.primaryColor}>
+                        <SectionTitle $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
+                            Producción de Recursos
+                        </SectionTitle>
+                        <ProductionGrid>
+                            <ProductionCard $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
+                                <ProductionIconContainer>💰 Oro</ProductionIconContainer>
+                                <ProductionRate>+{prodRates.gold.toFixed(2)} /s</ProductionRate>
+                            </ProductionCard>
+                            <ProductionCard $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
+                                <ProductionIconContainer>📦 Suministros</ProductionIconContainer>
+                                <ProductionRate>+{prodRates.supplies.toFixed(2)} /s</ProductionRate>
+                            </ProductionCard>
+                            <ProductionCard $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
+                                <ProductionIconContainer>🍖 Comida</ProductionIconContainer>
+                                <ProductionRate>+{prodRates.food.toFixed(2)} /s</ProductionRate>
+                            </ProductionCard>
+                            <ProductionCard $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
+                                <ProductionIconContainer>⏳ Chrono War</ProductionIconContainer>
+                                <ProductionRate>+0.00 /s</ProductionRate>
+                            </ProductionCard>
+                        </ProductionGrid>
+                    </BuildingSection>
+                )}
+
                 {/* Sección de entrenamiento de unidades */}
                 {building.unitsProduced.length > 0 && (
                     <BuildingSection $primaryColor={currentRaceStyle.primaryColor}>
                         <SectionTitle $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
                             Train Units
                         </SectionTitle>
-                        {building.unitsProduced.map((unit: any, index: number) => {
+                        {building.unitsProduced.map((unit: UnitProduction, index: number) => {
                             const producing = isProducing(unit.name);
                             const canAffordUnit = canAfford(unit.cost);
                             const unitToTrain = gameUnits.find(u => u.name === unit.name);
@@ -412,7 +445,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                                             </UnitName>
                                         </UnitNameContainer>
                                         <UnitCost>
-                                            {renderResourceCost({ gold: unit.cost.gold, food: unit.cost.food })}
+                                            {renderResourceCost(unit.cost)}
                                             <TimeBadge>⏱️ {unit.buildTime}s</TimeBadge>
                                         </UnitCost>
                                     </UnitInfo>
@@ -452,7 +485,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                         <SectionTitle $secondaryColor={currentRaceStyle.secondaryColor} $accentColor={currentRaceStyle.accentColor}>
                             Building Upgrades
                         </SectionTitle>
-                        {building.upgradesAvailable.map((upgrade: any, index: number) => {
+                        {building.upgradesAvailable.map((upgrade: UpgradeInfo, index: number) => {
                             const upgrading = isUpgrading(upgrade.name, buildingId);
                             const canAffordUpgrade = canAfford(upgrade.cost);
 
