@@ -193,6 +193,13 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
 
     if (needsInit) {
       initBuildingLevels(getInitialBuildings(race));
+    } else {
+      // Backfill any missing buildings from getInitialBuildings
+      const initial = getInitialBuildings(race);
+      const missingKeys = Object.keys(initial).filter(k => buildingLevels[k] === undefined);
+      if (missingKeys.length > 0) {
+        initBuildingLevels({ ...initial, ...buildingLevels });
+      }
     }
   }, [race, activeBuildingsData, buildingLevels, initBuildingLevels]);
 

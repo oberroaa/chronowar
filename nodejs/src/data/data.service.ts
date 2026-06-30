@@ -94,6 +94,7 @@ export class DataService {
             hitPoints: Number(unitData["Hit Points"] || 100),
             armor: Number(unitData.Armor || 0),
             food: Number(unitData.Food || 0),
+            chrono: Number(unitData.Chrono || 0),
             builds: unitData.Builds !== "null" && unitData.Builds !== undefined ? unitData.Builds : null,
             requisito: unitData.Requisito !== "null" && unitData.Requisito !== undefined ? unitData.Requisito : null,
             type: unitData.Type,

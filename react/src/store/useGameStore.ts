@@ -129,7 +129,10 @@ export const useGameStore = create<GameState>()(
           scheduleSync();
         },
 
-        initBuildingLevels: (initialLevels) => set(() => ({ buildingLevels: { ...initialLevels } })),
+        initBuildingLevels: (initialLevels) => {
+          set(() => ({ buildingLevels: { ...initialLevels } }));
+          scheduleSync();
+        },
 
         addUpgradeToQueue: (item) => {
           set((state) => ({

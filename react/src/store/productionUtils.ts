@@ -36,6 +36,7 @@ export const calculateProductionRates = (
     // Valdari
     'Siervo': 'gold',
     'Doncella': 'food',
+    'Artesano': 'supplies',
     // GorKar
     'Peon_Gor': 'supplies',
     'Recolectora_Gor': 'food',
