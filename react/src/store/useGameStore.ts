@@ -43,6 +43,9 @@ interface GameState {
   tickEconomy: () => void;
 }
 
+// Variables globales del store
+let lastTickTime = Date.now();
+
 // Implementation
 export const useGameStore = create<GameState>()(
   persist(
@@ -196,12 +199,18 @@ export const useGameStore = create<GameState>()(
           // Solo calculamos si hay playerData (usuario cargado)
           if (!state.playerData) return;
           
+          const now = Date.now();
+          const deltaSeconds = (now - lastTickTime) / 1000;
+          lastTickTime = now;
+          
+          if (deltaSeconds <= 0) return;
+          
           const rates = calculateProductionRates(state.race, state.buildingLevels, state.playerData.gameUnits || []);
           set({
             resources: {
-              gold: state.resources.gold + rates.gold,
-              supplies: state.resources.supplies + rates.supplies,
-              food: state.resources.food + rates.food,
+              gold: state.resources.gold + (rates.gold * deltaSeconds),
+              supplies: state.resources.supplies + (rates.supplies * deltaSeconds),
+              food: state.resources.food + (rates.food * deltaSeconds),
               chrono: state.resources.chrono
             } as any
           });

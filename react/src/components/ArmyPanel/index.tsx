@@ -38,6 +38,7 @@ import {
   ModalInfoSection,
   ModalUnitImage,
   ModalTitle,
+  ModalSubtitle,
   ModalInfoBox,
   ModalInfoRow,
   ModalInfoLabel,
@@ -111,6 +112,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
   race,
   isOpen,
   onClose,
+  onBuildingClick
 }) => {
   if (!isOpen) return null;
 
@@ -125,6 +127,14 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
           <ModalImageSection>
             <ModalUnitImage src={unit.image} alt={unit.name} />
             <ModalTitle>{formatName(unit.name)}</ModalTitle>
+            {unit.trainedAt && (
+              <ModalSubtitle 
+                onClick={() => onBuildingClick?.(unit.trainedAt!)}
+                style={{ cursor: onBuildingClick ? 'pointer' : 'default', textDecoration: onBuildingClick ? 'underline' : 'none' }}
+              >
+                Trained at {formatName(unit.trainedAt)}
+              </ModalSubtitle>
+            )}
 
             <ModalInfoBox $race={race}>
               <ModalInfoRow>
@@ -138,7 +148,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
               </ModalInfoRow>
 
               <ModalInfoRow>
-                <ModalInfoLabel $race={race}>Transport Size:</ModalInfoLabel>
+                <ModalInfoLabel $race={race}>Combat Tier:</ModalInfoLabel>
                 <ModalInfoValue>{unit.transportSize}</ModalInfoValue>
               </ModalInfoRow>
 
@@ -162,27 +172,27 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                   </ModalStatItem>
 
                   <ModalStatItem>
-                    <ModalStatLabel $race={race}>Attack:</ModalStatLabel>
+                    <ModalStatLabel $race={race}>Mana:</ModalStatLabel>
                     <ModalStatValue>
-                      {unit.attack} 
-                      {unit.attackBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.attackBonus})</span> : null}
+                      {unit.mana || 100} MP
                     </ModalStatValue>
                   </ModalStatItem>
                 </ModalStatsColumn>
 
                 <ModalStatsColumn>
                   <ModalStatItem>
-                    <ModalStatLabel $race={race}>Armor:</ModalStatLabel>
+                    <ModalStatLabel $race={race}>Attack:</ModalStatLabel>
                     <ModalStatValue>
-                      {unit.armor} 
-                      {unit.armorBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.armorBonus})</span> : null}
+                      {unit.attack} 
+                      {unit.attackBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.attackBonus})</span> : null}
                     </ModalStatValue>
                   </ModalStatItem>
 
                   <ModalStatItem>
-                    <ModalStatLabel $race={race}>Mana:</ModalStatLabel>
+                    <ModalStatLabel $race={race}>Armor:</ModalStatLabel>
                     <ModalStatValue>
-                      {unit.mana || 100} MP
+                      {unit.armor} 
+                      {unit.armorBonus ? <span style={{color: '#ffd700', fontSize: '0.8em', marginLeft: '4px'}}>(+{unit.armorBonus})</span> : null}
                     </ModalStatValue>
                   </ModalStatItem>
                 </ModalStatsColumn>
@@ -208,7 +218,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                 <CostIcon $race={race}>📦</CostIcon> PRODUCTION COSTS
               </ModalSectionTitle>
               <ModalCostGrid>
-                {unit.cost.gold && (
+                {unit.cost.gold ? (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>💰</ModalCostIcon>
                     <ModalCostDetails>
@@ -216,8 +226,8 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                       <ModalCostResource>Gold</ModalCostResource>
                     </ModalCostDetails>
                   </ModalCostItem>
-                )}
-                {unit.cost.supplies && (
+                ) : null}
+                {unit.cost.supplies ? (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>📦</ModalCostIcon>
                     <ModalCostDetails>
@@ -225,8 +235,8 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                       <ModalCostResource>Supplies</ModalCostResource>
                     </ModalCostDetails>
                   </ModalCostItem>
-                )}
-                {unit.cost.food && (
+                ) : null}
+                {unit.cost.food ? (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>🍖</ModalCostIcon>
                     <ModalCostDetails>
@@ -234,8 +244,8 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                       <ModalCostResource>Food</ModalCostResource>
                     </ModalCostDetails>
                   </ModalCostItem>
-                )}
-                {unit.cost.chrono && (
+                ) : null}
+                {unit.cost.chrono ? (
                   <ModalCostItem $race={race}>
                     <ModalCostIcon>⏳</ModalCostIcon>
                     <ModalCostDetails>
@@ -243,7 +253,7 @@ const ArmyModal: React.FC<ArmyModalProps> = ({
                       <ModalCostResource>Chrono</ModalCostResource>
                     </ModalCostDetails>
                   </ModalCostItem>
-                )}
+                ) : null}
               </ModalCostGrid>
             </ModalSection>
           </ModalInfoSection>
@@ -260,6 +270,7 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
   onUnitSelect,
   selectedUnits = [],
   gameUnits,
+  onBuildingClick
 }) => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [selectedUnit, setSelectedUnit] = useState<UnitProduction | null>(null);
@@ -416,6 +427,7 @@ const ArmyPanel: React.FC<ArmyPanelProps> = ({
           race={race}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          onBuildingClick={onBuildingClick}
         />
       )}
     </>

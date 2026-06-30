@@ -366,6 +366,10 @@ const RacePage: React.FC<RacePageProps> = ({ race, onBattle, onExit }) => {
         onClose={toggleTroopsPanel}
         race={race}
         gameUnits={gameUnits}
+        onBuildingClick={(buildingName) => {
+          setSelectedBuilding(buildingName);
+          setShowTroops(false);
+        }}
       />
 
       <PortalPanel

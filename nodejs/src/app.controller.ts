@@ -69,6 +69,7 @@ export class AppController {
                  id: unit.id,
                  available: 0,
                  name: unit.name,
+                 trainedAt: b.name,
                  unitType: unit.type,
                  cost: { gold: unit.gold || 0, food: unit.food || 0, chrono: unit.chrono || 0 },
                  buildTime: unit.time || 10,
@@ -85,7 +86,7 @@ export class AppController {
                  armor: unit.armor || 0,
                  hp: unit.hitPoints || 100,
                  mana: unit.mana || 100,
-                 transportSize: 1,
+                 transportSize: unit.time <= 20 ? 1 : (unit.time <= 40 ? 2 : 3),
 
                });
              }

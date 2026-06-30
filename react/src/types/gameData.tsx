@@ -72,7 +72,7 @@ export const getTravelCost = (race: RaceType, level: number) => {
         gold: level * 15,
         supplies: level * 20,
         food: level * 10
-      });    
+      });
     case 'sylvaran':
       return ({
         gold: level * 15,
@@ -91,6 +91,7 @@ export type UnitProduction = {
   id: number;
   name: string;
   unitType: UnitType;
+  trainedAt?: string;
   cost: Partial<Record<ResourceType, number>>;
   buildTime: number;
   image: string;
@@ -158,13 +159,13 @@ export const SquaresValdari = [
 ];
 
 export const SquaresGorkar = [
-  { name: 'BastionSangre', top: '52%', left: '41%', scale: 1.6 },
-  { name: 'FuerteCeniza', top: '45%', left: '24%' },
-  { name: 'CirculoIgneo', top: '44.5%', left: '66%' },
-  { name: 'FosoDepredadores', top: '55%', left: '11%' },
-  { name: 'NidoCumbres', top: '53.5%', left: '78%' },
-  { name: 'TotemsTierra', top: '40%', left: '47%', scale: 1.0 },
-  { name: 'PuestoTrueque', top: '32.5%', left: '59%', scale: 1.0 }
+  { name: 'BastionSangre', top: '53%', left: '41%', scale: 1.6 },
+  { name: 'FuerteCeniza', top: '48%', left: '24%', scale: 1.2, rotate: 5 },
+  { name: 'CirculoIgneo', top: '56%', left: '78%' },
+  { name: 'FosoDepredadores', top: '57%', left: '10%', rotate: 6 },
+  { name: 'NidoCumbres', top: '40%', left: '47%', scale: 1.1 },
+  { name: 'TotemsTierra', top: '35%', left: '60%', scale: 0.9 },
+  { name: 'PuestoTrueque', top: '47%', left: '65%', scale: 1.1 }
 ];
 
 export const SquaresSylvaran = [
@@ -178,13 +179,13 @@ export const SquaresSylvaran = [
 ];
 
 export const SquaresMortharim = [
-  { name: 'PinaculoVacio', top: '33%', left: '45%' },
-  { name: 'CriptaLamentos', top: '65%', left: '13%' },
-  { name: 'FosoAlmas', top: '51%', left: '30%' },
-  { name: 'AltarCondenados', top: '73%', left: '10%' },
-  { name: 'MausoleoReliquias', top: '60%', left: '65%' },
-  { name: 'ObeliscoSombras', top: '33%', left: '21%' },
-  { name: 'BastionEbano', top: '38%', left: '60%' }
+  { name: 'PinaculoVacio', top: '57%', left: '41%' },
+  { name: 'CriptaLamentos', top: '59%', left: '13%' },
+  { name: 'FosoAlmas', top: '47%', left: '25%' },
+  { name: 'AltarCondenados', top: '61%', left: '75%', scale: 1.1 },
+  { name: 'MausoleoReliquias', top: '41%', left: '47%', scale: 1.1 },
+  { name: 'ObeliscoSombras', top: '32%', left: '58%', scale: 1.0 },
+  { name: 'BastionEbano', top: '48%', left: '64%', scale: 1.1 }
 ];
 
 // types/gameData.ts (extender las interfaces existentes)

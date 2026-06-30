@@ -85,12 +85,27 @@ export const Tabs = styled.div<{ $race: RaceType }>`
   gap: 0;
   background: rgba(5, 5, 10, 0.6);
   padding: 0;
+  overflow-x: auto;
+  
+  /* Elegant scrollbar for desktop users */
+  &::-webkit-scrollbar {
+    height: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${({ $race }) => raceColors[$race].color};
+    border-radius: 2px;
+  }
 `;
 
 // Botones de pestaña
 export const TabButton = styled.button<{ $active: boolean; $race: RaceType }>`
   flex: 1;
-  padding: 12px;
+  min-width: max-content;
+  white-space: nowrap;
+  padding: 12px 16px;
   background: ${({ $active, $race }) => $active ? 
     `rgba(${hexToRgb(raceColors[$race].color)}, 0.1)` : 
     'transparent'};
@@ -175,8 +190,7 @@ export const UnitStaticImage = styled.img`
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  image-rendering: crisp-edges;
+  object-fit: cover;
 `;
 
 // Imagen GIF de unidad
@@ -186,7 +200,7 @@ export const UnitGif = styled.img`
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 `;
 
 // Fallback para imagen (cuando hay error)

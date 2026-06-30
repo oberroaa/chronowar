@@ -104,6 +104,15 @@ export const ModalTitle = styled.h2`
   text-align: center;
 `;
 
+export const ModalSubtitle = styled.h4`
+  margin: 5px 0 0 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  text-align: center;
+  font-weight: 400;
+  font-family: 'Orbitron', sans-serif;
+`;
+
 // Caja de información del modal
 export const ModalInfoBox = styled.div<{ $race: RaceType }>`
   width: 100%;

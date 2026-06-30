@@ -7,6 +7,7 @@ export type ArmyPanelProps = {
   onUnitSelect?: (unitId: number) => void;
   selectedUnits?: number[];
   gameUnits: UnitProduction[];
+  onBuildingClick?: (buildingName: string) => void;
 };
 
 export type UnitImageDisplayProps = {
@@ -19,4 +20,5 @@ export interface ArmyModalProps {
   race: RaceType;
   isOpen: boolean;
   onClose: () => void;
+  onBuildingClick?: (buildingName: string) => void;
 };

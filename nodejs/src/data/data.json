@@ -317,7 +317,7 @@
       "Race": "mortharim",
       "Name": "PinaculoVacio",
       "Img": "/images/Mortharim/construcciones/PinaculoVacio.png",
-      "Builds": "Siervo_del_Vacio",
+      "Builds": "Siervo_del_Vacio, Sombra",
       "Requisito": "null",
       "Gold": "1000",
       "Time": "120",
@@ -361,7 +361,7 @@
       "Race": "mortharim",
       "Name": "BastionEbano",
       "Img": "/images/Mortharim/construcciones/BastionEbano.png",
-      "Builds": "Horror_Alado",
+      "Builds": "Horror_Alado, Devorador_de_Magia",
       "Requisito": "FosoAlmas",
       "Gold": "650",
       "Time": "120",
@@ -383,7 +383,7 @@
       "Race": "mortharim",
       "Name": "MausoleoReliquias",
       "Img": "/images/Mortharim/construcciones/MausoleoReliquias.png",
-      "Builds": "Sombra",
+      "Builds": "Recolector_de_Almas",
       "Requisito": "Zigurat",
       "Gold": "500",
       "Time": "120",
@@ -1613,6 +1613,25 @@
       "Mana": "400",
       "skillDesc": "Permitirá realizar transacciones comerciales en el futuro.",
       "Chrono": "50"
+    },
+    {
+      "Race": "mortharim",
+      "Name": "Devorador_de_Magia",
+      "Img": "/images/Mortharim/units/Devorador_de_Magia.png",
+      "Builds": "null",
+      "Requisito": "BastionEbano",
+      "Type": "unit",
+      "Gold": "200",
+      "Time": "35",
+      "Hit Points": "600",
+      "Food": "3",
+      "Damage": "20",
+      "Armor": "2",
+      "Cooldown": "1.5",
+      "skillName": "Devorar Magia",
+      "skillAction": "devour_magic",
+      "Mana": "400",
+      "skillDesc": "Disipa efectos mágicos de los enemigos y restaura vida y maná al devorador."
     }
   ]
 }
