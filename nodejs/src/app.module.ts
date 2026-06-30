@@ -16,6 +16,7 @@ import { Hero } from './hero/hero.entity';
 import { Building } from './building/building.entity';
 import { Unit } from './unit/unit.entity';
 import { Player } from './player/player.entity';
+import { TradingOrder } from './trading/trading-order.entity';
 
 @Module({
   imports: [
@@ -38,7 +39,7 @@ import { Player } from './player/player.entity';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        entities: [Race, Hero, Building, Unit, Player],
+        entities: [Race, Hero, Building, Unit, Player, TradingOrder],
         synchronize: true, // Solo en desarrollo
         ssl: {
           rejectUnauthorized: false, // Requerido para Supabase en algunos entornos
