@@ -111,6 +111,7 @@ export type UnitProduction = {
   skillAction2?: string;
   attackBonus?: number;
   armorBonus?: number;
+  carryCapacity?: number;
 };
 
 export type ProductionQueueItem = {

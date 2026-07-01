@@ -418,3 +418,35 @@ export const ProductionRate = styled.div`
   font-size: 1.1rem;
   text-shadow: 0 0 5px rgba(50, 205, 50, 0.4);
 `;
+
+export const GarrisonContainer = styled.div`
+  margin: 10px 0 20px 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.03);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  color: #ffd700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.03);
+`;
+
+export const GarrisonOrbs = styled.div`
+  display: flex;
+  gap: 6px;
+  align-items: center;
+`;
+
+export const GarrisonOrb = styled.span<{ $active: boolean; $full: boolean }>`
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid ${props => props.$active ? (props.$full ? '#ef5350' : '#26a69a') : 'rgba(255, 255, 255, 0.2)'};
+  background: ${props => props.$active ? (props.$full ? 'radial-gradient(circle, #ef5350, #c62828)' : 'radial-gradient(circle, #26a69a, #00796b)') : 'transparent'};
+  box-shadow: ${props => props.$active ? (props.$full ? '0 0 8px #ef5350' : '0 0 8px #26a69a') : 'none'};
+  transition: all 0.3s ease;
+`;

@@ -99,7 +99,7 @@ export class AppController {
           name: b.name,
           main: !b.requisito || b.requisito === "null",
           description: b.name,
-          level: 0,
+          level: 1,
           buildCost: { gold: b.gold || 0, supplies: b.supplies || 0 },
           buildTime: b.time || 30,
           image: b.img,

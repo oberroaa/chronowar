@@ -125,12 +125,17 @@ export const useGameStore = create<GameState>()(
         },
 
         setBuildingLevel: (buildingId, level) => {
-          set((state) => ({ buildingLevels: { ...state.buildingLevels, [buildingId.toLowerCase()]: level } }));
+          const finalLevel = level === 0 ? 1 : level;
+          set((state) => ({ buildingLevels: { ...state.buildingLevels, [buildingId.toLowerCase()]: finalLevel } }));
           scheduleSync();
         },
 
         initBuildingLevels: (initialLevels) => {
-          set(() => ({ buildingLevels: { ...initialLevels } }));
+          const cleaned = { ...initialLevels };
+          Object.keys(cleaned).forEach(k => {
+            if (cleaned[k] === 0) cleaned[k] = 1;
+          });
+          set(() => ({ buildingLevels: cleaned }));
           scheduleSync();
         },
 
@@ -248,7 +253,11 @@ export const useGameStore = create<GameState>()(
             };
             // Only overwrite buildingLevels if server has saved levels
             if (me.buildingLevels && Object.keys(me.buildingLevels).length > 0) {
-              updates.buildingLevels = me.buildingLevels;
+              const cleaned = { ...me.buildingLevels };
+              Object.keys(cleaned).forEach(k => {
+                if (cleaned[k] === 0) cleaned[k] = 1;
+              });
+              updates.buildingLevels = cleaned;
             }
             // Restore persisted queues from server if present and local is empty
             const state = get();

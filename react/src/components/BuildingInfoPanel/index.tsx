@@ -49,7 +49,10 @@ import {
     ProductionGrid,
     ProductionCard,
     ProductionIconContainer,
-    ProductionRate
+    ProductionRate,
+    GarrisonContainer,
+    GarrisonOrbs,
+    GarrisonOrb
 } from './BuildingInfoPanel.styles';
 
 // Componente principal del panel de información de edificios
@@ -96,6 +99,8 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     const building = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.name === buildingId);
     if (!building) return null;
 
+    const currentBuildingLevel = buildingLevels[buildingId.toLowerCase()] ?? 1;
+
     const prodRates = building.main ? calculateProductionRates(race, storeBuildingLevels, gameUnits) : null;
 
     const currentRaceStyle = raceColors[race];
@@ -113,6 +118,21 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                 setTimeout(() => setMessage(null), 3000);
                 return;
             }
+
+        // Límite de guarnición (excepto edificio principal)
+        if (!building.main && building.unitsProduced && building.unitsProduced.length > 0) {
+            const producedNames = building.unitsProduced.map(u => u.name);
+            const activeUnitsCount = gameUnits.filter(u => producedNames.includes(u.name)).reduce((sum, u) => sum + (u.available || 0), 0);
+            const trainingCount = productionQueue.filter(item => item.buildingId === buildingId).length;
+            const totalUnits = activeUnitsCount + trainingCount;
+            const allowedLimit = currentBuildingLevel;
+
+            if (totalUnits >= allowedLimit) {
+                setMessage("Capacidad de Guarnición llena. Mejora el edificio a un Grado superior para entrenar más unidades.");
+                setTimeout(() => setMessage(null), 4000);
+                return;
+            }
+        }
 
         // Verifica límite de héroes
         if (unit.unitType === 'heroe') {
@@ -220,16 +240,16 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     // Encuentra el edificio principal y su nivel
     const mainBuilding = Object.values(activeBuildingsData).find((b: BuildingInfo) => b.main);
     const mainBuildingName = mainBuilding?.name || null;
-    const mainBuildingLevel = mainBuildingName ? buildingLevels[mainBuildingName.toLowerCase()] ?? 0 : 0;
+    const mainBuildingLevel = mainBuildingName ? buildingLevels[mainBuildingName.toLowerCase()] || 1 : 1;
 
     // Maneja la mejora de nivel del edificio
     const handleLevelUp = () => {
         if (!buildingId) return;
-        const currentLevel = buildingLevels[buildingId.toLowerCase()] ?? 0;
+        const currentLevel = buildingLevels[buildingId.toLowerCase()] || 1;
 
         // Verifica requisitos de edificio principal
-        if (mainBuildingName !== null && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && currentLevel >= (buildingLevels[mainBuildingName.toLowerCase()] ?? 0)) {
-            setMessage(`Necesitas mejorar ${formatName(mainBuildingName)} a nivel ${currentLevel + 1} primero.`);
+        if (mainBuildingName !== null && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && currentLevel >= (buildingLevels[mainBuildingName.toLowerCase()] || 1)) {
+            setMessage(`Necesitas mejorar ${formatName(mainBuildingName)} a Rango ${currentLevel + 1} primero.`);
             setTimeout(() => setMessage(null), 3000);
             return;
         }
@@ -319,7 +339,42 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
     const currentUpgrade = upgradeQueue.find(
         (item) => item.buildingId === buildingId
     );
-    const currentBuildingLevel = buildingLevels[buildingId.toLowerCase()] ?? 0;
+
+    // Mapear Rango del Edificio (Opción A)
+    const getRangoLabel = (lvl: number) => {
+        const roman = lvl === 1 ? 'I' : lvl === 2 ? 'II' : lvl === 3 ? 'III' : lvl === 4 ? 'IV' : lvl.toString();
+        const stars = '✦'.repeat(lvl);
+        return `Rango ${roman} ${stars}`;
+    };
+
+    // Calcular guarnición para este edificio
+    const producedNames = building.unitsProduced?.map(u => u.name) || [];
+    const activeUnitsCount = gameUnits.filter(u => producedNames.includes(u.name)).reduce((sum, u) => sum + (u.available || 0), 0);
+    const trainingCount = productionQueue.filter(item => item.buildingId === buildingId).length;
+    const totalUnits = activeUnitsCount + trainingCount;
+    const allowedLimit = currentBuildingLevel;
+    const isGarrisonFull = !building.main && totalUnits >= allowedLimit;
+
+    const renderGarrisonOrbs = () => {
+        const orbs = [];
+        for (let i = 0; i < allowedLimit; i++) {
+            orbs.push(
+                <GarrisonOrb 
+                    key={i} 
+                    $active={i < totalUnits} 
+                    $full={isGarrisonFull} 
+                />
+            );
+        }
+        return (
+            <GarrisonOrbs>
+                {orbs}
+                <span style={{ marginLeft: '8px', fontSize: '0.85rem', color: isGarrisonFull ? '#ef5350' : '#26a69a', fontWeight: 'bold' }}>
+                    ({totalUnits} / {allowedLimit})
+                </span>
+            </GarrisonOrbs>
+        );
+    };
 
     return (
         <ModalOverlay onClick={onClose}>
@@ -344,13 +399,20 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                 )}
 
                 <BuildingTitle $secondaryColor={currentRaceStyle.secondaryColor}>
-                    {formatName(building.name)} (Level {currentBuildingLevel})
+                    {formatName(building.name)} ({getRangoLabel(currentBuildingLevel)})
                     {currentUpgrade && (
                         <UpgradeStatus $accentColor={currentRaceStyle.accentColor}>
                             Upgrading <strong>{formatName(building.name)}</strong>: {currentUpgrade.upgrade} ({currentUpgrade.timeLeft}s)
                         </UpgradeStatus>
                     )}
                 </BuildingTitle>
+
+                {!building.main && building.unitsProduced && building.unitsProduced.length > 0 && (
+                    <GarrisonContainer>
+                        <span>Capacidad de Guarnición:</span>
+                        {renderGarrisonOrbs()}
+                    </GarrisonContainer>
+                )}
 
                 {(building.name !== "Market" && building.name !== "TradeHut" && building.name !== "AncientWonder") && (
                     <PopulationDisplay $secondaryColor={currentRaceStyle.secondaryColor}>
@@ -423,10 +485,15 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                             const isHero = unit.unitType === 'heroe';
                             const heroExists = isHero && (unitToTrain?.available ?? 0) > 0;
                             const isThisBuildingUpgrading = upgradeQueue.some(item => item.buildingId === buildingId);
+                            
+                            // Límite de guarnición
+                            const isGarrisonFull = !building.main && totalUnits >= allowedLimit;
+
                             const canTrain = canAffordUnit && hasPopulation &&
                                 !isThisBuildingTraining && !producing &&
                                 (!isHero || !heroExists) &&
-                                !isThisBuildingUpgrading;
+                                !isThisBuildingUpgrading &&
+                                !isGarrisonFull;
                             return (
                                 <UnitItem key={index}>
                                     <UnitInfo>
@@ -465,13 +532,15 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                                                 ? `Entrenando... (${getRemainingTime(unit.name, 'unit')}s)`
                                                 : unit.unitType === 'heroe' && unitToTrain?.available
                                                     ? 'Límite de héroe alcanzado'
-                                                    : !canAffordUnit
-                                                        ? 'Recursos insuficientes'
-                                                        : !hasPopulation
-                                                            ? 'Población insuficiente'
-                                                            : isThisBuildingTraining
-                                                                ? 'En uso'
-                                                                : 'Entrenar'}
+                                                    : isGarrisonFull
+                                                        ? 'Guarnición Llena'
+                                                        : !canAffordUnit
+                                                            ? 'Recursos insuficientes'
+                                                            : !hasPopulation
+                                                                ? 'Población insuficiente'
+                                                                : isThisBuildingTraining
+                                                                    ? 'En uso'
+                                                                    : 'Entrenar'}
                                     </ProductionButton>
                                 </UnitItem>
                             );
@@ -532,7 +601,7 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                     {/* Advertencia si se necesita mejorar el edificio principal primero */}
                     {mainBuildingName !== null && currentBuildingLevel >= mainBuildingLevel && buildingId.toLowerCase() !== mainBuildingName.toLowerCase() && (
                         <UpgradeWarning $accentColor={currentRaceStyle.accentColor}>
-                            You need to upgrade your {formatName(mainBuildingName)} to level {currentBuildingLevel + 1} first!
+                            You need to upgrade your {formatName(mainBuildingName)} to Rango {currentBuildingLevel + 1} first!
                         </UpgradeWarning>
                     )}
 
@@ -559,10 +628,10 @@ export const BuildingInfoPanel: React.FC<BuildingInfoModalProps> = ({
                         $darkColor={currentRaceStyle.darkColor}
                     >
                         {isLevelUpgrading
-                            ? `Upgrading to Level ${currentBuildingLevel + 1} (${currentLevelUpgrade?.timeLeft}s)`
+                            ? `Upgrading to Rango ${currentBuildingLevel + 1} (${currentLevelUpgrade?.timeLeft}s)`
                             : isAnyUpgradeInProgress
                                 ? 'Another upgrade in progress'
-                                : `Upgrade to Level ${currentBuildingLevel + 1}`}
+                                : `Upgrade to Rango ${currentBuildingLevel + 1}`}
                     </LevelUpButton>
                 </LevelUpSection>
             </ModalContainer>
