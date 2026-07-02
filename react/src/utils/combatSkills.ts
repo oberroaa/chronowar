@@ -542,6 +542,29 @@ export const executeHeroSkill = ({
       break;
     }
 
+    case 'resuscitate': { /* Revive un aliado muerto a mitad de vida; si no hay muertos, cura 60 HP a todos */
+      const deadAllies = updatedHeroes.map((h, i) => ({ index: i, unit: h })).filter(item => item.unit.isDead);
+      if (deadAllies.length > 0) {
+        const target = deadAllies[Math.floor(Math.random() * deadAllies.length)]; // Revive un muerto aleatorio
+        const targetIndex = target.index;
+        const revivedHp = Math.floor(target.unit.maxHp / 2);
+        updatedHeroes[targetIndex] = {
+          ...target.unit,
+          isDead: false,
+          hp: revivedHp
+        };
+        addFloat(`✨ Revivido: +${revivedHp} HP`, 'heal', hPos(targetIndex).x, hPos(targetIndex).y - 25);
+      } else {
+        // Backup heal si no hay aliados muertos
+        updatedHeroes = updatedHeroes.map((h, i) => {
+          if (h.isDead) return h;
+          addFloat('+60 💚', 'heal', hPos(i).x, hPos(i).y);
+          return { ...h, hp: Math.min(h.maxHp, h.hp + 60) };
+        });
+      }
+      break;
+    }
+
     default: { /* fallback: golpe simple */
       const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
       if (alive.length > 0) {
