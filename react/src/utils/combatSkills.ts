@@ -540,6 +540,155 @@ export const executeHeroSkill = ({
         setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
       }
       break;
+    }    case 'heavy_strike': { /* Golpe Pesado: 65 daño a un enemigo aleatorio */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        const actual = Math.max(1, 65 - updatedEnemies[target].defense);
+        updatedEnemies[target] = { ...updatedEnemies[target], hp: Math.max(0, updatedEnemies[target].hp - actual), isDead: updatedEnemies[target].hp - actual <= 0, isHit: true };
+        addFloat(`💥 Golpe Pesado: ${actual}`, 'crit', ePos(target).x, ePos(target).y);
+        doShake();
+        setTimeout(() => setEnemies(prev => prev.map((u, i) => (i === target ? { ...u, isHit: false } : u))), 430);
+      }
+      break;
+    }
+
+    case 'poison_spear': { /* Lanza Envenenada: 35 daño y aplica 30 de veneno */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        const actual = Math.max(1, 35 - updatedEnemies[target].defense);
+        updatedEnemies[target] = { 
+          ...updatedEnemies[target], 
+          hp: Math.max(0, updatedEnemies[target].hp - actual), 
+          isDead: updatedEnemies[target].hp - actual <= 0,
+          poison: (updatedEnemies[target].poison || 0) + 30,
+          isHit: true 
+        };
+        addFloat(`💥 ${actual} 🤢 Veneno +30`, 'crit', ePos(target).x, ePos(target).y);
+        doShake();
+        setTimeout(() => setEnemies(prev => prev.map((u, i) => (i === target ? { ...u, isHit: false } : u))), 430);
+      }
+      break;
+    }
+
+    case 'bloodlust': { /* Sed de Sangre: Aumenta ataque de todos los aliados vivos en +5 permanentemente en este combate */
+      updatedHeroes = updatedHeroes.map((h, i) => {
+        if (h.isDead) return h;
+        addFloat(`⚔️ ¡Furia! ATK +5`, 'combo', hPos(i).x, hPos(i).y - 25);
+        return { ...h, attack: h.attack + 5 };
+      });
+      break;
+    }
+
+    case 'healing_ward': { /* Guardián Sanador: Cura 50 HP a todos los aliados */
+      updatedHeroes = updatedHeroes.map((h, i) => {
+        if (h.isDead) return h;
+        addFloat('+50 💚', 'heal', hPos(i).x, hPos(i).y);
+        return { ...h, hp: Math.min(h.maxHp, h.hp + 50) };
+      });
+      break;
+    }
+
+    case 'pulverize': { /* Pulverizar: Hace 50 de daño en área a todos los enemigos */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const actual = Math.max(1, 50 - e.defense);
+        addFloat(`💥 Pulverizar: ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+        const hp = Math.max(0, e.hp - actual);
+        updatedEnemies[i] = { ...e, hp, isDead: hp <= 0, isHit: true };
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+
+    case 'ensnare': { /* Atrapar: 30 dmg a un enemigo aleatorio y reduce su ataque en un 50% */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead);
+      if (alive.length > 0) {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        const actual = Math.max(1, 30 - updatedEnemies[target].defense);
+        updatedEnemies[target] = { 
+          ...updatedEnemies[target], 
+          hp: Math.max(0, updatedEnemies[target].hp - actual), 
+          isDead: updatedEnemies[target].hp - actual <= 0,
+          attack: Math.max(1, Math.round(updatedEnemies[target].attack * 0.5)),
+          isHit: true 
+        };
+        addFloat(`🕸️ Atrapado: -50% ATK`, 'skill', ePos(target).x, ePos(target).y - 25);
+        addFloat(`💥 ${actual}`, 'dmg', ePos(target).x, ePos(target).y);
+        doShake();
+        setTimeout(() => setEnemies(prev => prev.map((u, i) => (i === target ? { ...u, isHit: false } : u))), 430);
+      }
+      break;
+    }
+
+    case 'burning_oil': { /* Aceite Hirviente: Quema a 3 enemigos aleatorios por 55 de daño */
+      const tgts = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead).sort(() => Math.random() - 0.5).slice(0, 3);
+      for (const i of tgts) {
+        const actual = Math.max(1, 55 - updatedEnemies[i].defense);
+        updatedEnemies[i] = { ...updatedEnemies[i], hp: Math.max(0, updatedEnemies[i].hp - actual), isDead: updatedEnemies[i].hp - actual <= 0, isHit: true };
+        addFloat(`🔥 Aceite Hirviente: ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+
+    case 'bladestorm': { /* Tormenta de Espadas: 110 de daño masivo a todos los enemigos */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const actual = Math.max(1, 110 - e.defense);
+        addFloat(`⚔️ Bladestorm: ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+        const hp = Math.max(0, e.hp - actual);
+        updatedEnemies[i] = { ...e, hp, isDead: hp <= 0, isHit: true };
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+
+    case 'chain_lightning': { /* Cadena de Relámpagos: Rayo que golpea al primer enemigo por 90 dmg, al segundo por 60 dmg y al tercero por 35 dmg */
+      const alive = updatedEnemies.map((_, i) => i).filter(i => !updatedEnemies[i].isDead).sort(() => Math.random() - 0.5).slice(0, 3);
+      const dmgs = [90, 60, 35];
+      for (let idx = 0; idx < alive.length; idx++) {
+        const target = alive[idx];
+        const actual = Math.max(1, dmgs[idx] - updatedEnemies[target].defense);
+        updatedEnemies[target] = { ...updatedEnemies[target], hp: Math.max(0, updatedEnemies[target].hp - actual), isDead: updatedEnemies[target].hp - actual <= 0, isHit: true };
+        addFloat(`⚡ Relámpago: ${actual}`, 'crit', ePos(target).x, ePos(target).y);
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+
+    case 'shockwave': { /* Onda de Choque: 80 de daño a todos los enemigos */
+      for (let i = 0; i < updatedEnemies.length; i++) {
+        const e = updatedEnemies[i];
+        if (e.isDead) continue;
+        const actual = Math.max(1, 80 - e.defense);
+        addFloat(`🌊 Onda de Choque: ${actual}`, 'crit', ePos(i).x, ePos(i).y);
+        const hp = Math.max(0, e.hp - actual);
+        updatedEnemies[i] = { ...e, hp, isDead: hp <= 0, isHit: true };
+      }
+      doShake();
+      setTimeout(() => setEnemies(prev => prev.map(u => ({ ...u, isHit: false }))), 440);
+      break;
+    }
+
+    case 'healing_wave': { /* Ola Sanadora: Cura 90 HP al primer aliado, 60 HP al segundo y 40 HP al tercero */
+      const aliveAllies = updatedHeroes.map((h, i) => ({ index: i, unit: h })).filter(item => !item.unit.isDead).sort(() => Math.random() - 0.5).slice(0, 3);
+      const healVals = [90, 60, 40];
+      for (let idx = 0; idx < aliveAllies.length; idx++) {
+        const targetIndex = aliveAllies[idx].index;
+        const targetUnit = aliveAllies[idx].unit;
+        const healAmt = healVals[idx];
+        updatedHeroes[targetIndex] = { ...targetUnit, hp: Math.min(targetUnit.maxHp, targetUnit.hp + healAmt) };
+        addFloat(`✨ Sanación: +${healAmt}`, 'heal', hPos(targetIndex).x, hPos(targetIndex).y);
+      }
+      break;
     }
 
     case 'resuscitate': { /* Revive un aliado muerto a mitad de vida; si no hay muertos, cura 60 HP a todos */
